@@ -12,3 +12,4 @@ requests
 jinja2
 starlette
 PyPDF2
+sentence-transformers

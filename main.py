@@ -32,6 +32,10 @@ os.makedirs("vectorstore", exist_ok=True)
 
 app = FastAPI(title="Business Chatbot API")
 
+@app.api_route("/health", methods=["GET", "HEAD"])
+async def health_check():
+    return {"status": "ok"}
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
