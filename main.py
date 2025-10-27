@@ -20,7 +20,7 @@ from openai import OpenAI, APIError, AuthenticationError, RateLimitError
 from PyPDF2 import PdfReader
 from starlette.concurrency import run_in_threadpool
 
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "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"
 SITE_NAME = "Business Chatbot"
 
 DEFAULT_PDF = "data/tester.pdf"
