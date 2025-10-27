@@ -14,3 +14,4 @@ pypdf
 python-multipart
 requests
 jinja2
+PyPDF2
