@@ -1,7 +1,6 @@
 fastapi
 uvicorn
 openai
-torch==2.0.0
 langchain
 langchain-community
 langchain-text-splitters
