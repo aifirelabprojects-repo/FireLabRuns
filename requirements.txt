@@ -12,5 +12,6 @@ requests
 jinja2
 starlette
 PyPDF2
-torch==1.13.1
+--index-url https://download.pytorch.org/whl/cpu 
+torch==2.5.0
 sentence-transformers==2.2.2
