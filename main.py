@@ -19,6 +19,8 @@ from langchain_community.docstore.document import Document
 from openai import OpenAI, APIError, AuthenticationError, RateLimitError
 from PyPDF2 import PdfReader
 from starlette.concurrency import run_in_threadpool
+from dotenv import load_dotenv
+load_dotenv()
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
@@ -674,7 +676,7 @@ async def websocket_chat(websocket: WebSocket, session_id: str):
                         await manager.broadcast(json.dumps(bot_msg), session_id)
                     except Exception as e:
                         print(e)
-                        bot_error = {"type": "message","role": "error", "content": "Bot is temporarily unavailable. Please try again."}
+                        bot_error = {"type": "message","role": "error", "content": f"Bot is temporarily unavailable. Please try again.{e}"}
                         await manager.broadcast(json.dumps(bot_error), session_id)
     except WebSocketDisconnect:
         pass
