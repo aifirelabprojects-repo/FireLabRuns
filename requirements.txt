@@ -8,3 +8,7 @@ faiss-cpu
 pypdf
 python-multipart
 langchain-huggingface
+requests
+jinja2
+starlette
+PyPDF2
