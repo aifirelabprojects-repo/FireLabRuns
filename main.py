@@ -81,11 +81,17 @@ client = OpenAI(
     api_key=OPENROUTER_API_KEY
 )
 
-embedding_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2",
-    model_kwargs={"device": "cpu"},
-    encode_kwargs={"normalize_embeddings": False}
-)
+_embedding_model = None
+
+def get_embedding_model():
+    global _embedding_model
+    if _embedding_model is None:
+        _embedding_model = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2",
+            model_kwargs={"device": "cpu"},
+            encode_kwargs={"normalize_embeddings": False}
+        )
+    return _embedding_model
 
 vectorstore = None
 
@@ -96,7 +102,7 @@ def get_vectorstore():
         if os.path.exists(VECTORSTORE_PATH):
             vectorstore = load_vectorstore()
         else:
-            vectorstore = FAISS.from_documents([], embedding_model)
+            vectorstore = FAISS.from_documents([], get_embedding_model())
     return vectorstore
 
 class ConnectionManager:
@@ -154,14 +160,14 @@ def extract_text_from_pdf(pdf_path):
     return text
 
 def create_vectorstore(text, store_path=VECTORSTORE_PATH):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)  # Reduced from 800/100
     docs = [Document(page_content=chunk) for chunk in splitter.split_text(text)]
-    vectorstore = FAISS.from_documents(docs, embedding_model)
+    vectorstore = FAISS.from_documents(docs, get_embedding_model())  # Use lazy loader
     vectorstore.save_local(store_path)
     return vectorstore
 
 def load_vectorstore(store_path=VECTORSTORE_PATH):
-    return FAISS.load_local(store_path, embedding_model, allow_dangerous_deserialization=True)
+    return FAISS.load_local(store_path, get_embedding_model(), allow_dangerous_deserialization=True)
 
 def ensure_vectorstore_ready():
     if not os.path.exists(VECTORSTORE_PATH):

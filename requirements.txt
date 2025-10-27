@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 openai
+torch==2.0.0+cpu
 langchain
 langchain-community
 langchain-text-splitters
@@ -12,4 +13,4 @@ requests
 jinja2
 starlette
 PyPDF2
-sentence-transformers
+sentence-transformers==2.2.2
