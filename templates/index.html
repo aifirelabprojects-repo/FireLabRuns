@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Business ChatBot</title>
+  <script src="/static/tailwind.js"></script>
+  <style>
+    /* subtle scroll bar */
+    #messages::-webkit-scrollbar { width: 8px; }
+    #messages::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.18); border-radius: 8px; }
+    /* spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { border: 2px solid rgba(100,100,100,0.2); border-top: 2px solid #6b7280; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
+    /* fade-in */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0);} }
+    .fade-up { animation: fadeUp .22s ease-out; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 font-sans text-sm text-slate-700">
+
+  <div class="w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col" style="height: 80vh;">
+    <header class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 bg-white">
+      <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <g id="Product-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+              <g id="ic_fluent_bot_24_regular" fill="#000" fill-rule="nonzero">
+                  <path d="M17.7530511,13.999921 C18.9956918,13.999921 20.0030511,15.0072804 20.0030511,16.249921 L20.0030511,17.1550008 C20.0030511,18.2486786 19.5255957,19.2878579 18.6957793,20.0002733 C17.1303315,21.344244 14.8899962,22.0010712 12,22.0010712 C9.11050247,22.0010712 6.87168436,21.3444691 5.30881727,20.0007885 C4.48019625,19.2883988 4.00354153,18.2500002 4.00354153,17.1572408 L4.00354153,16.249921 C4.00354153,15.0072804 5.01090084,13.999921 6.25354153,13.999921 L17.7530511,13.999921 Z M17.7530511,15.499921 L6.25354153,15.499921 C5.83932796,15.499921 5.50354153,15.8357075 5.50354153,16.249921 L5.50354153,17.1572408 C5.50354153,17.8128951 5.78953221,18.4359296 6.28670709,18.8633654 C7.5447918,19.9450082 9.44080155,20.5010712 12,20.5010712 C14.5599799,20.5010712 16.4578003,19.9446634 17.7186879,18.8621641 C18.2165778,18.4347149 18.5030511,17.8112072 18.5030511,17.1550005 L18.5030511,16.249921 C18.5030511,15.8357075 18.1672647,15.499921 17.7530511,15.499921 Z M11.8985607,2.00734093 L12.0003312,2.00049432 C12.380027,2.00049432 12.6938222,2.2826482 12.7434846,2.64872376 L12.7503312,2.75049432 L12.7495415,3.49949432 L16.25,3.5 C17.4926407,3.5 18.5,4.50735931 18.5,5.75 L18.5,10.254591 C18.5,11.4972317 17.4926407,12.504591 16.25,12.504591 L7.75,12.504591 C6.50735931,12.504591 5.5,11.4972317 5.5,10.254591 L5.5,5.75 C5.5,4.50735931 6.50735931,3.5 7.75,3.5 L11.2495415,3.49949432 L11.2503312,2.75049432 C11.2503312,2.37079855 11.5324851,2.05700336 11.8985607,2.00734093 L12.0003312,2.00049432 L11.8985607,2.00734093 Z M16.25,5 L7.75,5 C7.33578644,5 7,5.33578644 7,5.75 L7,10.254591 C7,10.6688046 7.33578644,11.004591 7.75,11.004591 L16.25,11.004591 C16.6642136,11.004591 17,10.6688046 17,10.254591 L17,5.75 C17,5.33578644 16.6642136,5 16.25,5 Z M9.74928905,6.5 C10.4392523,6.5 10.9985781,7.05932576 10.9985781,7.74928905 C10.9985781,8.43925235 10.4392523,8.99857811 9.74928905,8.99857811 C9.05932576,8.99857811 8.5,8.43925235 8.5,7.74928905 C8.5,7.05932576 9.05932576,6.5 9.74928905,6.5 Z M14.2420255,6.5 C14.9319888,6.5 15.4913145,7.05932576 15.4913145,7.74928905 C15.4913145,8.43925235 14.9319888,8.99857811 14.2420255,8.99857811 C13.5520622,8.99857811 12.9927364,8.43925235 12.9927364,7.74928905 C12.9927364,7.05932576 13.5520622,6.5 14.2420255,6.5 Z" id="🎨-Color">
+      
+      </path>
+              </g>
+          </g>
+      </svg>
+      </div>
+      <div class="flex-1">
+        <div class="text-slate-900 font-medium leading-tight">Business Chatbot</div>
+        <div class="text-xs text-slate-400">Testing </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="newBtn" title="New Chat" class="p-2 rounded-md hover:bg-slate-50">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-slate-500">
+            <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+ 
+    <main id="messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-white">
+
+    </main>
+
+
+    <div class="border-t border-slate-100 bg-white p-3">
+      <form id="composer" class="flex items-center gap-2" onsubmit="return false;">
+
+        <input id="input" type="text" autocomplete="off" placeholder="nthelu choik..." 
+               class="flex-1 bg-slate-50 border border-slate-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-200" />
+
+        <button id="sendBtn" title="Send" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-xs rounded-full px-3 py-2">
+         
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="inline-block">
+            <path d="M22 2L11 13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M22 2l-7 20  -4-9-9-4 20-7z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+          </svg>
+          <span class="hidden sm:inline">Send</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+ 
+    let ws;
+    let sessionId = localStorage.getItem('chatSessionId');
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+    const newBtn = document.getElementById('newBtn');
+
+ 
+    function appendHTML(html) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'fade-up';
+      wrapper.innerHTML = html;
+      messagesEl.appendChild(wrapper);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function formatTime(ts = new Date().toISOString()) {
+      const d = new Date(ts);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function addMessage(role, content, timestamp = new Date().toISOString()) {
+  
+      const safe = String(content).replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\n','<br>');
+      if (role === 'user') {
+        appendHTML(`
+          <div class="flex justify-end">
+            <div class="max-w-[78%] text-slate-50 bg-slate-800 rounded-2xl rounded-br-none px-4 py-2 leading-tight shadow-sm">
+              <div class="text-[13px]">${safe}</div>
+              <div class="text-[11px] text-slate-300 text-right mt-1">${formatTime(timestamp)}</div>
+            </div>
+          </div>`);
+      } else if (role === 'bot') {
+        appendHTML(`
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 flex items-center justify-center rounded-md bg-slate-100">
+           
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-slate-600">
+                <rect x="3" y="7" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.1"></rect>
+                <path d="M8 12h.01M16 12h.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"></path>
+                <path d="M8 4v2M16 4v2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"></path>
+              </svg>
+            </div>
+            <div class="max-w-[85%] bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl rounded-bl-none px-4 py-2 leading-tight shadow-sm">
+              <div class="text-[13px]">${safe}</div>
+              <div class="text-[11px] text-slate-400 mt-1">${formatTime(timestamp)}</div>
+            </div>
+          </div>`);
+      } else if (role === 'admin') {
+        appendHTML(`
+          <div class="flex justify-start">
+            <div class="max-w-[80%] bg-slate-100 text-slate-700 rounded-2xl px-4 py-2 leading-tight border border-slate-100">
+              <div class="text-[13px] font-medium">${safe}</div>
+              <div class="text-[11px] text-slate-400 mt-1">${formatTime(timestamp)}</div>
+            </div>
+          </div>`);
+      } else { 
+        appendHTML(`<div class="flex justify-center"><div class="text-[12px] italic text-slate-400 px-2">${safe}</div></div>`);
+      }
+    }
+
+    function showGenerating() {
+   
+      hideGenerating();
+      
+      const el = document.createElement('div');
+      el.id = 'generating-row';
+      el.className = 'fade-up flex items-start gap-3';
+      el.innerHTML = `
+        <div class="w-8 h-8 flex items-center justify-center rounded-md bg-slate-100">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-slate-600">
+            <rect x="3" y="7" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.1"></rect>
+            <path d="M8 12h.01M16 12h.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"></path>
+            <path d="M8 4v2M16 4v2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="bg-slate-50 border border-slate-100 rounded-2xl px-4 py-2 inline-flex items-center gap-2">
+          <div class="spinner"></div>
+          <span class="text-xs text-slate-500">Typing...</span>
+        </div>`;
+      messagesEl.appendChild(el);
+ 
+      setTimeout(() => {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }, 10);
+    }
+    
+    function hideGenerating() {
+      const el = document.getElementById('generating-row');
+      if (el) el.remove();
+    }
+
+    async function createSessionIfNeeded() {
+      if (sessionId) return;
+      try {
+        const response = await fetch('/api/sessions/', { method: 'POST' });
+        if (!response.ok) throw new Error('Failed to create session');
+        const data = await response.json();
+        sessionId = data.session_id;
+        localStorage.setItem('chatSessionId', sessionId);
+      } catch (error) {
+        console.error('Error creating session:', error);
+        throw error;
+      }
+    }
+
+    function createWebSocket() {
+      const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(`${proto}://${window.location.host}/ws/chat/${sessionId}`);
+
+      ws.addEventListener('open', () => console.log('ws open'));
+      ws.addEventListener('close', () => console.log('ws close'));
+      ws.addEventListener('message', (e) => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'history') {
+          msg.messages.forEach(m => addMessage(m.role, m.content, m.timestamp));
+        } else if (msg.type === 'message') {
+    
+          if (msg.role !== 'user') {
+            hideGenerating();
+            addMessage(msg.role, msg.content, msg.timestamp);
+          }
+        } else if (msg.type === 'status' || msg.type === 'error' || msg.type === 'handover') {
+          hideGenerating();
+          addMessage('system', msg.content || msg.status || msg.error);
+        } else if (msg.type === 'typing') {
+    
+          if (msg.on) showGenerating(); else hideGenerating();
+        }
+      });
+    }
+
+    async function connectWS() {
+      return new Promise((resolve, reject) => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          resolve();
+          return;
+        }
+        createWebSocket();
+        const timeout = setTimeout(() => {
+          reject(new Error('Connection timeout'));
+        }, 5000);
+        const tempOnOpen = ws.onopen;
+        ws.onopen = () => {
+          clearTimeout(timeout);
+          if (tempOnOpen) tempOnOpen();
+          resolve();
+        };
+        const tempOnClose = ws.onclose;
+        ws.onclose = (event) => {
+          clearTimeout(timeout);
+          if (tempOnClose) tempOnClose(event);
+          if (event.code !== 1000) {
+            reject(new Error(`Connection closed with code ${event.code}`));
+          }
+        };
+        const tempOnError = ws.onerror;
+        ws.onerror = (error) => {
+          clearTimeout(timeout);
+          if (tempOnError) tempOnError(error);
+          reject(error);
+        };
+      });
+    }
+
+    async function ensureSessionAndConnect() {
+      await createSessionIfNeeded();
+      await connectWS();
+    }
+
+    async function initChat() {
+      try {
+        if (sessionId) {
+          await ensureSessionAndConnect();
+        }
+      } catch (err) {
+        console.error(err);
+        addMessage('system', 'Unable to load chat history');
+      }
+    }
+
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      try {
+        await ensureSessionAndConnect();
+        if (ws.readyState !== WebSocket.OPEN) {
+          throw new Error('WebSocket not open');
+        }
+
+        addMessage('user', text);
+        inputEl.value = '';
+ 
+        showGenerating();
+        ws.send(JSON.stringify({ type: 'message', content: text }));
+      } catch (err) {
+        console.error(err);
+        hideGenerating();
+        addMessage('system', 'Unable to send message. Please try again.');
+      }
+    }
+
+
+    sendBtn.addEventListener('click', sendMessage);
+    inputEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+    newBtn.addEventListener('click', () => {
+      localStorage.removeItem('chatSessionId');
+      sessionId = null;
+      if (ws) ws.close();
+      messagesEl.innerHTML = '';
+      addMessage('system', 'Started a new conversation.');
+    });
+
+
+    initChat();
+  </script>
+</body>
+</html>

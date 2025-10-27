@@ -1,0 +1,705 @@
+<!-- admin.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel - Sessions</title>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+ 
+  <script src="/static/tailwind.js"></script>
+  <script>
+
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#000' 
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Small professional base font across the app */
+    html, body {
+      height: 100%;
+    }
+    body {
+      background: #ffffff; /* pure white */
+      color: #000000;      /* black */
+      font-size: 13px;     /* smaller text for professional look */
+    }
+
+    /* Slide panel initial transform (Tailwind utilities used - but defined fallback) */
+    .panel-slide {
+      transform: translateX(100%);
+    }
+
+    /* Modal backdrop smoothing */
+    .modal-backdrop {
+      background: rgba(0,0,0,0.45);
+    }
+
+    /* Message animation */
+    .msg-animate {
+      transform: translateY(8px);
+      opacity: 0;
+      transition: transform 220ms ease, opacity 220ms ease;
+    }
+    .msg-animate.in {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Tiny helpers for truncated id text in tables */
+    .truncate-id { max-width: 8rem; display:inline-block; }
+
+    /* Make table row hover subtle */
+    .session-row:hover { background-color: rgba(59,130,246,0.04); }
+
+    .message-bubble {
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .message-bubble:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      }
+      
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 6px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(0,0,0,0.1);
+        cursor: help;
+      }
+      
+      .icon {
+        width: 14px;
+        height: 14px;
+        opacity: 0.7;
+      }
+      
+      .mood-tag {
+        color: #f97316; /* orange tone */
+        background: rgba(251, 146, 60, 0.1);
+        border-color: rgba(251, 146, 60, 0.3);
+      }
+      
+      .interest-tag {
+        color: #3b82f6; /* blue tone */
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.3);
+      }
+      
+  </style>
+</head>
+<body class="antialiased font-sans text-sm">
+
+  <div id="mainContainer" class="min-h-screen flex">
+    <!-- LEFT PANEL -->
+    <aside class="left-panel w-full md:w-1/2 lg:w-[100%] p-6 border-r border-gray-100">
+      <div class="flex items-start justify-between mb-6">
+        <div>
+          <h1 class="text-xl font-semibold tracking-tight">Admin Panel</h1>
+          <p class="text-xs text-gray-600 mt-1">Sessions dashboard</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="toggleBtn" onclick="toggleActive()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded text-xs hover:shadow-sm">
+            <!-- filter icon -->
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L15 13.414V19a1 1 0 01-.553.894l-3 1.5A1 1 0 0110 20.5v-7.086L3.293 6.707A1 1 0 013 6V4z"/></svg>
+            <span>Show Active Only</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- stats -->
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div class="p-3 bg-white border border-gray-100 rounded shadow-sm">
+          <div class="text-xs text-gray-500">Total Sessions</div>
+          <div class="text-lg font-medium" id="statTotal">{{total_sessions}}</div>
+        </div>
+        <div class="p-3 bg-white border border-gray-100 rounded shadow-sm">
+          <div class="text-xs text-gray-500">Highest Message Count</div>
+          <div class="text-lg font-medium" id="statHighest">{{highest_message_count}}</div>
+        </div>
+        <div class="p-3 bg-white border border-gray-100 rounded shadow-sm">
+          <div class="text-xs text-gray-500">Total Messages</div>
+          <div class="text-lg font-medium" id="statTotalMessages">{{total_messages}}</div>
+        </div>
+        <div class="p-3 bg-white border border-gray-100 rounded shadow-sm">
+          <div class="text-xs text-gray-500">Avg / Session</div>
+          <div class="text-lg font-medium" id="statAvg">{{avg_messages_per_session}}</div>
+        </div>
+      </div>
+
+      <div id="sessionsList" class="bg-white border border-gray-100 rounded shadow-sm overflow-hidden">
+        <!-- sessions table injected here -->
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL (sliding) -->
+    <div id="rightPanel" class="right-panel fixed inset-y-0 right-0 w-full md:w-1/2 lg:w-3/5 transform transition-transform duration-300 ease-in-out translate-x-full panel-slide z-40">
+      <div class="h-full flex flex-col bg-white ">
+        <!-- chat header -->
+        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+          <div class="flex items-center gap-3">
+            <button id="closePanelBtn" class="p-2 rounded hover:bg-gray-50" onclick="closeChat()" aria-label="Close">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div>
+              <h2 id="chatTitle" class="text-sm font-semibold">Session Chat</h2>
+              <!-- <div id="statusIndicator" class="text-xs text-gray-500">Status: Active</div> -->
+            </div>
+          </div>
+
+
+        </div>
+
+        <!-- user info -->
+        <div id="user-info" class="px-5 py-4 border-b border-gray-50"></div>
+
+        <!-- messages -->
+        <div id="messagesContainer" class="flex-1 px-5 py-4 overflow-auto space-y-3">
+          <!-- messages will be appended here -->
+        </div>
+
+        <!-- input area (hidden when not in control mode) -->
+        <div id="inputArea" class="px-5 py-4 border-t border-gray-100 hidden">
+          <div class="flex items-center gap-3">
+            <input id="messageInput" type="text" placeholder="Type message as admin..." class="flex-1 px-4 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            <button id="sendBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90">
+              <svg  class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.5003 12H5.41872M5.24634 12.7972L4.24158 15.7986C3.69128 17.4424 3.41613 18.2643 3.61359 18.7704C3.78506 19.21 4.15335 19.5432 4.6078 19.6701C5.13111 19.8161 5.92151 19.4604 7.50231 18.7491L17.6367 14.1886C19.1797 13.4942 19.9512 13.1471 20.1896 12.6648C20.3968 12.2458 20.3968 11.7541 20.1896 11.3351C19.9512 10.8529 19.1797 10.5057 17.6367 9.81135L7.48483 5.24303C5.90879 4.53382 5.12078 4.17921 4.59799 4.32468C4.14397 4.45101 3.77572 4.78336 3.60365 5.22209C3.40551 5.72728 3.67772 6.54741 4.22215 8.18767L5.24829 11.2793C5.34179 11.561 5.38855 11.7019 5.407 11.8459C5.42338 11.9738 5.42321 12.1032 5.40651 12.231C5.38768 12.375 5.34057 12.5157 5.24634 12.7972Z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              Send
+            </button>
+            <button id="handoverBtn" class="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 rounded hover:bg-gray-50" title="Handover to bot">
+              
+              <svg class="w-4 h-4" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <g id="Product-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                    <g id="ic_fluent_bot_24_regular" fill="#000" fill-rule="nonzero">
+                        <path d="M17.7530511,13.999921 C18.9956918,13.999921 20.0030511,15.0072804 20.0030511,16.249921 L20.0030511,17.1550008 C20.0030511,18.2486786 19.5255957,19.2878579 18.6957793,20.0002733 C17.1303315,21.344244 14.8899962,22.0010712 12,22.0010712 C9.11050247,22.0010712 6.87168436,21.3444691 5.30881727,20.0007885 C4.48019625,19.2883988 4.00354153,18.2500002 4.00354153,17.1572408 L4.00354153,16.249921 C4.00354153,15.0072804 5.01090084,13.999921 6.25354153,13.999921 L17.7530511,13.999921 Z M17.7530511,15.499921 L6.25354153,15.499921 C5.83932796,15.499921 5.50354153,15.8357075 5.50354153,16.249921 L5.50354153,17.1572408 C5.50354153,17.8128951 5.78953221,18.4359296 6.28670709,18.8633654 C7.5447918,19.9450082 9.44080155,20.5010712 12,20.5010712 C14.5599799,20.5010712 16.4578003,19.9446634 17.7186879,18.8621641 C18.2165778,18.4347149 18.5030511,17.8112072 18.5030511,17.1550005 L18.5030511,16.249921 C18.5030511,15.8357075 18.1672647,15.499921 17.7530511,15.499921 Z M11.8985607,2.00734093 L12.0003312,2.00049432 C12.380027,2.00049432 12.6938222,2.2826482 12.7434846,2.64872376 L12.7503312,2.75049432 L12.7495415,3.49949432 L16.25,3.5 C17.4926407,3.5 18.5,4.50735931 18.5,5.75 L18.5,10.254591 C18.5,11.4972317 17.4926407,12.504591 16.25,12.504591 L7.75,12.504591 C6.50735931,12.504591 5.5,11.4972317 5.5,10.254591 L5.5,5.75 C5.5,4.50735931 6.50735931,3.5 7.75,3.5 L11.2495415,3.49949432 L11.2503312,2.75049432 C11.2503312,2.37079855 11.5324851,2.05700336 11.8985607,2.00734093 L12.0003312,2.00049432 L11.8985607,2.00734093 Z M16.25,5 L7.75,5 C7.33578644,5 7,5.33578644 7,5.75 L7,10.254591 C7,10.6688046 7.33578644,11.004591 7.75,11.004591 L16.25,11.004591 C16.6642136,11.004591 17,10.6688046 17,10.254591 L17,5.75 C17,5.33578644 16.6642136,5 16.25,5 Z M9.74928905,6.5 C10.4392523,6.5 10.9985781,7.05932576 10.9985781,7.74928905 C10.9985781,8.43925235 10.4392523,8.99857811 9.74928905,8.99857811 C9.05932576,8.99857811 8.5,8.43925235 8.5,7.74928905 C8.5,7.05932576 9.05932576,6.5 9.74928905,6.5 Z M14.2420255,6.5 C14.9319888,6.5 15.4913145,7.05932576 15.4913145,7.74928905 C15.4913145,8.43925235 14.9319888,8.99857811 14.2420255,8.99857811 C13.5520622,8.99857811 12.9927364,8.43925235 12.9927364,7.74928905 C12.9927364,7.05932576 13.5520622,6.5 14.2420255,6.5 Z" id="🎨-Color">
+            
+            </path>
+                    </g>
+                </g>
+            </svg>
+              Handover
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metrics Modal -->
+  <div id="metricsModal" class="fixed inset-0 hidden items-center justify-center z-50">
+    <div class="modal-backdrop absolute inset-0"></div>
+    <div class="relative w-11/12 md:w-3/4 lg:w-2/3 bg-white rounded-lg shadow-lg overflow-hidden z-50">
+      <div class="flex items-center justify-between px-4 py-3 border-b">
+        <h3 id="metricsTitle" class="text-sm font-semibold">Session Metrics</h3>
+        <button class="p-2 rounded hover:bg-gray-50" onclick="closeModal()">✕</button>
+      </div>
+      <div class="p-4">
+        <div id="metricsInfo" class="text-xs text-gray-600 mb-4"></div>
+        <div class="grid grid-cols-1 ">
+          <div class="h-72 bg-white p-2 border rounded">
+            <canvas id="interestChart" style="height:100%;"></canvas>
+          </div>
+          <div class="h-72 bg-white p-2 border rounded" style="display: none;">
+            <canvas id="moodChart" style="height:100%;"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* --- Keep your original logic and IDs - modernized DOM rendering for Tailwind UI --- */
+    let activeOnly = false;
+    let interestChart = null;
+    let moodChart = null;
+    let currentWs = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    let currentSessionId = null;
+    let currentMode = null;
+    let currentWsUrl = null;
+
+
+    const svgIcons = {
+      name: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      email: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      phone: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5.5C3 14.0604 9.93959 21 18.5 21C18.8862 21 19.2691 20.9859 19.6483 20.9581C20.0834 20.9262 20.3009 20.9103 20.499 20.7963C20.663 20.7019 20.8185 20.5345 20.9007 20.364C21 20.1582 21 19.9181 21 19.438V16.6207C21 16.2169 21 16.015 20.9335 15.842C20.8749 15.6891 20.7795 15.553 20.6559 15.4456C20.516 15.324 20.3262 15.255 19.9468 15.117L16.74 13.9509C16.2985 13.7904 16.0777 13.7101 15.8683 13.7237C15.6836 13.7357 15.5059 13.7988 15.3549 13.9058C15.1837 14.0271 15.0629 14.2285 14.8212 14.6314L14 16C11.3501 14.7999 9.2019 12.6489 8 10L9.36863 9.17882C9.77145 8.93713 9.97286 8.81628 10.0942 8.64506C10.2012 8.49408 10.2643 8.31637 10.2763 8.1317C10.2899 7.92227 10.2096 7.70153 10.0491 7.26005L8.88299 4.05321C8.745 3.67376 8.67601 3.48403 8.55442 3.3441C8.44701 3.22049 8.31089 3.12515 8.15802 3.06645C7.98496 3 7.78308 3 7.37932 3H4.56201C4.08188 3 3.84181 3 3.63598 3.09925C3.4655 3.18146 3.29814 3.33701 3.2037 3.50103C3.08968 3.69907 3.07375 3.91662 3.04189 4.35173C3.01413 4.73086 3 5.11378 3 5.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      company: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M4 7H20M4 12H20M4 17H20M6 17V7M18 17V7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      mood: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 10H9.01M15 10H15.01M9 14C9 14 9.75 16 12 16C14.25 16 15 14 15 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      interest: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M12 2L15 8H21L17 12L21 18H15L12 24L9 18H3L7 12L3 8H9L12 2Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    };
+
+    async function loadSessions() {
+      const url = `/api/sessions/?active=${activeOnly}`;
+      try {
+        const response = await fetch(url);
+        const sessions = await response.json();
+        const listDiv = document.getElementById('sessionsList');
+        if (!sessions || sessions.length === 0) {
+          listDiv.innerHTML = '<div class="p-6 text-center text-gray-500">No sessions found.</div>';
+          return;
+        }
+
+        let rows = sessions.map(session => {
+          const moodCell = `<a class="text-primary underline text-xs" onclick="showMetrics('${session.id}')">${session.mood || '—'}</a>`;
+          const idShort = session.id ? session.id.substring(0,8) + '...' : '—';
+          let actions = `<button class="text-xs inline-flex items-center gap-2 px-3 py-1 bg-white border border-gray-200 rounded hover:shadow-sm" onclick="openSession('${session.id}', 'view', '${escapeJs(session.name)}','${escapeJs(session.usr_email)}','${escapeJs(session.usr_phone)}','${escapeJs(session.usr_company)}','${escapeJs(session.mood)}','${escapeJs(session.interest)}')">
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                          View</button>`;
+
+          if (session.status === 'active') {
+            actions += ` <button class="text-xs inline-flex items-center gap-2 px-3 py-1 bg-primary text-white rounded hover:bg-primary/90" onclick="openSession('${session.id}', 'control', '${escapeJs(session.name)}','${escapeJs(session.usr_email)}','${escapeJs(session.usr_phone)}','${escapeJs(session.usr_company)}','${escapeJs(session.mood)}','${escapeJs(session.interest)}')">
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="white"><path d="M9 7v10l7-5-7-5z" stroke="none" /></svg>
+                          Control</button>`;
+          }
+
+          return `
+            <tr class="session-row">
+              <td class="px-4 py-3 text-xs text-gray-700"><span class="truncate-id font-mono">${idShort}</span></td>
+              <td class="px-4 py-3 text-xs text-gray-600">${new Date(session.created_at).toLocaleString()}</td>
+              <td class="px-4 py-3 text-xs"><span class="px-2 py-1 rounded text-xs ${session.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-600'}">${session.status}</span></td>
+              <td class="px-4 py-3 text-xs">${session.interest || '—'}</td>
+              <td class="px-4 py-3 text-xs">${moodCell}</td>
+              <td class="px-4 py-3 text-xs">${session.name || '—'}</td>
+              <td class="px-4 py-3 text-xs">${actions}</td>
+            </tr>
+          `;
+        }).join('');
+
+        const tableHtml = `
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100">
+              <thead class="bg-white">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">ID</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Created At</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Interest</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Mood</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Name</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-100">
+                ${rows}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        listDiv.innerHTML = tableHtml;
+      } catch (err) {
+        console.error('Failed to load sessions', err);
+        document.getElementById('sessionsList').innerHTML = '<div class="p-6 text-red-600">Failed to load sessions</div>';
+      }
+    }
+
+    function toggleActive() {
+      activeOnly = !activeOnly;
+      document.getElementById('toggleBtn').textContent = activeOnly ? 'Show All' : 'Show Active Only';
+      loadSessions();
+    }
+
+    function escapeJs(s) {
+      if (!s) return '';
+      return s.replace(/'/g, "\\'").replace(/"/g,'&quot;').replace(/\n/g,' ');
+    }
+
+    function getMoodEmoji(mood) {
+      const moods = {
+        curious: "🤔 Curious",
+        polite: "😊 Polite",
+        frustrated: "😤 Frustrated",
+        confused: "😕 Confused",
+        excited: "🤩 Excited",
+        inquisitive:"🧐 inquisitive"
+      };
+      return moods[mood?.toLowerCase()] || `<span class="text-gray-500 text-xs">Not detected</span>`;
+    }
+
+    function getInterestDisplay(level) {
+      const interests = {
+        high: `<span class="text-xs px-2 py-0.5 rounded bg-red-50 text-red-700">🔥 High</span>`,
+        medium: `<span class="text-xs px-2 py-0.5 rounded bg-yellow-50 text-yellow-700">⚡ Medium</span>`,
+        low: `<span class="text-xs px-2 py-0.5 rounded bg-gray-50 text-gray-600">💤 Low</span>`
+      };
+      return interests[level?.toLowerCase()] || `<span class="text-xs text-gray-400">Not measured</span>`;
+    }
+
+    function openSession(id, mode, name, email, phone, company, mood, interest) {
+      if (currentWs) {
+        reconnectAttempts = maxReconnectAttempts;
+        currentWs.close();
+      }
+      currentSessionId = id;
+      currentMode = mode;
+      document.getElementById('chatTitle').textContent = `Session: ${id} (Mode: ${mode})`;
+
+      const userInfoHtml = `
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="rounded-full bg-gray-50 border border-gray-100 w-10 h-10 flex items-center justify-center text-sm font-medium text-gray-700">${(name && name[0]) || '?'}</div>
+            <div class="leading-tight">
+              <div class="text-sm font-medium text-gray-800" title="username">${name || '<span class="text-gray-500">Not provided</span>'}</div>
+              <div class="text-xs text-gray-500" title="company name">${company || '—'}</div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-xs text-gray-600" title="email">
+              ${svgIcons.email} <div>${email && email.trim() ? email : '<span class="text-gray-400">Not provided</span>'}</div>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-gray-600" title="phone">
+              ${svgIcons.phone} <div>${phone && phone.trim() ? phone : '<span class="text-gray-400">Not provided</span>'}</div>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-gray-600" title="mood">
+              ${svgIcons.mood} <div>${getMoodEmoji(mood)}</div>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-gray-600" title="interest">
+              ${svgIcons.interest} <div>${getInterestDisplay(interest)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("user-info").innerHTML = userInfoHtml;
+      document.getElementById('inputArea').style.display = mode === 'control' ? 'block' : 'none';
+
+      const rp = document.getElementById('rightPanel');
+      rp.classList.remove('translate-x-full'); 
+      rp.classList.add('translate-x-0');
+
+      document.querySelector('.left-panel').classList.add('md:w-1/2', 'lg:w-2/5');
+
+      currentWsUrl = `/ws/${mode === 'control' ? 'control' : 'view'}/${id}`;
+      document.getElementById('messagesContainer').innerHTML = ''; 
+      connectWebSocket();
+    }
+
+    function closeChat() {
+      reconnectAttempts = maxReconnectAttempts;
+      if (currentWs) {
+        currentWs.close();
+      }
+      currentWs = null;
+      currentWsUrl = null;
+      currentSessionId = null;
+      currentMode = null;
+
+     
+      const rp = document.getElementById('rightPanel');
+      rp.classList.remove('translate-x-0');
+      rp.classList.add('translate-x-full');
+
+      document.querySelector('.left-panel').classList.remove('md:w-1/2', 'lg:w-2/5');
+      document.getElementById('messagesContainer').innerHTML = '';
+      const statusIndicator = document.getElementById('statusIndicator');
+      if (statusIndicator) {
+        statusIndicator.textContent = 'Status: Active';
+        statusIndicator.className = 'text-xs text-gray-500';
+      }
+    }
+
+    function connectWebSocket() {
+      if (!currentWsUrl) return;
+      try {
+    
+        currentWs = new WebSocket(currentWsUrl);
+
+        currentWs.onopen = () => {
+          console.log('Connected to WebSocket');
+          reconnectAttempts = 0;
+        };
+
+        currentWs.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          if (data.type === 'history') {
+            renderMessages(data.messages || []);
+          } else if (data.type === 'message') {
+            addMessage(data);
+          } else if (data.type === 'status') {
+            updateStatus(data.status);
+          } else if (data.type === 'handover') {
+            addMessage({ role: 'system', content: data.content, timestamp: new Date().toISOString() });
+          }
+        };
+
+        currentWs.onclose = () => {
+          console.log('WebSocket closed');
+          currentWs = null;
+          if (reconnectAttempts < maxReconnectAttempts) {
+            setTimeout(() => {
+              reconnectAttempts++;
+              connectWebSocket();
+            }, 1000 * reconnectAttempts);
+          } else {
+            updateStatus('Disconnected');
+          }
+        };
+
+        currentWs.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+      } catch (err) {
+        console.error('Failed to create WebSocket', err);
+      }
+    }
+
+    function renderMessages(messages) {
+      const container = document.getElementById('messagesContainer');
+      container.innerHTML = '';
+      messages.forEach(msg => {
+        container.insertAdjacentHTML('beforeend', renderMessageHtml(msg));
+  
+        const last = container.lastElementChild;
+        requestAnimationFrame(() => last.classList.add('in'));
+      });
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function renderMessageHtml(msg) {
+      const ts = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : new Date().toLocaleString();
+
+      const role = (msg.role || '').toLowerCase();
+      if (role === 'system') {
+        return `<div class="msg-animate in flex justify-center"><div class="text-xs px-3 py-1 bg-gray-50 rounded-md border border-gray-100 text-gray-600">${escapeHtml(msg.content)}</div></div>`;
+      }
+      if (role === 'user') {
+        return `
+          <div class="msg-animate in flex items-start space-x-3">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-700">
+                ${escapeHtml((msg.name && msg.name[0]) || 'U')}
+              </div>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-medium text-gray-700">${escapeHtml(msg.name || 'User')}</div>
+                <div class="text-xs text-gray-400">${ts}</div>
+              </div>
+              <div class="mt-1 p-3 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-800">
+                ${escapeHtml(msg.content)}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+
+      if (role === 'bot') {
+        return `
+          <div class="msg-animate in flex items-start justify-end">
+            <div class="flex-1 max-w-[78%]">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-medium text-gray-700">Bot</div>
+                <div class="text-xs text-gray-400">${ts}</div>
+              </div>
+              <div class="mt-1 p-3 rounded-lg text-sm bg-primary/10 border border-primary/20 text-primary-700 relative message-bubble">
+                ${escapeHtml(msg.content)}
+      
+                <div class="flex flex-wrap gap-2 mt-2 items-center text-xs">
+                  <span class="tag mood-tag" title="${msg.mood ? `Detected mood: ${msg.mood}` : 'No mood detected'}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm-3-7a1 1 0 112 0h2a1 1 0 112 0 4 4 0 01-6 0zM7 8a1 1 0 110-2 1 1 0 010 2zm6 0a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg>
+                    Mood: <span>${msg.mood || 'Not detected'}</span>
+                  </span>
+      
+                  <span class="tag interest-tag" title="${msg.interest ? `Detected interest: ${msg.interest}` : 'No interest detected'}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M2 10a8 8 0 1116 0A8 8 0 012 10zm8 4a4 4 0 100-8 4 4 0 000 8z" />
+                    </svg>
+                    Interest: <span>${msg.interest || 'Not detected'}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    
+      if (role === 'admin') {
+        return `
+          <div class="msg-animate in flex items-start justify-end">
+            <div class="flex-1 max-w-[78%]">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-medium text-gray-700">Admin</div>
+                <div class="text-xs text-gray-400">${ts}</div>
+              </div>
+              <div class="mt-1 p-3 rounded-lg text-sm bg-blue-50 border border-blue-100 text-blue-800 relative message-bubble">
+                ${escapeHtml(msg.content)}
+              </div>
+            </div>
+          </div>
+        `;
+      }      
+    }
+
+    function addMessage(msg) {
+      const container = document.getElementById('messagesContainer');
+
+      const normalized = {
+        role: msg.role || msg.from || 'assistant',
+        content: msg.content || msg.message || '',
+        timestamp: msg.timestamp || new Date().toISOString(),
+        name: msg.name || msg.sender_name || ''
+      };
+      container.insertAdjacentHTML('beforeend', renderMessageHtml(normalized));
+      const last = container.lastElementChild;
+      requestAnimationFrame(() => last.classList.add('in'));
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function updateStatus(status) {
+      const statusEl = document.getElementById('statusIndicator');
+      statusEl.textContent = `Status: ${status}`;
+      statusEl.className = 'text-xs text-gray-600';
+    }
+
+    function sendMessage() {
+      if (currentMode !== 'control') return;
+      const input = document.getElementById('messageInput');
+      const content = input.value.trim();
+      if (content && currentWs) {
+        currentWs.send(JSON.stringify({ type: 'message', content }));
+        input.value = '';
+      
+        addMessage({ role: 'assistant', content: content, timestamp: new Date().toISOString(), name: 'Admin' });
+      }
+    }
+
+    function handover() {
+      if (currentMode !== 'control' || !currentWs) return;
+      currentWs.send(JSON.stringify({ type: 'handover' }));
+    }
+
+    function destroyCharts() {
+      if (interestChart) { interestChart.destroy(); interestChart = null; }
+      if (moodChart) { moodChart.destroy(); moodChart = null; }
+    }
+
+    function closeModal() {
+      document.getElementById('metricsModal').style.display = 'none';
+      destroyCharts();
+    }
+
+    async function showMetrics(sessionId) {
+      destroyCharts();
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}/metrics`);
+        const data = await res.json();
+        document.getElementById('metricsTitle').textContent = `Session Metrics — ${sessionId.substring(0,8)}...`;
+        document.getElementById('metricsInfo').innerHTML = `<p class="text-xs text-gray-600">Messages: ${data.timeline.length} &nbsp; | &nbsp; Days: ${data.daily.length}</p>`;
+
+        const timestamps = data.timeline.map(t => t.timestamp);
+        const interest_scores = data.timeline.map(t => t.interest_score !== null ? t.interest_score : null);
+        const ctx1 = document.getElementById('interestChart').getContext('2d');
+        interestChart = new Chart(ctx1, {
+          type: 'line',
+          data: {
+            labels: timestamps,
+            datasets: [{
+              label: 'Interest score (0=low,1=medium,2=high)',
+              data: interest_scores,
+              spanGaps: true,
+              tension: 0.2,
+              fill: false,
+            }]
+          },
+          options: {
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+              y: { min: 0, max: 2, ticks: { stepSize: 1 } },
+              x: { type: 'time', time: { tooltipFormat: 'yyyy-MM-dd HH:mm' } }
+            }
+          }
+        });
+
+        const daily = data.daily;
+        const dates = daily.map(d => d.date);
+        const moodSet = new Set();
+        daily.forEach(d => {
+          const mc = d.mood_counts || {};
+          Object.keys(mc).forEach(m => moodSet.add(m));
+        });
+        const moods = Array.from(moodSet);
+        const datasets = moods.map(mood => ({
+          label: mood,
+          data: daily.map(d => (d.mood_counts && d.mood_counts[mood]) ? d.mood_counts[mood] : 0),
+          stack: 'moods'
+        }));
+
+        const ctx2 = document.getElementById('moodChart').getContext('2d');
+        moodChart = new Chart(ctx2, {
+          type: 'bar',
+          data: { labels: dates, datasets: datasets },
+          options: {
+            maintainAspectRatio: false,
+            plugins: { title: { display: true, text: 'Mood counts per day (user messages only)' } },
+            responsive: true,
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+          }
+        });
+
+        document.getElementById('metricsModal').style.display = 'flex';
+      } catch (err) {
+        console.error('Failed to load metrics', err);
+        document.getElementById('metricsInfo').innerHTML = '<div class="text-xs text-red-600">Failed to load metrics</div>';
+      }
+    }
+
+   
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str).replace(/[&<>"'`]/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;', '`':'&#96;'}[m]));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') sendMessage();
+        });
+        document.getElementById('handoverBtn').addEventListener('click', handover);
+        document.getElementById('closePanelBtn').addEventListener('click', closeChat);
+      
+        loadSessions(); 
+        startSessionAutoRefresh(5000);
+      });
+
+      let sessionRefreshInterval;
+      
+      function startSessionAutoRefresh(intervalMs = 10000) {
+        if (sessionRefreshInterval) clearInterval(sessionRefreshInterval);
+      
+
+        sessionRefreshInterval = setInterval(() => {
+          loadSessions();
+        }, intervalMs);
+      }
+      
+  </script>
+</body>
+</html>
