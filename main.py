@@ -16,11 +16,11 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_community.docstore.document import Document
-from openai import OpenAI
+from openai import OpenAI, APIError, AuthenticationError, RateLimitError
 from PyPDF2 import PdfReader
 from starlette.concurrency import run_in_threadpool
 
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "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"
 SITE_NAME = "Business Chatbot"
 
 DEFAULT_PDF = "data/tester.pdf"
@@ -180,73 +180,103 @@ def query_vectorstore(question, k=3):
     docs = vectorstore.similarity_search(question, k=k)
     return "\n".join([d.page_content for d in docs])
 
-def get_bot_response(question: str, current_details: Dict = None):
+def get_bot_response(question: str, current_details: dict = None):
     if current_details is None:
         current_details = {}
+
     context = query_vectorstore(question)
     prompt = f"""
-                You are a professional business chatbot for {SITE_NAME}.
+        You are a professional business chatbot for {SITE_NAME}.
 
-                You must:
-                1. Answer the user's question clearly using the given context.
-                2. Extract any **new** personal details (name, email, phone, company, etc.) mentioned by the user.
-                3. Merge the new details with the current known details below. Do not overwrite known values unless explicitly contradicted by new information. If no new details for a field, keep the existing value.
-                4. Assess their **interest level** (high / medium / low) and **mood** (e.g., curious, polite, frustrated, confused, excited).
-                5. Return everything strictly as a JSON object, nothing else.
+        You must:
+        1. Answer the user's question clearly using the given context.
+        2. Extract any **new** personal details (name, email, phone, company, etc.) mentioned by the user.
+        3. Merge the new details with the current known details below. Do not overwrite known values unless explicitly contradicted by new information. If no new details for a field, keep the existing value.
+        4. Assess their **interest level** (high / medium / low) and **mood** (e.g., curious, polite, frustrated, confused, excited).
+        5. Return everything strictly as a JSON object, nothing else.
 
-                Current known details: {json.dumps(current_details)}
+        Current known details: {json.dumps(current_details)}
 
-                Format:
-                {{
-                "answer": "<your message to the user>",
-                "analysis": {{
-                    "interest": "<high|medium|low>",
-                    "mood": "<mood>",
-                    "details": {{
-                    "name": "<name or unknown>",
-                    "email": "<email or unknown>",
-                    "phone": "<phone or unknown>",
-                    "company": "<company or unknown>"
-                    }}
-                }}
-                }}
+        Format:
+        {{
+        "answer": "<your message to the user>",
+        "analysis": {{
+            "interest": "<high|medium|low>",
+            "mood": "<mood>",
+            "details": {{
+                "name": "<name or unknown>",
+                "email": "<email or unknown>",
+                "phone": "<phone or unknown>",
+                "company": "<company or unknown>"
+            }}
+        }}
+        }}
 
-                Context:
-                {context}
+        Context:
+        {context}
 
-                User Question:
-                {question}
-                """
-                
-    completion = client.chat.completions.create(
-        model="qwen/qwen-2.5-coder-32b-instruct:free",
-        messages=[
-            {"role": "system", "content": "You are a JSON-only business assistant. Always respond in valid JSON format."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    raw_output = completion.choices[0].message.content
+        User Question:
+        {question}
+    """
+
     try:
-        response_data = json.loads(raw_output)
-    except json.JSONDecodeError:
-        json_part = re.search(r'\{.*\}', raw_output, re.DOTALL)
-        if json_part:
-            response_data = json.loads(json_part.group(0))
-        else:
-            response_data = {
-                "answer": raw_output,
-                "analysis": {
-                    "interest": "unknown",
-                    "mood": "unknown",
-                    "details": {
-                        "name": "unknown",
-                        "email": "unknown",
-                        "phone": "unknown",
-                        "company": "unknown"
+        completion = client.chat.completions.create(
+            model="qwen/qwen-2.5-coder-32b-instruct:free",
+            messages=[
+                {"role": "system", "content": "You are a JSON-only business assistant. Always respond in valid JSON format."},
+                {"role": "user", "content": prompt}
+            ],
+        )
+        raw_output = completion.choices[0].message.content
+        try:
+            response_data = json.loads(raw_output)
+        except json.JSONDecodeError:
+            json_part = re.search(r'\{.*\}', raw_output, re.DOTALL)
+            if json_part:
+                response_data = json.loads(json_part.group(0))
+            else:
+                response_data = {
+                    "answer": raw_output,
+                    "analysis": {
+                        "interest": "unknown",
+                        "mood": "unknown",
+                        "details": {
+                            "name": "unknown",
+                            "email": "unknown",
+                            "phone": "unknown",
+                            "company": "unknown"
+                        }
                     }
                 }
-            }
-    return response_data
+        return response_data
+
+    except AuthenticationError as e:
+        print(f"Authentication Error: {e}")
+        return {
+            "answer": "Authentication failed — check your API key or account permissions.",
+            "analysis": {"interest": "unknown", "mood": "frustrated", "details": {}}
+        }
+
+    except RateLimitError as e:
+        print(f"Rate Limit Error: {e}")
+        return {
+            "answer": "The system is receiving too many requests. Please try again later.",
+            "analysis": {"interest": "high", "mood": "impatient", "details": {}}
+        }
+
+    except APIError as e:
+        print(f"API Error: {e}")
+        return {
+            "answer": f"API Error: {str(e)}",
+            "analysis": {"interest": "medium", "mood": "confused", "details": {}}
+        }
+
+    except Exception as e:
+        print(f"Unexpected Error: {e}")
+        return {
+            "answer": "An unexpected error occurred while fetching the bot response.",
+            "analysis": {"interest": "unknown", "mood": "confused", "details": {}}
+        }
 
 def insert_user_message(session_id: str, content: str):
     try:
@@ -641,7 +671,8 @@ async def websocket_chat(websocket: WebSocket, session_id: str):
                             "mood": analysis["mood"]
                         }
                         await manager.broadcast(json.dumps(bot_msg), session_id)
-                    except Exception:
+                    except Exception as e:
+                        print(e)
                         bot_error = {"type": "message","role": "error", "content": "Bot is temporarily unavailable. Please try again."}
                         await manager.broadcast(json.dumps(bot_error), session_id)
     except WebSocketDisconnect:
