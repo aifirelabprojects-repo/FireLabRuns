@@ -88,6 +88,7 @@
       wrapper.innerHTML = html;
       messagesEl.appendChild(wrapper);
       messagesEl.scrollTop = messagesEl.scrollHeight;
+      return wrapper; // Return wrapper for attaching listeners
     }
 
     function formatTime(ts = new Date().toISOString()) {
@@ -95,19 +96,31 @@
       return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    function addMessage(role, content, timestamp = new Date().toISOString()) {
+    function addMessage(role, content, timestamp = new Date().toISOString(), options = null) {
   
       const safe = String(content).replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\n','<br>');
+      let html = '';
       if (role === 'user') {
-        appendHTML(`
+        html = `
           <div class="flex justify-end">
             <div class="max-w-[78%] text-slate-50 bg-slate-800 rounded-2xl rounded-br-none px-4 py-2 leading-tight shadow-sm">
               <div class="text-[13px]">${safe}</div>
               <div class="text-[11px] text-slate-300 text-right mt-1">${formatTime(timestamp)}</div>
             </div>
-          </div>`);
+          </div>`;
       } else if (role === 'bot') {
-        appendHTML(`
+        const optionsHtml = (options && options.length > 0) ? `
+          <div class="mt-2 flex flex-wrap gap-2">
+            ${options.map(o => `
+              <button class="option-btn px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs border border-slate-200 transition-colors" 
+                      data-value="${o.value.replace(/"/g, '&quot;')}" 
+                      data-text="${o.text.replace(/"/g, '&quot;')}">
+                ${o.text}
+              </button>
+            `).join('')}
+          </div>
+        ` : '';
+        html = `
           <div class="flex items-start gap-3">
             <div class="w-8 h-8 flex items-center justify-center rounded-md bg-slate-100">
            
@@ -119,19 +132,32 @@
             </div>
             <div class="max-w-[85%] bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl rounded-bl-none px-4 py-2 leading-tight shadow-sm">
               <div class="text-[13px]">${safe}</div>
+              ${optionsHtml}
               <div class="text-[11px] text-slate-400 mt-1">${formatTime(timestamp)}</div>
             </div>
-          </div>`);
+          </div>`;
       } else if (role === 'admin') {
-        appendHTML(`
+        html = `
           <div class="flex justify-start">
             <div class="max-w-[80%] bg-slate-100 text-slate-700 rounded-2xl px-4 py-2 leading-tight border border-slate-100">
               <div class="text-[13px] font-medium">${safe}</div>
               <div class="text-[11px] text-slate-400 mt-1">${formatTime(timestamp)}</div>
             </div>
-          </div>`);
+          </div>`;
       } else { 
-        appendHTML(`<div class="flex justify-center"><div class="text-[12px] italic text-slate-400 px-2">${safe}</div></div>`);
+        html = `<div class="flex justify-center"><div class="text-[12px] italic text-slate-400 px-2">${safe}</div></div>`;
+      }
+      const wrapper = appendHTML(html);
+      // Attach event listeners to option buttons if present
+      if (options && options.length > 0 && role === 'bot') {
+        const btns = wrapper.querySelectorAll('.option-btn');
+        btns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const value = btn.dataset.value;
+            const text = btn.dataset.text;
+            sendOption(value, text);
+          });
+        });
       }
     }
 
@@ -191,10 +217,9 @@
         if (msg.type === 'history') {
           msg.messages.forEach(m => addMessage(m.role, m.content, m.timestamp));
         } else if (msg.type === 'message') {
-    
           if (msg.role !== 'user') {
             hideGenerating();
-            addMessage(msg.role, msg.content, msg.timestamp);
+            addMessage(msg.role, msg.content, msg.timestamp, msg.options);
           }
         } else if (msg.type === 'status' || msg.type === 'error' || msg.type === 'handover') {
           hideGenerating();
@@ -273,6 +298,24 @@
         console.error(err);
         hideGenerating();
         addMessage('system', 'Unable to send message. Please try again.');
+      }
+    }
+
+    async function sendOption(value, text) {
+      try {
+        await ensureSessionAndConnect();
+        if (ws.readyState !== WebSocket.OPEN) {
+          throw new Error('WebSocket not open');
+        }
+
+        addMessage('user', text);
+ 
+        showGenerating();
+        ws.send(JSON.stringify({ type: 'message', content: value }));
+      } catch (err) {
+        console.error(err);
+        hideGenerating();
+        addMessage('system', 'Unable to send option. Please try again.');
       }
     }
 

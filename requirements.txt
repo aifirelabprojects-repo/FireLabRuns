@@ -18,3 +18,4 @@ PyPDF2
 uvicorn[standard]
 websockets
 wsproto
+langchain-openai

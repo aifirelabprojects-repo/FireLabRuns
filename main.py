@@ -7,8 +7,8 @@ import sqlite3
 import asyncio
 import re
 from datetime import datetime, timedelta
-from typing import Dict, Set, Optional
-from fastapi import FastAPI, File, Request, UploadFile, Form, WebSocket, WebSocketDisconnect, Query, HTTPException
+from typing import Any, Dict, List, Set, Optional
+from fastapi import Depends, FastAPI, File, Request, UploadFile, Form, WebSocket, WebSocketDisconnect, Query, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -20,9 +20,20 @@ from openai import OpenAI, APIError, AuthenticationError, RateLimitError
 from PyPDF2 import PdfReader
 from starlette.concurrency import run_in_threadpool
 from dotenv import load_dotenv
+#langchain imports
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_community.chat_message_histories import SQLChatMessageHistory
+from sqlalchemy import create_engine,func
+from sqlalchemy.orm import Session as DBSession
+from database import SessionLocal, Session as SessionModel, Message as MessageModel, get_db, init_db
+from prompt import AnalytxPromptTemp
+from collections import defaultdict
+
 load_dotenv()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 SITE_NAME = "Business Chatbot"
 
@@ -43,46 +54,12 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
-conn = sqlite3.connect("chatbot.db", check_same_thread=False)
-cur = conn.cursor()
-
-def init_db():
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS sessions (
-            id TEXT PRIMARY KEY,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            status TEXT DEFAULT 'active',
-            interest TEXT DEFAULT 'low',
-            mood TEXT DEFAULT 'neutral',
-            details TEXT DEFAULT '{}'
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT NOT NULL,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            interest TEXT,
-            mood TEXT,
-            FOREIGN KEY (session_id) REFERENCES sessions (id)
-        )
-    """)
-    cur.execute("PRAGMA journal_mode = WAL;")
-    cur.execute("PRAGMA synchronous = NORMAL;")
-    conn.commit()
-
 @app.on_event("startup")
 def startup_event():
     init_db()
 
 
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY
-)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 _embedding_model = None
 
@@ -139,37 +116,61 @@ class ConnectionManager:
     async def send_history(self, session_id: str, websocket: WebSocket):
         def fetch_history():
             try:
-                cur.execute("""
-                    SELECT role, content, strftime('%Y-%m-%dT%H:%M:%SZ', timestamp) as ts, interest, mood
-                    FROM messages WHERE session_id = ? ORDER BY timestamp ASC
-                """, (session_id,))
-                rows = cur.fetchall()
-                messages = [{"role": row[0], "content": row[1], "timestamp": row[2], "interest": row[3], "mood": row[4]} for row in rows]
-                return json.dumps({"type": "history", "messages": messages})
-            except Exception:
+                db: DBSession = SessionLocal()
+
+                # ORM query to fetch messages for the session
+                messages = (
+                    db.query(MessageModel)
+                    .filter(MessageModel.session_id == session_id)
+                    .order_by(MessageModel.timestamp.asc())
+                    .all()
+                )
+
+                # Convert ORM objects to JSON-serializable dicts
+                message_list = [
+                    {
+                        "role": msg.role,
+                        "content": msg.content,
+                        "timestamp": msg.timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "interest": msg.interest,
+                        "mood": msg.mood,
+                    }
+                    for msg in messages
+                ]
+
+                return json.dumps({"type": "history", "messages": message_list})
+
+            except Exception as e:
+                print(f"[DB ERROR] {e}")
                 return json.dumps({"type": "history", "messages": []})
 
+            finally:
+                db.close()
+
+        # Run the blocking DB call in a threadpool (important for async)
         history_json = await run_in_threadpool(fetch_history)
+
+        # Send over WebSocket
         await websocket.send_text(history_json)
 
 manager = ConnectionManager()
 
 
-def extract_text_from_pdf(pdf_path):
+def extract_text_from_pdf(pdf_path: str) -> str:
     pdf = PdfReader(pdf_path)
     text = ""
     for page in pdf.pages:
         text += page.extract_text() or ""
     return text
 
-def create_vectorstore(text, store_path=VECTORSTORE_PATH):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)  # Reduced from 800/100
+def create_vectorstore(text: str, store_path: str = VECTORSTORE_PATH):
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     docs = [Document(page_content=chunk) for chunk in splitter.split_text(text)]
-    vectorstore = FAISS.from_documents(docs, get_embedding_model())  # Use lazy loader
+    vectorstore = FAISS.from_documents(docs, get_embedding_model())
     vectorstore.save_local(store_path)
     return vectorstore
 
-def load_vectorstore(store_path=VECTORSTORE_PATH):
+def load_vectorstore(store_path: str = VECTORSTORE_PATH):
     return FAISS.load_local(store_path, get_embedding_model(), allow_dangerous_deserialization=True)
 
 def ensure_vectorstore_ready():
@@ -177,181 +178,573 @@ def ensure_vectorstore_ready():
         if os.path.exists(DEFAULT_PDF):
             text = extract_text_from_pdf(DEFAULT_PDF)
             create_vectorstore(text)
+        else:
+            # Fallback: Create a basic vectorstore with hardcoded data if PDF missing
+            hardcoded_text = """MAIN_CATEGORIES = [
+            "Market Entry & Business Setup",
+            "Strategic Growth & Management",
+            "Financial Services & Compliance",
+            "Industrial & Specialized Operations",
+            "Legal & Business Protection"
+            ]
 
-def query_vectorstore(question, k=3):
+            SUB_SERVICES = {
+            "Market Entry & Business Setup": [
+            {"text": "Business Setup Saudi Arabia", "value": "setup_sa"},
+            {"text": "Business Setup in other GCC (UAE, Qatar, etc.)", "value": "setup_gcc"},
+            {"text": "Premium Residency & Investor Visas", "value": "visas"},
+            {"text": "Entrepreneur License (IT & Tech Services)", "value": "entrepreneur_license"},
+            {"text": "Virtual Office & Business Center", "value": "virtual_office"}
+            ],
+            "Strategic Growth & Management": [
+            {"text": "Management Consultancy (Business Restructuring, Market Strategy, M&A)", "value": "consultancy"},
+            {"text": "Vendor Registration & Certification (for NEOM, Aramco, etc.)", "value": "vendor_reg"},
+            {"text": "HR & Talent Solutions (Recruitment, EOR, Training)", "value": "hr_solutions"}
+            ],
+            "Financial Services & Compliance": [
+            {"text": "Accounting & Bookkeeping", "value": "accounting"},
+            {"text": "Tax Consulting & Audit", "value": "tax_audit"},
+            {"text": "Bank Account & Finance Assistance", "value": "finance_assist"}
+            ],
+            "Industrial & Specialized Operations": [
+            {"text": "Industrial License & Factory Setup", "value": "industrial_license"},
+            {"text": "ISO & Local Content Certification", "value": "iso_cert"},
+            {"text": "Technology & Process Automation", "value": "automation"}
+            ],
+            "Legal & Business Protection": [
+            {"text": "Legal Advisory & Contract Drafting", "value": "legal_advisory"},
+            {"text": "Debt Recovery & Dispute Resolution", "value": "debt_recovery"},
+            {"text": "Trademark Registration", "value": "trademark"}
+            ]
+            }
+
+            TIMELINE_OPTIONS = [
+            {"text": "Within 1 month", "value": "1_month"},
+            {"text": "1-3 months", "value": "1_3_months"},
+            {"text": "3-6 months", "value": "3_6_months"},
+            {"text": "Just researching", "value": "researching"}
+            ]
+
+            BUDGET_RANGES = "Our packages typically range from 35,000 to 150,000 SAR."""
+            create_vectorstore(hardcoded_text)
+
+_MAIN_CATEGORIES="""MAIN_CATEGORIES = [
+            "Market Entry & Business Setup",
+            "Strategic Growth & Management",
+            "Financial Services & Compliance",
+            "Industrial & Specialized Operations",
+            "Legal & Business Protection"
+            ]"""
+
+_SUB_SERVICES = """SUB_SERVICES = {
+            "Market Entry & Business Setup": [
+            {"text": "Business Setup Saudi Arabia", "value": "setup_sa"},
+            {"text": "Business Setup in other GCC (UAE, Qatar, etc.)", "value": "setup_gcc"},
+            {"text": "Premium Residency & Investor Visas", "value": "visas"},
+            {"text": "Entrepreneur License (IT & Tech Services)", "value": "entrepreneur_license"},
+            {"text": "Virtual Office & Business Center", "value": "virtual_office"}
+            ],
+            "Strategic Growth & Management": [
+            {"text": "Management Consultancy (Business Restructuring, Market Strategy, M&A)", "value": "consultancy"},
+            {"text": "Vendor Registration & Certification (for NEOM, Aramco, etc.)", "value": "vendor_reg"},
+            {"text": "HR & Talent Solutions (Recruitment, EOR, Training)", "value": "hr_solutions"}
+            ],
+            "Financial Services & Compliance": [
+            {"text": "Accounting & Bookkeeping", "value": "accounting"},
+            {"text": "Tax Consulting & Audit", "value": "tax_audit"},
+            {"text": "Bank Account & Finance Assistance", "value": "finance_assist"}
+            ],
+            "Industrial & Specialized Operations": [
+            {"text": "Industrial License & Factory Setup", "value": "industrial_license"},
+            {"text": "ISO & Local Content Certification", "value": "iso_cert"},
+            {"text": "Technology & Process Automation", "value": "automation"}
+            ],
+            "Legal & Business Protection": [
+            {"text": "Legal Advisory & Contract Drafting", "value": "legal_advisory"},
+            {"text": "Debt Recovery & Dispute Resolution", "value": "debt_recovery"},
+            {"text": "Trademark Registration", "value": "trademark"}
+            ]
+            }"""
+
+_TIMELINE_OPTIONS =""" TIMELINE_OPTIONS = [
+            {"text": "Within 1 month", "value": "1_month"},
+            {"text": "1-3 months", "value": "1_3_months"},
+            {"text": "3-6 months", "value": "3_6_months"},
+            {"text": "Just researching", "value": "researching"}
+            ] """           
+
+_BUDGET_OPTIONS = [
+    {"text": "Under 50,000 SAR", "value": "under_50k"},
+    {"text": "50,000 - 75,000 SAR", "value": "50_75k"},
+    {"text": "75,000 - 100,000 SAR", "value": "75_100k"},
+    {"text": "100,000 - 125,000 SAR", "value": "100_125k"},
+    {"text": "125,000 - 150,000 SAR", "value": "125_150k"},
+    {"text": "Over 150,000 SAR", "value": "over_150k"}
+]
+           
+def get_vectorstore():
+    ensure_vectorstore_ready()
+    return load_vectorstore()
+
+def query_vectorstore(question: str, k: int = 3) -> str:
     vectorstore = get_vectorstore()
     docs = vectorstore.similarity_search(question, k=k)
     return "\n".join([d.page_content for d in docs])
 
-def get_bot_response(question: str, current_details: dict = None):
+memory_engine = create_engine("sqlite:///chat_memory.db", connect_args={"check_same_thread": False})
+
+# LLM wrapper (reuse your Qwen config)
+llm = ChatOpenAI(
+    model="gpt-4o-mini",
+    api_key=OPENAI_API_KEY,
+    temperature=0.2,
+    max_tokens=800
+)
+
+def _get_memory(session_id: str):
+    return SQLChatMessageHistory(session_id=session_id, connection=memory_engine)
+
+# Enhanced prompt template to include SNIP flow guidance (made more robust: added explicit JSON enforcement, fallback handling, and clearer phase instructions)
+prompt = ChatPromptTemplate.from_messages([
+    ("system", AnalytxPromptTemp),
+    MessagesPlaceholder(variable_name="history"),("human", "{input}"),
+])
+
+chain = prompt | llm
+chat_chain = RunnableWithMessageHistory(
+    chain,
+    _get_memory,
+    input_messages_key="input",
+    history_messages_key="history",
+)
+
+
+MAIN_CATEGORIES = []  
+SUB_SERVICES = {}  
+TIMELINE_OPTIONS = []  
+BUDGET_RANGES = ""  
+SERVICE_BENEFITS = {
+    "setup_sa": "complete full business setup in under 30 days",
+    "setup_gcc": "expand seamlessly across GCC with unified compliance",
+    "trademark": "protect their brand and avoid costly legal disputes",
+    "pro_services": "save 40+ hours/month on government paperwork",
+    "visa_relocation": "relocate key talent in 2 weeks with zero delays",
+    "virtual_office": "establish a Saudi address instantly at 1/10th the cost",
+    "consulting_strategy": "increase revenue by 25% in the first year",
+    "marketing_digital": "secure government tenders through targeted campaigns",
+    "hr_talent": "meet Saudization goals without compromising quality",
+    "tech_implementation": "deploy ERP systems with 99% uptime",
+    "factory_setup": "launch industrial operations within 90 days",
+    "vendor_reg": "get approved on major vendor lists in 2 weeks",
+    "legal_advisory": "avoid fines up to SAR 100k with full compliance",
+    "financial_audit": "pass ZATCA audits on first attempt",
+    "tax_compliance": "reduce tax liability by 15-20% legally",
+    "accelerator": "raise funding 3x faster through Vision 2030 programs",
+    "feasibility": "validate market entry with 95% accuracy",
+    "funding_assist": "secure up to SAR 5M in non-dilutive grants"
+}
+
+
+def simulate_company_enrichment(company_name: str, question: str) -> str:
+    """Simulate data enrichment via vectorstore or placeholder. Enhance with real lookup if available."""
+    # Use vectorstore for company-specific data
+    context = query_vectorstore(f"Company info for {company_name}: industry, size, location")
+    if "industry" in context.lower() or "size" in context.lower():
+        # Placeholder parsing (enhance as needed)
+        enrichment = f"{context}"  # Use full relevant context
+    else:
+        enrichment = "No prior data found—exciting new venture!"
+    return enrichment
+
+def get_bot_response(question: str, current_details: Dict[str, Any], session_id: str = "transient") -> Dict[str, Any]:
     if current_details is None:
         current_details = {}
 
-    context = query_vectorstore(question)
-    prompt = f"""
-        You are a professional business chatbot for {SITE_NAME}.
+    # Extract state from current_details
+    phase = current_details.get("phase", "initial")
+    lead_data = current_details.get("lead_data", {})
+    details = current_details.get("details", {})
+    
 
-        You must:
-        1. Answer the user's question clearly using the given context.
-        2. Extract any **new** personal details (name, email, phone, company, etc.) mentioned by the user.
-        3. Merge the new details with the current known details below. Do not overwrite known values unless explicitly contradicted by new information. If no new details for a field, keep the existing value.
-        4. Assess their **interest level** (high / medium / low) and **mood** (e.g., curious, polite, frustrated, confused, excited).
-        5. Return everything strictly as a JSON object, nothing else.
+    # Simulate enrichment if company mentioned
+    company = lead_data.get("q1_company", details.get("company", "unknown"))
+    if company != "unknown" and "company" in question.lower():
+        enrichment = simulate_company_enrichment(company, question)
+    else:
+        enrichment = ""
 
-        Current known details: {json.dumps(current_details)}
+    # Dynamic options: Now primarily from vectorstore for modularity; fallback to hardcoded if query fails
+    options = []
+    try:
+        if phase == "snip_q2": # for next snipq3
+            cat_context = query_vectorstore("MAIN_CATEGORIES for services")
+            cats = [
+                line.strip().strip('"')
+                for line in cat_context.split("\n")
+                if line.strip().startswith('"') and line.strip().endswith('"')
+            ] or MAIN_CATEGORIES
 
-        Format:
-        {{
-        "answer": "<your message to the user>",
-        "analysis": {{
-            "interest": "<high|medium|low>",
-            "mood": "<mood>",
-            "details": {{
-                "name": "<name or unknown>",
-                "email": "<email or unknown>",
-                "phone": "<phone or unknown>",
-                "company": "<company or unknown>"
-            }}
-        }}
-        }}
+            options = [
+                        {
+                            "text": cat,
+                            "value": cat.lower()
+                                    .replace(" & ", "_")
+                                    .replace(" ", "_"),
+                            "type": "multi_select"
+                        }
+                        for cat in cats
+                    ]
+                
+        elif phase == "snip_q3": # for next snip q4
+            selected_cats = lead_data.get("q3_categories", [])
+            options = []
+            for cat in selected_cats:
+                sub_context = query_vectorstore(f"SUB_SERVICES for {cat}")
+                subs = re.findall(
+                    r'{"text":\s*"([^"]+)",\s*"value":\s*"([^"]+)"}',
+                    sub_context
+                )
+                if subs:
+                    options.extend(
+                        {"text": t, "value": v, "type": "multi_select"} for t, v in subs
+                    )
+                else:
+                    options.extend(SUB_SERVICES.get(cat, []))
 
-        Context:
-        {context}
+            # NEW: Generate benefit line AFTER user selects (i.e., in next turn when phase advances)
+            # But we prepare it here in context so LLM can use it
+            
+                
+        elif phase == "snip_q4": # for next snip q5
+            options = []
+        elif phase == "snip_q5": # for next snip q6
+            # timeline_context = query_vectorstore("TIMELINE_OPTIONS")
+            timeline_context = _TIMELINE_OPTIONS
+            timelines = re.findall(
+                r'{"text":\s*"([^"]+)",\s*"value":\s*"([^"]+)"}',
+                timeline_context
+            ) or TIMELINE_OPTIONS
 
-        User Question:
-        {question}
-    """
+            options = [
+                {"text": t, "value": v, "type": "select"} for t, v in timelines
+            ]
+    except Exception:
+        # Fallback to hardcoded
+        if phase == "snip_q2":
+            options = [{"text": cat, "value": cat.lower().replace(" & ", "_").replace(" ", "_"), "type": "multi_select"} for cat in MAIN_CATEGORIES]
+        elif phase == "snip_q3":
+            selected_cats = lead_data.get("q3_categories", [])
+            for cat in selected_cats:
+                options.extend(SUB_SERVICES.get(cat, []))
+            if options:
+                options = [{"text": opt["text"], "value": opt["value"], "type": "multi_select"} for opt in options]
+        elif phase == "snip_q5":
+            options = [{"text": opt["text"], "value": opt["value"], "type": "select"} for opt in TIMELINE_OPTIONS]
+
+    # Phase-specific context to reduce length and improve focus (replaces general query_vectorstore(question))
+    context_parts = []
+    if enrichment:
+        context_parts.append(f"Enrichment: {enrichment}")
 
     try:
-        completion = client.chat.completions.create(
-            model="qwen/qwen-2.5-coder-32b-instruct:free",
-            messages=[
-                {"role": "system", "content": "You are a JSON-only business assistant. Always respond in valid JSON format."},
-                {"role": "user", "content": prompt}
-            ],
+        if phase == "snip_q2":
+            cat_context = query_vectorstore("MAIN_CATEGORIES for services")
+            context_parts.append(cat_context)
+        elif phase == "snip_q3":
+            print("\n\n\nentered in phase q4")
+            # main_cats = query_vectorstore("MAIN_CATEGORIES for services")
+            main_cats = _SUB_SERVICES
+            context_parts.append(main_cats)
+            selected_cats = lead_data.get("q3_categories", [])
+            for cat in selected_cats:
+                sub_context = query_vectorstore(f"SUB_SERVICES for {cat}")
+                context_parts.append(sub_context)
+        if phase == "snip_q4" and "q4_services" in lead_data:
+                print("\n\n\nentered in phase q4")
+                
+    
+        elif phase == "snip_q5":
+            context_parts.append(_TIMELINE_OPTIONS)
+        elif phase == "snip_q6":
+            budget_info = _BUDGET_OPTIONS
+            if budget_info:
+                context_parts.append(f"Budget info: {budget_info}")
+        # else:
+        #     general_context = query_vectorstore(question)
+        #     context_parts.append(general_context)
+    except Exception:
+        pass  # Already handled
+
+    context = "\n".join(context_parts)
+    print("\n\nphase:",phase,"\n")
+
+    input_text=f"""Current state from session: Phase='{phase}', Lead Data={json.dumps(lead_data)}, Known Details={json.dumps(details)}
+                    Dynamic Options (ALWAYS include full array in JSON if relevant to phase; weave into answer naturally): {json.dumps(options)}
+                    You must:
+                    1. Advance/follow the SNIP flow based on phase and user input. Update lead_data (e.g., 'q1_company': 'value').
+                    2. Personalize: Use enrichment, connect to benefits from vectorstore, build rapport.
+                    3. If options relevant, weave into answer (e.g., "Which of these?") and include full "options" array in JSON for frontend clickable handling.
+                    4. Extract/merge new details (name, email, etc.)—check for business email upsell.
+                    5. Assess interest/mood. If flow complete, set "routing" (high_value|nurturing|cre).
+                    6. For existing customer: Simulate Odoo fetch from vectorstore context.
+                    7. Query vectorstore for services/categories dynamically.
+                    8. Return STRICTLY valid JSON ONLY—no extra text. Use EXACT format provided.
+                    9. Use contractions ("you're", "we'll"), occasional emojis (like 😊), and a conversational tone.
+
+                    Context (from vectorstore—use for services, benefits, company data): {context}
+                    User Question/Input: {question}
+                """.strip()
+
+    # Try LangChain path first (enhanced with robust parsing)
+    try:
+        result = chat_chain.invoke(
+            {"input": input_text},
+            config={"configurable": {"session_id": session_id}},
         )
-        raw_output = completion.choices[0].message.content
+        raw_output = getattr(result, "content", str(result))
         try:
-            response_data = json.loads(raw_output)
+            parsed = json.loads(raw_output)
+            print("\n\nphase model detected:",parsed,"\n")
+            # Ensure options are merged (LLM might override; prioritize dynamic)
+            if phase == "snip_q4":
+                options=[]
+            if "options" not in parsed or not parsed["options"]:
+                parsed["options"] = options
+            return parsed
         except json.JSONDecodeError:
+            # Robust extraction: Find largest JSON block
             json_part = re.search(r'\{.*\}', raw_output, re.DOTALL)
             if json_part:
-                response_data = json.loads(json_part.group(0))
-            else:
-                response_data = {
-                    "answer": raw_output,
-                    "analysis": {
-                        "interest": "unknown",
-                        "mood": "unknown",
-                        "details": {
-                            "name": "unknown",
-                            "email": "unknown",
-                            "phone": "unknown",
-                            "company": "unknown"
+                parsed = json.loads(json_part.group(0))
+                if "options" not in parsed or not parsed["options"]:
+                    parsed["options"] = options
+                return parsed
+            # Fallback structure if parse fails
+            
+            print("\n\nphase model detected:",phase,"\n")
+            return {
+                "answer": raw_output,
+                "options": options,
+                "phase": phase,
+                "lead_data": lead_data,
+                "routing": "none",
+                "analysis": {
+                    "interest": "unknown",
+                    "mood": "unknown",
+                    "details": {"name": "unknown", "email": "unknown", "phone": "unknown", "company": "unknown"}
+                }
+            }
+    except Exception as lc_err:
+        print(f"[LangChain invoke failed — falling back to direct client] {lc_err}")
+        # Fallback to direct client (enhanced with same input_text and robust JSON enforcement)
+        try:
+            completion = client.chat.completions.create(
+                model="qwen/qwen-2.5-coder-32b-instruct:free",
+                messages=[
+                    {"role": "system", "content": "You are a JSON-only business assistant following the SNIP flow. Respond EXCLUSIVELY with valid JSON in the EXACT format specified. No other text."},
+                    {"role": "user", "content": input_text}
+                ],
+            )
+            raw_output = completion.choices[0].message.content
+            try:
+                parsed = json.loads(raw_output)
+                if "options" not in parsed or not parsed["options"]:
+                    parsed["options"] = options
+                return parsed
+            except json.JSONDecodeError:
+                json_part = re.search(r'\{.*\}', raw_output, re.DOTALL)
+                if json_part:
+                    parsed = json.loads(json_part.group(0))
+                    if "options" not in parsed or not parsed["options"]:
+                        parsed["options"] = options
+                    return parsed
+                else:
+                    return {
+                        "answer": raw_output,
+                        "options": options,
+                        "phase": phase,
+                        "lead_data": lead_data,
+                        "routing": "none",
+                        "analysis": {
+                            "interest": "unknown",
+                            "mood": "unknown",
+                            "details": {"name": "unknown", "email": "unknown", "phone": "unknown", "company": "unknown"}
                         }
                     }
-                }
-        return response_data
-
-    except AuthenticationError as e:
-        print(f"Authentication Error: {e}")
-        return {
-            "answer": "Authentication failed — check your API key or account permissions.",
-            "analysis": {"interest": "unknown", "mood": "frustrated", "details": {}}
-        }
-
-    except RateLimitError as e:
-        print(f"Rate Limit Error: {e}")
-        return {
-            "answer": "The system is receiving too many requests. Please try again later.",
-            "analysis": {"interest": "high", "mood": "impatient", "details": {}}
-        }
-
-    except APIError as e:
-        print(f"API Error: {e}")
-        return {
-            "answer": f"API Error: {str(e)}",
-            "analysis": {"interest": "medium", "mood": "confused", "details": {}}
-        }
-
-    except Exception as e:
-        print(f"Unexpected Error: {e}")
-        return {
-            "answer": "An unexpected error occurred while fetching the bot response.",
-            "analysis": {"interest": "unknown", "mood": "confused", "details": {}}
-        }
-
+        except AuthenticationError as e:
+            print(f"Authentication Error: {e}")
+            return {
+                "answer": "Authentication failed — check your API key.",
+                "options": [],
+                "phase": phase,
+                "lead_data": lead_data,
+                "routing": "none",
+                "analysis": {"interest": "unknown", "mood": "frustrated", "details": {}}
+            }
+        except RateLimitError as e:
+            print(f"Rate Limit Error: {e}")
+            return {
+                "answer": "Too many requests. Please try again later.",
+                "options": [],
+                "phase": phase,
+                "lead_data": lead_data,
+                "routing": "none",
+                "analysis": {"interest": "high", "mood": "impatient", "details": {}}
+            }
+        except APIError as e:
+            print(f"API Error: {e}")
+            return {
+                "answer": f"API Error: {str(e)}",
+                "options": [],
+                "phase": phase,
+                "lead_data": lead_data,
+                "routing": "none",
+                "analysis": {"interest": "medium", "mood": "confused", "details": {}}
+            }
+        except Exception as e:
+            print(f"Unexpected Error: {e}")
+            return {
+                "answer": "An unexpected error occurred.",
+                "options": [],
+                "phase": phase,
+                "lead_data": lead_data,
+                "routing": "none",
+                "analysis": {"interest": "unknown", "mood": "confused", "details": {}}
+    }
+            
 def insert_user_message(session_id: str, content: str):
+    db = SessionLocal()
     try:
-        ts = datetime.utcnow().isoformat()
-        cur.execute(
-            "INSERT INTO messages (session_id, role, content, timestamp, interest, mood) VALUES (?, 'user', ?, ?, NULL, NULL)",
-            (session_id, content, ts)
+        ts = datetime.utcnow()
+
+        #  Fetch the existing session
+        session_obj = db.query(SessionModel).filter(SessionModel.id == session_id).first()
+
+        # If not found, create a new one
+        if not session_obj:
+            session_obj = SessionModel(id=session_id, status="active")
+            db.add(session_obj)
+            db.commit()
+            db.refresh(session_obj)
+
+        # Create and add the new user message
+        message = MessageModel(
+            session_id=session_id,
+            role="user",
+            content=content,
+            timestamp=ts,
+            interest=None,
+            mood=None
         )
-        
-        cur.execute("SELECT status FROM sessions WHERE id = ?", (session_id,))
-        status_row = cur.fetchone()
-        current_status = status_row[0] if status_row else 'active'
-        
-        if current_status != 'admin':
-            cur.execute("""
-                UPDATE sessions SET updated_at = CURRENT_TIMESTAMP, status = 'active' 
-                WHERE id = ?
-            """, (session_id,))
-        else:
-            cur.execute("""
-                UPDATE sessions SET updated_at = CURRENT_TIMESTAMP 
-                WHERE id = ?
-            """, (session_id,))
-        conn.commit()
-        return ts, current_status
+        db.add(message)
+
+        # Update the session’s status and timestamp
+        if session_obj.status != "admin":
+            session_obj.status = "active"
+        session_obj.updated_at = datetime.utcnow()
+        db.commit()
+
+        return ts.isoformat(), session_obj.status
+
     except Exception as e:
-        if conn.in_transaction:
-            conn.rollback()
+        db.rollback()
         raise e
 
-def handle_bot_response(session_id: str, question: str):
+    finally:
+        db.close()
+
+def handle_bot_response(session_id: str, question: str) -> Dict[str, Any]:
+    db = SessionLocal()
     try:
-        cur.execute("SELECT details FROM sessions WHERE id = ?", (session_id,))
-        details_row = cur.fetchone()
-        current_details = json.loads(details_row[0]) if details_row and details_row[0] else {}
-        response_data = get_bot_response(question, current_details)
+        # Fetch session
+        session_obj = db.get(SessionModel, session_id)
+        if not session_obj:
+            raise ValueError(f"Session {session_id} not found")
+
+        current_details = json.loads(session_obj.details) if session_obj.details else {
+            "phase": "initial",
+            "lead_data": {},
+            "details": {}
+        }
+
+        response_data = get_bot_response(question, current_details, session_id)
         answer = response_data["answer"]
+        options = response_data["options"]
+        next_phase = response_data["phase"]
+        lead_data = response_data["lead_data"]
+        routing = response_data["routing"]
         analysis = response_data["analysis"]
-        details_json = json.dumps(analysis["details"])
-        bot_ts = datetime.utcnow().isoformat()
-        cur.execute(
-            "INSERT INTO messages (session_id, role, content, timestamp, interest, mood) VALUES (?, 'bot', ?, ?, ?, ?)",
-            (session_id, answer, bot_ts, analysis["interest"], analysis["mood"])
+
+        # Merge details (from analysis)
+        details = {**current_details.get("details", {}), **analysis.get("details", {})}
+        for k, v in analysis.get("details", {}).items():
+            if details.get(k) == "unknown" or v != "unknown":
+                details[k] = v
+
+        updated_details = {
+            **current_details,
+            "phase": next_phase,
+            "lead_data": lead_data,
+            "details": details,
+            "routing": routing if routing != "none" else current_details.get("routing", "none")
+        }
+
+        # Add bot message
+        bot_message = MessageModel(
+            session_id=session_id,
+            role="bot",
+            content=answer,
+            timestamp=datetime.utcnow(),
+            interest=analysis.get("interest"),
+            mood=analysis.get("mood")
         )
-        cur.execute("""
-            UPDATE sessions SET 
-            details = ?, interest = ?, mood = ?, updated_at = CURRENT_TIMESTAMP, status = 'active'
-            WHERE id = ?
-        """, (details_json, analysis["interest"], analysis["mood"], session_id))
-        conn.commit()
-        return {"answer": answer, "analysis": analysis, "bot_ts": bot_ts}
-    except Exception as e:
-        if conn.in_transaction:
-            conn.rollback()
-        raise e
+        db.add(bot_message)
+
+        # Update session
+        session_obj.details = json.dumps(updated_details)
+        session_obj.interest = analysis.get("interest")
+        session_obj.mood = analysis.get("mood")
+        session_obj.phase = next_phase
+        session_obj.routing = routing
+        session_obj.updated_at = datetime.utcnow()
+        session_obj.status = "active"
+
+        db.commit()
+
+        return {
+            "answer": answer,
+            "options": options,
+            "phase": next_phase,
+            "lead_data": lead_data,
+            "routing": routing,
+            "analysis": analysis,
+            "bot_ts": bot_message.timestamp.isoformat()
+        }
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
 
 def update_inactive_sessions():
-    threshold_time = (datetime.utcnow() - INACTIVITY_THRESHOLD).strftime('%Y-%m-%d %H:%M:%S')
+    db = SessionLocal()
     try:
-        cur.execute("""
-            UPDATE sessions 
-            SET status = 'inactive' 
-            WHERE status = 'active' 
-            AND updated_at < ?
-        """, (threshold_time,))
-        conn.commit()
-    except Exception as e:
-        if conn.in_transaction:
-            conn.rollback()
-        raise e
-
-# =main
+        threshold_time = datetime.utcnow() - INACTIVITY_THRESHOLD
+        # Bulk update using ORM
+        db.query(SessionModel).filter(
+            SessionModel.status == "active",
+            SessionModel.updated_at < threshold_time
+        ).update({"status": "inactive"}, synchronize_session=False)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+        
+        
+# main
 
 @app.get("/")
 async def home(request: Request):
@@ -359,181 +752,281 @@ async def home(request: Request):
 
 @app.post("/api/sessions/")
 def create_session():
+    db = SessionLocal()
     try:
         session_id = str(uuid.uuid4())
-        cur.execute("INSERT INTO sessions (id) VALUES (?)", (session_id,))
-        conn.commit()
+        new_session = SessionModel(
+            id=session_id,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(new_session)
+        db.commit()
         return {"session_id": session_id}
-    except Exception as e:
-        if conn.in_transaction:
-            conn.rollback()
+    except Exception:
+        db.rollback()
         raise HTTPException(status_code=500, detail="Failed to create session")
+    finally:
+        db.close()
+
+
+
+
+interest_score = {"low": 0.0, "medium": 1.0, "high": 2.0}
+score_to_interest = lambda s: "low" if s < 0.5 else ("medium" if s < 1.5 else "high")
 
 @app.get("/api/sessions/")
-def get_sessions(active: bool = Query(False)):
+def get_sessions(
+    active: bool = Query(False),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=100),
+    db: DBSession = Depends(get_db)
+) -> Dict[str, Any]:
     try:
         update_inactive_sessions()
 
+        # Base query for sessions
+        session_query = db.query(SessionModel)
         if active:
-            cur.execute("""
-                SELECT id, created_at, status, interest, mood, details 
-                FROM sessions WHERE status = 'active' ORDER BY created_at DESC
-            """)
-        else:
-            cur.execute("""
-                SELECT id, created_at, status, interest, mood, details 
-                FROM sessions ORDER BY created_at DESC
-            """)
-        rows = cur.fetchall()
+            session_query = session_query.filter(SessionModel.status == "active")
+
+        # Get total count for pagination
+        total_query = session_query.with_entities(func.count(SessionModel.id))
+        total = total_query.scalar()
+
+        if total == 0:
+            return {
+                "sessions": [],
+                "pagination": {
+                    "page": page,
+                    "per_page": per_page,
+                    "total": 0,
+                    "pages": 0
+                }
+            }
+
+        # Paginated query
+        offset = (page - 1) * per_page
+        sessions = (
+            session_query
+            .order_by(SessionModel.created_at.desc())
+            .offset(offset)
+            .limit(per_page)
+            .all()
+        )
+
+        # Collect session IDs for batch querying messages
+        session_ids = [sess.id for sess in sessions]
+        session_id_to_index = {sess.id: idx for idx, sess in enumerate(sessions)}
+
+        # Batch fetch ALL messages for these sessions in one query
+        msg_rows_all = (
+            db.query(MessageModel)
+            .filter(MessageModel.session_id.in_(session_ids))
+            .order_by(MessageModel.session_id, MessageModel.timestamp.asc())
+            .all()
+        )
+
+        # Group messages by session_id
+        messages_by_session: Dict[int, List[MessageModel]] = defaultdict(list)
+        for msg in msg_rows_all:
+            messages_by_session[msg.session_id].append(msg)
+
+        # Precompute half-life constants (shared across sessions)
+        half_life_seconds = 3 * 24 * 3600
+        ln2 = math.log(2)
+
         sessions_list = []
-
-        # helper maps
-        interest_score = {"low": 0.0, "medium": 1.0, "high": 2.0}
-        score_to_interest = lambda s: "low" if s < 0.5 else ("medium" if s < 1.5 else "high")
-
-        for row in rows:
-            id_, created, status, sess_interest, sess_mood, details_json = row
+        for sess in sessions:
+            # Parse details once
             try:
-                details = json.loads(details_json)
-            except:
-                details = {}
-            name = details.get("name", "Unknown")
-            usr_email = details.get("email", "Unknown")
-            usr_phone = details.get("phone", "Unknown")
-            usr_company = details.get("company", "Unknown")
+                details_json = json.loads(sess.details) if sess.details else {}
+            except Exception:
+                details_json = {}
 
-            cur.execute("SELECT content FROM messages WHERE session_id = ? ORDER BY timestamp DESC LIMIT 1", (id_,))
-            last_row = cur.fetchone()
-            last_msg = (last_row[0][:50] + "..." if last_row and len(last_row[0]) > 50 else last_row[0] if last_row else "")
+            inner_details = details_json.get("details", {})
+            lead_data = details_json.get("lead_data", {})
 
-           
-            cur.execute("SELECT role, interest, mood, timestamp FROM messages WHERE session_id = ? ORDER BY timestamp ASC", (id_,))
-            msg_rows = cur.fetchall()
+            # Backward compatibility (old data may not have nested dict)
+            name = inner_details.get("name") or details_json.get("name", "Unknown")
+            usr_email = inner_details.get("email") or details_json.get("email", "Unknown")
+            usr_phone = inner_details.get("phone") or details_json.get("phone", "Unknown")
+            usr_company = inner_details.get("company") or details_json.get("company", "Unknown")
+            
+            lead_company = lead_data.get("q1_company") or details_json.get("q1_company") or None
+            lead_email = lead_data.get("q1_email") or details_json.get("q1_email") or None
+            phase = details_json.get("phase", "unknown")
+            routing = details_json.get("routing", "none")
 
-            overall_interest_label = sess_interest  
-            overall_mood_label = sess_mood 
+            # Get messages for this session from grouped data
+            msg_rows = messages_by_session.get(sess.id, [])
+
+            # Compute last message from the grouped messages (no extra query)
+            last_msg_obj = msg_rows[-1] if msg_rows else None
+            last_msg = (
+                (last_msg_obj.content[:50] + "...")
+                if last_msg_obj and len(last_msg_obj.content) > 50
+                else (last_msg_obj.content if last_msg_obj else "")
+            )
+
+            # Compute interest and mood
+            overall_interest_label = sess.interest
+            overall_mood_label = sess.mood
 
             if msg_rows:
-             
-                half_life_seconds = 3 * 24 * 3600 
-                ln2 = math.log(2)
-
-              
                 parsed = []
-                for role, interest_val, mood_val, ts in msg_rows:
-                 
-                    try:
-                        ts_dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-                    except Exception:
-                    
-                        try:
-                            ts_dt = datetime.fromisoformat(ts)
-                        except Exception:
-                            ts_dt = None
-                    parsed.append((role, (interest_val or "").lower(), (mood_val or ""), ts_dt))
+                for msg in msg_rows:
+                    ts_dt = msg.timestamp or datetime.utcnow()
+                    parsed.append(
+                        (
+                            msg.role.lower() if msg.role else "",
+                            (msg.interest or "").lower(),
+                            (msg.mood or "").lower(),
+                            ts_dt,
+                        )
+                    )
 
-                latest_ts = None
-                for _, _, _, ts_dt in parsed:
-                    if ts_dt:
-                        latest_ts = ts_dt
-                if latest_ts is None:
-                    latest_ts = datetime.utcnow()
+                latest_ts = max((ts for _, _, _, ts in parsed if ts), default=datetime.utcnow())
 
                 weighted_sum = 0.0
                 weight_total = 0.0
                 mood_weights = {}
+
                 for role, interest_val, mood_val, ts_dt in parsed:
-                   
                     delta = (latest_ts - ts_dt).total_seconds() if ts_dt else 0.0
                     weight = math.exp(-ln2 * (delta / half_life_seconds))
 
-                 
-                    if interest_val and interest_val in interest_score:
+                    if interest_val in interest_score:
                         s = interest_score[interest_val]
                         weighted_sum += s * weight
                         weight_total += weight
 
-                    if role and role.lower() == "user" and mood_val:
-                        mood_key = mood_val.lower()
-                        mood_weights[mood_key] = mood_weights.get(mood_key, 0.0) + weight
+                    if role == "user" and mood_val:
+                        mood_weights[mood_val] = mood_weights.get(mood_val, 0.0) + weight
 
                 if weight_total > 0:
                     avg_score = weighted_sum / weight_total
                     overall_interest_label = score_to_interest(avg_score)
 
                 if mood_weights:
-                    # pick the mood with highest weighted score
                     overall_mood_label = max(mood_weights.items(), key=lambda kv: kv[1])[0]
 
             sessions_list.append({
-                "id": id_,
-                "created_at": created,
-                "status": status,
+                "id": sess.id,
+                "created_at": sess.created_at,
+                "status": sess.status,
                 "interest": overall_interest_label,
                 "mood": overall_mood_label,
                 "name": name,
                 "usr_email": usr_email,
                 "usr_phone": usr_phone,
                 "usr_company": usr_company,
-                "last_message": last_msg
+                "phase": phase,
+                "routing": routing,
+                "last_message": last_msg,
+                
+                "lead_company": lead_company,
+                "lead_email": lead_email,
+                "lead_email_domain": lead_data.get("q1_email_domain") or details_json.get("q1_email_domain") or None,
+                "lead_role": lead_data.get("q2_role") or details_json.get("q2_role") or None,
+                "lead_categories": lead_data.get("q3_categories") or details_json.get("q3_categories") or None,
+                "lead_services": lead_data.get("q4_services") or details_json.get("q4_services") or None,
+                "lead_activity": lead_data.get("q5_activity") or details_json.get("q5_activity") or None,
+                "lead_timeline": lead_data.get("q6_timeline") or details_json.get("q6_timeline") or None,
+                "lead_budget": lead_data.get("q7_budget") or details_json.get("q7_budget") or None,
             })
-        return sessions_list
+
+        pages = math.ceil(total / per_page)
+
+        return {
+            "sessions": sessions_list,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total,
+                "pages": pages
+            }
+        }
+
     except Exception as e:
-        return []
+        print("Error in get_sessions:", e)
+        return {
+            "sessions": [],
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": 0,
+                "pages": 0
+            }
+        }
+
 
 @app.get("/api/sessions/{session_id}/metrics")
-def session_metrics(session_id: str):
+def session_metrics(session_id: str, db: DBSession = Depends(get_db)):
     try:
-        cur.execute("SELECT role, interest, mood, timestamp FROM messages WHERE session_id = ? ORDER BY timestamp ASC", (session_id,))
-        rows = cur.fetchall()
+        # Fetch all messages for the session in chronological order
+        rows = (
+            db.query(MessageModel)
+            .filter(MessageModel.session_id == session_id)
+            .order_by(MessageModel.timestamp.asc())
+            .all()
+        )
 
         timeline = []
-        # maps date -> {interest_sum, interest_count, mood_counts}
         daily = {}
-        interest_score = {"low": 0.0, "medium": 1.0, "high": 2.0}
+        for msg in rows:
+            ts_dt = msg.timestamp or None
+            ts_str = (
+                msg.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                if msg.timestamp else None
+            )
 
-        for role, interest_val, mood_val, ts in rows:
-            try:
-                ts_dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-            except Exception:
-                try:
-                    ts_dt = datetime.fromisoformat(ts)
-                except Exception:
-                    ts_dt = None
+            # Compute numeric interest score
+            interest_val = (msg.interest or "").lower()
+            iscore = interest_score.get(interest_val) if interest_val in interest_score else None
 
-            # per-message numeric interest score (or null)
-            iscore = None
-            if interest_val and interest_val.lower() in interest_score:
-                iscore = interest_score[interest_val.lower()]
+            mood_val = (msg.mood or "").lower()
+            role = msg.role or ""
 
             timeline.append({
-                "timestamp": ts,  # raw string
+                "timestamp": ts_str,
                 "role": role,
-                "interest": (interest_val or None),
+                "interest": msg.interest or None,
                 "interest_score": iscore,
-                "mood": (mood_val or None)
+                "mood": msg.mood or None
             })
 
-            # monthly/daily aggregation - we will aggregate by date
+            # Daily aggregation
             if ts_dt:
                 date_key = ts_dt.strftime("%Y-%m-%d")
                 if date_key not in daily:
-                    daily[date_key] = {"interest_sum": 0.0, "interest_count": 0, "mood_counts": {}}
+                    daily[date_key] = {
+                        "interest_sum": 0.0,
+                        "interest_count": 0,
+                        "mood_counts": {}
+                    }
+
                 if iscore is not None:
                     daily[date_key]["interest_sum"] += iscore
                     daily[date_key]["interest_count"] += 1
-                # only user mood messages included
-                if role and role.lower() == "user" and mood_val:
-                    mk = mood_val.lower()
-                    daily[date_key]["mood_counts"][mk] = daily[date_key]["mood_counts"].get(mk, 0) + 1
 
-        # transform daily dict to list with average interest
+                if role.lower() == "user" and mood_val:
+                    mood_key = mood_val
+                    daily[date_key]["mood_counts"][mood_key] = (
+                        daily[date_key]["mood_counts"].get(mood_key, 0) + 1
+                    )
+
+        # Transform daily dict into sorted list
         daily_list = []
-        for d in sorted(daily.keys()):
-            entry = daily[d]
-            avg_interest = (entry["interest_sum"] / entry["interest_count"]) if entry["interest_count"] else None
+        for date_key in sorted(daily.keys()):
+            entry = daily[date_key]
+            avg_interest = (
+                entry["interest_sum"] / entry["interest_count"]
+                if entry["interest_count"] > 0
+                else None
+            )
             daily_list.append({
-                "date": d,
+                "date": date_key,
                 "avg_interest": avg_interest,
                 "mood_counts": entry["mood_counts"]
             })
@@ -543,8 +1036,11 @@ def session_metrics(session_id: str):
             "timeline": timeline,
             "daily": daily_list
         }
-    except Exception:
+
+    except Exception as e:
+        print("Error in session_metrics:", e)
         return {"session_id": session_id, "timeline": [], "daily": []}
+
 
 @app.post("/upload_pdf/")
 def upload_pdf(file: UploadFile = File(...)):
@@ -561,72 +1057,69 @@ def upload_pdf(file: UploadFile = File(...)):
             os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
 
-# Admin
+
+
+
+templates = Jinja2Templates(directory="templates")
+
+
 @app.get("/admin/")
-async def admin_home(request: Request):
-    try:
-      
-        cur.execute("SELECT COUNT(*) FROM sessions")
-        total_sessions = cur.fetchone()[0]
+async def admin_home(request: Request, db = Depends(get_db)):
+    # Basic totals
+    total_sessions = db.query(func.count(SessionModel.id)).scalar() or 0
+    total_messages = db.query(func.count(MessageModel.id)).scalar() or 0
 
-     
-        cur.execute("""
-            SELECT s.id, COUNT(m.id) as message_count
-            FROM sessions s
-            LEFT JOIN messages m ON s.id = m.session_id
-            GROUP BY s.id
-            ORDER BY message_count DESC
-            LIMIT 1
-        """)
-        highest_conversation = cur.fetchone()
-        if highest_conversation:
-            highest_session_id, highest_message_count = highest_conversation
-        else:
-            highest_session_id, highest_message_count = None, 0
+    # Highest conversation (session with most messages)
+    highest_conversation = (
+        db.query(
+            MessageModel.session_id,
+            func.count(MessageModel.id).label("message_count")
+        )
+        .group_by(MessageModel.session_id)
+        .order_by(func.count(MessageModel.id).desc())
+        .first()
+    )
 
-        cur.execute("SELECT COUNT(*) FROM messages")
-        total_messages = cur.fetchone()[0]
+    highest_message_count = highest_conversation.message_count if highest_conversation else 0
 
-        cur.execute("""
-            SELECT AVG(message_count) 
-            FROM (
-                SELECT COUNT(m.id) as message_count
-                FROM sessions s
-                LEFT JOIN messages m ON s.id = m.session_id
-                GROUP BY s.id
-            )
-        """)
-        avg_messages_per_session = cur.fetchone()[0] or 0
-        avg_messages_per_session = int(round(avg_messages_per_session))
+    # Average messages per session (only sessions that have messages)
+    subquery = (
+        db.query(
+            MessageModel.session_id,
+            func.count(MessageModel.id).label("msg_count")
+        )
+        .group_by(MessageModel.session_id)
+        .subquery()
+    )
+    avg_messages_per_session = db.query(func.avg(subquery.c.msg_count)).scalar() or 0
+    avg_messages_per_session = round(avg_messages_per_session, 2)
+
+    # Routing counts
+    routing_high_value = db.query(func.count(SessionModel.id)).filter(SessionModel.routing == "high_value").scalar() or 0
+    routing_nurturing = db.query(func.count(SessionModel.id)).filter(SessionModel.routing == "nurturing").scalar() or 0
+
+    # Completion: sessions where phase in ('snip_q7', 'routing')
+    completed_count = db.query(func.count(SessionModel.id)).filter(SessionModel.phase.in_(["snip_q7", "routing","complete"])).scalar() or 0
+    if total_sessions:
+        completion_rate = round((completed_count / total_sessions) * 100, 2)
+    else:
+        completion_rate = 0.0
 
 
-     
-        context = {
-            "request": request,
-            "total_sessions": total_sessions,
-            "highest_message_count": highest_message_count,
-            "total_messages": total_messages,
-            "avg_messages_per_session": round(avg_messages_per_session, 2),
-        }
-        return templates.TemplateResponse("admin.html", context)
-    except Exception:
-        context = {
-            "request": request,
-            "total_sessions": 0,
-            "highest_message_count": 0,
-            "total_messages": 0,
-            "avg_messages_per_session": 0,
-        }
-        return templates.TemplateResponse("admin.html", context)
+    context = {
+        "request": request,
+        "total_sessions": total_sessions,
+        "total_messages": total_messages,
+        "highest_message_count": highest_message_count,
+        "avg_messages_per_session": avg_messages_per_session,
+        "routing_high_value": routing_high_value,
+        "routing_nurturing": routing_nurturing,
+        "completed_count": completed_count,
+        "completion_rate": completion_rate,
+    }
 
-@app.get("/admin/session/{session_id}")
-async def admin_session(request: Request, session_id: str, mode: str = Query("view")):
-    return templates.TemplateResponse("session.html", {
-        "request": request, 
-        "session_id": session_id, 
-        "mode": mode,
-        "site_name": SITE_NAME
-    })
+    return templates.TemplateResponse("admin.html", context)
+
 
 
 @app.websocket("/ws/chat/{session_id}")
@@ -663,12 +1156,14 @@ async def websocket_chat(websocket: WebSocket, session_id: str):
                     try:
                         bot_data = await run_in_threadpool(lambda: handle_bot_response(session_id, content))
                         answer = bot_data["answer"]
+                        options = bot_data["options"]
                         analysis = bot_data["analysis"]
                         bot_ts = bot_data["bot_ts"]
                         bot_msg = {
                             "type": "message",
                             "role": "bot",
                             "content": answer,
+                            "options":options,
                             "timestamp": bot_ts,
                             "interest": analysis["interest"],
                             "mood": analysis["mood"]
@@ -695,69 +1190,126 @@ async def websocket_view(websocket: WebSocket, session_id: str):
     finally:
         manager.disconnect(websocket, session_id)
 
+
+
 @app.websocket("/ws/control/{session_id}")
 async def websocket_control(websocket: WebSocket, session_id: str):
+    # --- Sync DB helpers (run inside run_in_threadpool) ---
     def set_admin_status(session_id: str):
+        db: DBSession = SessionLocal()
         try:
-            cur.execute("UPDATE sessions SET status = 'admin' WHERE id = ?", (session_id,))
-            conn.commit()
-        except Exception as e:
-            if conn.in_transaction:
-                conn.rollback()
-            raise e
+            sess = db.get(SessionModel, session_id)
+            if sess:
+                sess.status = "admin"
+                sess.updated_at = datetime.utcnow()
+                db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
-    try:
-        await run_in_threadpool(lambda: set_admin_status(session_id))
-    except Exception:
-        await websocket.close(code=1011)
-        return
+    def do_handover(session_id: str):
+        db: DBSession = SessionLocal()
+        try:
+            sess = db.get(SessionModel, session_id)
+            if sess:
+                sess.status = "active"
+                sess.updated_at = datetime.utcnow()
+                db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
-    await manager.broadcast(json.dumps({"type": "status", "status": "admin"}), session_id)
-    await manager.connect(websocket, session_id)
-    await manager.send_history(session_id, websocket)
+    def insert_admin_message(session_id: str, content: str) -> str:
+        """
+        Inserts an admin message and updates session.updated_at.
+        Returns ISO timestamp string for broadcasting.
+        """
+        db: DBSession = SessionLocal()
+        try:
+            ts = datetime.utcnow()
+            msg = MessageModel(
+                session_id=session_id,
+                role="admin",
+                content=content,
+                timestamp=ts,
+                interest=None,
+                mood=None
+            )
+            db.add(msg)
+
+            # update session's updated_at if session exists
+            sess = db.get(SessionModel, session_id)
+            if sess:
+                sess.updated_at = datetime.utcnow()
+
+            db.commit()
+            # refresh to ensure id populated if needed
+            db.refresh(msg)
+            return ts.isoformat()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def set_active_status(session_id: str):
+        db: DBSession = SessionLocal()
+        try:
+            sess = db.get(SessionModel, session_id)
+            if sess:
+                sess.status = "active"
+                sess.updated_at = datetime.utcnow()
+                db.commit()
+        except Exception:
+            db.rollback()
+            # swallow errors similar to original finally block behavior
+        finally:
+            db.close()
+
+    # --- Main websocket flow ---
     try:
+        # Set session status = 'admin' (blocking DB op)
+        try:
+            await run_in_threadpool(lambda: set_admin_status(session_id))
+        except Exception:
+            # If DB update fails, close socket (similar to original)
+            await websocket.close(code=1011)
+            return
+
+        # notify clients that status changed to admin
+        await manager.broadcast(json.dumps({"type": "status", "status": "admin"}), session_id)
+
+        # connect this websocket to manager and send history
+        await manager.connect(websocket, session_id)
+        await manager.send_history(session_id, websocket)
+
+        # handle incoming websocket messages
         while True:
             data = await websocket.receive_text()
             try:
                 parsed_data = json.loads(data)
             except json.JSONDecodeError:
+                # ignore malformed JSON (same as original)
                 continue
-            if parsed_data.get("type") == "handover":
-                def do_handover(session_id: str):
-                    try:
-                        cur.execute("UPDATE sessions SET status = 'active' WHERE id = ?", (session_id,))
-                        conn.commit()
-                    except Exception as e:
-                        if conn.in_transaction:
-                            conn.rollback()
-                        raise e
 
+            msg_type = parsed_data.get("type")
+
+            if msg_type == "handover":
+                # make session active again
                 try:
                     await run_in_threadpool(lambda: do_handover(session_id))
                     handover_msg = {"type": "handover", "content": "Handed over to bot."}
                     await manager.broadcast(json.dumps(handover_msg), session_id)
                 except Exception:
+                    # swallow exceptions (same behavior as original)
                     pass
-            elif parsed_data.get("type") == "message":
-                content = parsed_data["content"]
-                def insert_admin_message(session_id: str, content: str):
-                    try:
-                        ts = datetime.utcnow().isoformat()
-                        cur.execute(
-                            "INSERT INTO messages (session_id, role, content, timestamp, interest, mood) VALUES (?, 'admin', ?, ?, NULL, NULL)",
-                            (session_id, content, ts)
-                        )
-                        cur.execute("""
-                            UPDATE sessions SET updated_at = CURRENT_TIMESTAMP 
-                            WHERE id = ?
-                        """, (session_id,))
-                        conn.commit()
-                        return ts
-                    except Exception as e:
-                        if conn.in_transaction:
-                            conn.rollback()
-                        raise e
 
+            elif msg_type == "message":
+                content = parsed_data.get("content", "")
                 try:
                     ts = await run_in_threadpool(lambda: insert_admin_message(session_id, content))
                     admin_msg = {
@@ -770,17 +1322,16 @@ async def websocket_control(websocket: WebSocket, session_id: str):
                     }
                     await manager.broadcast(json.dumps(admin_msg), session_id)
                 except Exception:
-                    pass  
+                    # swallow DB/broadcast errors (same as original)
+                    pass
+
+            # ignore other types (same as original)
+
     except WebSocketDisconnect:
+        # client disconnected; fall through to finally
         pass
     finally:
-        def set_active_status(session_id: str):
-            try:
-                cur.execute("UPDATE sessions SET status = 'active' WHERE id = ?", (session_id,))
-                conn.commit()
-            except Exception:
-                pass  
-
+        # restore session status -> active (best-effort)
         await run_in_threadpool(lambda: set_active_status(session_id))
         await manager.broadcast(json.dumps({"type": "status", "status": "active"}), session_id)
         manager.disconnect(websocket, session_id)
