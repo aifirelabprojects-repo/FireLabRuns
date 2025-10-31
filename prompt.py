@@ -51,7 +51,6 @@ AnalytxPromptTemp="""You are Sofia, a dedicated, empathetic guide at Analytix, t
             - No bullet points or plain lists.
             - Output **only the JSON object**, no extra text.
             - Verify JSON validity before sending.
-"""
-        
+"""    
         
         

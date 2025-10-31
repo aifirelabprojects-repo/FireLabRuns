@@ -117,7 +117,6 @@ class ConnectionManager:
         def fetch_history():
             try:
                 db: DBSession = SessionLocal()
-
                 # ORM query to fetch messages for the session
                 messages = (
                     db.query(MessageModel)
@@ -125,31 +124,26 @@ class ConnectionManager:
                     .order_by(MessageModel.timestamp.asc())
                     .all()
                 )
-
                 # Convert ORM objects to JSON-serializable dicts
+                # Handle potential None timestamps gracefully by using a default ISO string
                 message_list = [
                     {
                         "role": msg.role,
                         "content": msg.content,
-                        "timestamp": msg.timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "timestamp": msg.timestamp.strftime("%Y-%m-%dT%H:%M:%SZ") if msg.timestamp else "2025-01-01T00:00:00Z",
                         "interest": msg.interest,
                         "mood": msg.mood,
                     }
                     for msg in messages
                 ]
-
                 return json.dumps({"type": "history", "messages": message_list})
-
             except Exception as e:
                 print(f"[DB ERROR] {e}")
                 return json.dumps({"type": "history", "messages": []})
-
             finally:
                 db.close()
-
         # Run the blocking DB call in a threadpool (important for async)
         history_json = await run_in_threadpool(fetch_history)
-
         # Send over WebSocket
         await websocket.send_text(history_json)
 
@@ -1106,7 +1100,7 @@ async def admin_home(request: Request, db = Depends(get_db)):
     routing_nurturing = db.query(func.count(SessionModel.id)).filter(SessionModel.routing == "nurturing").scalar() or 0
 
     # Completion: sessions where phase in ('snip_q7', 'routing')
-    completed_count = db.query(func.count(SessionModel.id)).filter(SessionModel.phase.in_(["snip_q7", "routing","complete"])).scalar() or 0
+    completed_count = db.query(func.count(SessionModel.id)).filter(SessionModel.phase.in_(["routing","complete"])).scalar() or 0
     if total_sessions:
         completion_rate = round((completed_count / total_sessions) * 100, 2)
     else:
