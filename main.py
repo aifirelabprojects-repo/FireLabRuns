@@ -1155,18 +1155,23 @@ async def websocket_chat(websocket: WebSocket, session_id: str):
                 if current_status == "active":
                     try:
                         bot_data = await run_in_threadpool(lambda: handle_bot_response(session_id, content))
-                        answer = bot_data["answer"]
-                        options = bot_data["options"]
-                        analysis = bot_data["analysis"]
-                        bot_ts = bot_data["bot_ts"]
+                        answer = bot_data.get("answer", "")
+                        options = bot_data.get("options", [])
+                        analysis = bot_data.get("analysis") or {}
+
+                        # Safe defaults
+                        interest = analysis.get("interest", "medium")
+                        mood = analysis.get("mood", "neutral")
+
+                        bot_ts = bot_data.get("bot_ts")
                         bot_msg = {
                             "type": "message",
                             "role": "bot",
                             "content": answer,
-                            "options":options,
+                            "options": options,
                             "timestamp": bot_ts,
-                            "interest": analysis["interest"],
-                            "mood": analysis["mood"]
+                            "interest": interest,
+                            "mood": mood
                         }
                         await manager.broadcast(json.dumps(bot_msg), session_id)
                     except Exception as e:
