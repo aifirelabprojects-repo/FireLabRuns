@@ -297,8 +297,9 @@ memory_engine = create_engine("sqlite:///chat_memory.db", connect_args={"check_s
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     api_key=OPENAI_API_KEY,
-    temperature=0.2,
-    max_tokens=800
+    temperature=0.0,
+    max_tokens=800,
+    response_format={"type": "json_object"}  # Enforces JSON schema
 )
 
 def _get_memory(session_id: str):
@@ -668,16 +669,21 @@ def handle_bot_response(session_id: str, question: str) -> Dict[str, Any]:
         }
 
         response_data = get_bot_response(question, current_details, session_id)
-        answer = response_data["answer"]
-        options = response_data["options"]
-        next_phase = response_data["phase"]
-        lead_data = response_data["lead_data"]
-        routing = response_data["routing"]
-        analysis = response_data["analysis"]
+        answer = response_data.get("answer", "")
+        options = response_data.get("options", [])
+        next_phase = response_data.get("phase", current_details.get("phase", "initial"))
+        lead_data = response_data.get("lead_data", current_details.get("lead_data", {}))
+        routing = response_data.get("routing", current_details.get("routing", "none"))
 
-        # Merge details (from analysis)
-        details = {**current_details.get("details", {}), **analysis.get("details", {})}
-        for k, v in analysis.get("details", {}).items():
+        # Safe handling of analysis
+        analysis = response_data.get("analysis") or {}
+        interest = analysis.get("interest", "medium")
+        mood = analysis.get("mood", "neutral")
+        details_update = analysis.get("details", {})
+
+        # Merge details
+        details = {**current_details.get("details", {}), **details_update}
+        for k, v in details_update.items():
             if details.get(k) == "unknown" or v != "unknown":
                 details[k] = v
 
@@ -695,15 +701,15 @@ def handle_bot_response(session_id: str, question: str) -> Dict[str, Any]:
             role="bot",
             content=answer,
             timestamp=datetime.utcnow(),
-            interest=analysis.get("interest"),
-            mood=analysis.get("mood")
+            interest=interest,
+            mood=mood
         )
         db.add(bot_message)
 
         # Update session
         session_obj.details = json.dumps(updated_details)
-        session_obj.interest = analysis.get("interest")
-        session_obj.mood = analysis.get("mood")
+        session_obj.interest = interest
+        session_obj.mood = mood
         session_obj.phase = next_phase
         session_obj.routing = routing
         session_obj.updated_at = datetime.utcnow()
@@ -725,6 +731,7 @@ def handle_bot_response(session_id: str, question: str) -> Dict[str, Any]:
         raise
     finally:
         db.close()
+
 
 
 def update_inactive_sessions():
