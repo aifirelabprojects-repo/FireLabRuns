@@ -268,6 +268,10 @@ def get_bot_response(question: str, current_details: Dict[str, Any], session_id:
             # cat_context = query_vectorstore("MAIN_CATEGORIES for services")
             cat_context = _MAIN_CATEGORIES
             context_parts.append(cat_context)
+        elif phase == "snip_q2a":
+            # cat_context = query_vectorstore("MAIN_CATEGORIES for services")
+            cat_context = _MAIN_CATEGORIES
+            context_parts.append(cat_context)
         elif phase == "snip_q3":
             print("\n\n\nentered in phase q3")
             # main_cats = query_vectorstore("MAIN_CATEGORIES for services")
