@@ -3,7 +3,6 @@ import os
 import shutil
 import uuid
 import json
-import sqlite3
 import asyncio
 import re
 from datetime import datetime, timedelta
@@ -20,25 +19,23 @@ from openai import OpenAI, APIError, AuthenticationError, RateLimitError
 from PyPDF2 import PdfReader
 from starlette.concurrency import run_in_threadpool
 from dotenv import load_dotenv
+from sqlalchemy import create_engine,func
+from sqlalchemy.orm import Session as DBSession
+from database import SessionLocal, Session as SessionModel, Message as MessageModel, get_db, init_db 
+from prompt import AnalytxPromptTemp
+from collections import defaultdict
 #langchain imports
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import SQLChatMessageHistory
-from sqlalchemy import create_engine,func
-from sqlalchemy.orm import Session as DBSession
-from database import SessionLocal, Session as SessionModel, Message as MessageModel, get_db, init_db
-from prompt import AnalytxPromptTemp
-from collections import defaultdict
+
 
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
+MODEL_NAME = "gpt-4o-mini"
 SITE_NAME = "Business Chatbot"
-
-DEFAULT_PDF = "data/tester.pdf"
-VECTORSTORE_PATH = "vectorstore/index"
 INACTIVITY_THRESHOLD = timedelta(minutes=5)  
 
 os.makedirs("data", exist_ok=True)
@@ -61,29 +58,6 @@ def startup_event():
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-_embedding_model = None
-
-def get_embedding_model():
-    global _embedding_model
-    if _embedding_model is None:
-        _embedding_model = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2",
-            model_kwargs={"device": "cpu"},
-            encode_kwargs={"normalize_embeddings": False}
-        )
-    return _embedding_model
-
-vectorstore = None
-
-def get_vectorstore():
-    global vectorstore
-    if vectorstore is None:
-        ensure_vectorstore_ready()
-        if os.path.exists(VECTORSTORE_PATH):
-            vectorstore = load_vectorstore()
-        else:
-            vectorstore = FAISS.from_documents([], get_embedding_model())
-    return vectorstore
 
 class ConnectionManager:
     def __init__(self):
@@ -150,78 +124,6 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
-def extract_text_from_pdf(pdf_path: str) -> str:
-    pdf = PdfReader(pdf_path)
-    text = ""
-    for page in pdf.pages:
-        text += page.extract_text() or ""
-    return text
-
-def create_vectorstore(text: str, store_path: str = VECTORSTORE_PATH):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    docs = [Document(page_content=chunk) for chunk in splitter.split_text(text)]
-    vectorstore = FAISS.from_documents(docs, get_embedding_model())
-    vectorstore.save_local(store_path)
-    return vectorstore
-
-def load_vectorstore(store_path: str = VECTORSTORE_PATH):
-    return FAISS.load_local(store_path, get_embedding_model(), allow_dangerous_deserialization=True)
-
-def ensure_vectorstore_ready():
-    if not os.path.exists(VECTORSTORE_PATH):
-        if os.path.exists(DEFAULT_PDF):
-            text = extract_text_from_pdf(DEFAULT_PDF)
-            create_vectorstore(text)
-        else:
-            # Fallback: Create a basic vectorstore with hardcoded data if PDF missing
-            hardcoded_text = """MAIN_CATEGORIES = [
-            "Market Entry & Business Setup",
-            "Strategic Growth & Management",
-            "Financial Services & Compliance",
-            "Industrial & Specialized Operations",
-            "Legal & Business Protection"
-            ]
-
-            SUB_SERVICES = {
-            "Market Entry & Business Setup": [
-            {"text": "Business Setup Saudi Arabia", "value": "setup_sa"},
-            {"text": "Business Setup in other GCC (UAE, Qatar, etc.)", "value": "setup_gcc"},
-            {"text": "Premium Residency & Investor Visas", "value": "visas"},
-            {"text": "Entrepreneur License (IT & Tech Services)", "value": "entrepreneur_license"},
-            {"text": "Virtual Office & Business Center", "value": "virtual_office"}
-            ],
-            "Strategic Growth & Management": [
-            {"text": "Management Consultancy (Business Restructuring, Market Strategy, M&A)", "value": "consultancy"},
-            {"text": "Vendor Registration & Certification (for NEOM, Aramco, etc.)", "value": "vendor_reg"},
-            {"text": "HR & Talent Solutions (Recruitment, EOR, Training)", "value": "hr_solutions"}
-            ],
-            "Financial Services & Compliance": [
-            {"text": "Accounting & Bookkeeping", "value": "accounting"},
-            {"text": "Tax Consulting & Audit", "value": "tax_audit"},
-            {"text": "Bank Account & Finance Assistance", "value": "finance_assist"}
-            ],
-            "Industrial & Specialized Operations": [
-            {"text": "Industrial License & Factory Setup", "value": "industrial_license"},
-            {"text": "ISO & Local Content Certification", "value": "iso_cert"},
-            {"text": "Technology & Process Automation", "value": "automation"}
-            ],
-            "Legal & Business Protection": [
-            {"text": "Legal Advisory & Contract Drafting", "value": "legal_advisory"},
-            {"text": "Debt Recovery & Dispute Resolution", "value": "debt_recovery"},
-            {"text": "Trademark Registration", "value": "trademark"}
-            ]
-            }
-
-            TIMELINE_OPTIONS = [
-            {"text": "Within 1 month", "value": "1_month"},
-            {"text": "1-3 months", "value": "1_3_months"},
-            {"text": "3-6 months", "value": "3_6_months"},
-            {"text": "Just researching", "value": "researching"}
-            ]
-
-            BUDGET_RANGES = "Our packages typically range from 35,000 to 150,000 SAR."""
-            create_vectorstore(hardcoded_text)
-
 _MAIN_CATEGORIES="""MAIN_CATEGORIES = [
             "Market Entry & Business Setup",
             "Strategic Growth & Management",
@@ -276,30 +178,21 @@ _BUDGET_OPTIONS = [
     {"text": "Over 150,000 SAR", "value": "over_150k"}
 ]
            
-def get_vectorstore():
-    ensure_vectorstore_ready()
-    return load_vectorstore()
 
-def query_vectorstore(question: str, k: int = 3) -> str:
-    vectorstore = get_vectorstore()
-    docs = vectorstore.similarity_search(question, k=k)
-    return "\n".join([d.page_content for d in docs])
 
 memory_engine = create_engine("sqlite:///chat_memory.db", connect_args={"check_same_thread": False})
 
-# LLM wrapper (reuse your Qwen config)
 llm = ChatOpenAI(
-    model="gpt-4o-mini",
+    model=MODEL_NAME,
     api_key=OPENAI_API_KEY,
     temperature=0.0,
     max_tokens=800,
-    response_format={"type": "json_object"}  # Enforces JSON schema
+    model_kwargs={"response_format": {"type": "json_object"}} 
 )
 
 def _get_memory(session_id: str):
     return SQLChatMessageHistory(session_id=session_id, connection=memory_engine)
 
-# Enhanced prompt template to include SNIP flow guidance (made more robust: added explicit JSON enforcement, fallback handling, and clearer phase instructions)
 prompt = ChatPromptTemplate.from_messages([
     ("system", AnalytxPromptTemp),
     MessagesPlaceholder(variable_name="history"),("human", "{input}"),
@@ -340,16 +233,13 @@ SERVICE_BENEFITS = {
 }
 
 
-def simulate_company_enrichment(company_name: str, question: str) -> str:
-    """Simulate data enrichment via vectorstore or placeholder. Enhance with real lookup if available."""
-    # Use vectorstore for company-specific data
-    context = query_vectorstore(f"Company info for {company_name}: industry, size, location")
-    if "industry" in context.lower() or "size" in context.lower():
-        # Placeholder parsing (enhance as needed)
-        enrichment = f"{context}"  # Use full relevant context
-    else:
-        enrichment = "No prior data found—exciting new venture!"
-    return enrichment
+# def simulate_company_enrichment(company_name: str, question: str) -> str:
+#     context = query_vectorstore(f"Company info for {company_name}: industry, size, location")
+#     if "industry" in context.lower() or "size" in context.lower():
+#         enrichment = f"{context}" 
+#     else:
+#         enrichment = "No prior data found—exciting new venture!"
+#     return enrichment
 
 def get_bot_response(question: str, current_details: Dict[str, Any], session_id: str = "transient") -> Dict[str, Any]:
     if current_details is None:
@@ -364,117 +254,41 @@ def get_bot_response(question: str, current_details: Dict[str, Any], session_id:
     # Simulate enrichment if company mentioned
     company = lead_data.get("q1_company", details.get("company", "unknown"))
     if company != "unknown" and "company" in question.lower():
-        enrichment = simulate_company_enrichment(company, question)
+        pass
+        # enrichment = simulate_company_enrichment(company, question)
     else:
         enrichment = ""
-
-    # Dynamic options: Now primarily from vectorstore for modularity; fallback to hardcoded if query fails
-    options = []
-    try:
-        if phase == "snip_q2": # for next snipq3
-            cat_context = query_vectorstore("MAIN_CATEGORIES for services")
-            cats = [
-                line.strip().strip('"')
-                for line in cat_context.split("\n")
-                if line.strip().startswith('"') and line.strip().endswith('"')
-            ] or MAIN_CATEGORIES
-
-            options = [
-                        {
-                            "text": cat,
-                            "value": cat.lower()
-                                    .replace(" & ", "_")
-                                    .replace(" ", "_"),
-                            "type": "multi_select"
-                        }
-                        for cat in cats
-                    ]
-                
-        elif phase == "snip_q3": # for next snip q4
-            selected_cats = lead_data.get("q3_categories", [])
-            options = []
-            for cat in selected_cats:
-                sub_context = query_vectorstore(f"SUB_SERVICES for {cat}")
-                subs = re.findall(
-                    r'{"text":\s*"([^"]+)",\s*"value":\s*"([^"]+)"}',
-                    sub_context
-                )
-                if subs:
-                    options.extend(
-                        {"text": t, "value": v, "type": "multi_select"} for t, v in subs
-                    )
-                else:
-                    options.extend(SUB_SERVICES.get(cat, []))
-
-            # NEW: Generate benefit line AFTER user selects (i.e., in next turn when phase advances)
-            # But we prepare it here in context so LLM can use it
-            
-                
-        elif phase == "snip_q4": # for next snip q5
-            options = []
-        elif phase == "snip_q5": # for next snip q6
-            # timeline_context = query_vectorstore("TIMELINE_OPTIONS")
-            timeline_context = _TIMELINE_OPTIONS
-            timelines = re.findall(
-                r'{"text":\s*"([^"]+)",\s*"value":\s*"([^"]+)"}',
-                timeline_context
-            ) or TIMELINE_OPTIONS
-
-            options = [
-                {"text": t, "value": v, "type": "select"} for t, v in timelines
-            ]
-    except Exception:
-        # Fallback to hardcoded
-        if phase == "snip_q2":
-            options = [{"text": cat, "value": cat.lower().replace(" & ", "_").replace(" ", "_"), "type": "multi_select"} for cat in MAIN_CATEGORIES]
-        elif phase == "snip_q3":
-            selected_cats = lead_data.get("q3_categories", [])
-            for cat in selected_cats:
-                options.extend(SUB_SERVICES.get(cat, []))
-            if options:
-                options = [{"text": opt["text"], "value": opt["value"], "type": "multi_select"} for opt in options]
-        elif phase == "snip_q5":
-            options = [{"text": opt["text"], "value": opt["value"], "type": "select"} for opt in TIMELINE_OPTIONS]
-
-    # Phase-specific context to reduce length and improve focus (replaces general query_vectorstore(question))
+    options=[]
     context_parts = []
     if enrichment:
         context_parts.append(f"Enrichment: {enrichment}")
 
     try:
         if phase == "snip_q2":
-            cat_context = query_vectorstore("MAIN_CATEGORIES for services")
+            # cat_context = query_vectorstore("MAIN_CATEGORIES for services")
+            cat_context = _MAIN_CATEGORIES
             context_parts.append(cat_context)
         elif phase == "snip_q3":
-            print("\n\n\nentered in phase q4")
+            print("\n\n\nentered in phase q3")
             # main_cats = query_vectorstore("MAIN_CATEGORIES for services")
             main_cats = _SUB_SERVICES
             context_parts.append(main_cats)
-            selected_cats = lead_data.get("q3_categories", [])
-            for cat in selected_cats:
-                sub_context = query_vectorstore(f"SUB_SERVICES for {cat}")
-                context_parts.append(sub_context)
         if phase == "snip_q4" and "q4_services" in lead_data:
                 print("\n\n\nentered in phase q4")
-                
-    
         elif phase == "snip_q5":
             context_parts.append(_TIMELINE_OPTIONS)
         elif phase == "snip_q6":
             budget_info = _BUDGET_OPTIONS
             if budget_info:
                 context_parts.append(f"Budget info: {budget_info}")
-        # else:
-        #     general_context = query_vectorstore(question)
-        #     context_parts.append(general_context)
-    except Exception:
-        pass  # Already handled
 
+    except Exception:
+        pass  
     context = "\n".join(context_parts)
     print("\n\nphase:",phase,"\n")
 
     input_text=f"""Current state from session: Phase='{phase}', Lead Data={json.dumps(lead_data)}, Known Details={json.dumps(details)}
-                    Dynamic Options (ALWAYS include full array in JSON if relevant to phase; weave into answer naturally): {json.dumps(options)}
+                    Dynamic Options (ALWAYS include full array in JSON if relevant to phase; weave into answer naturally)
                     You must:
                     1. Advance/follow the SNIP flow based on phase and user input. Update lead_data (e.g., 'q1_company': 'value').
                     2. Personalize: Use enrichment, connect to benefits from vectorstore, build rapport.
@@ -500,14 +314,12 @@ def get_bot_response(question: str, current_details: Dict[str, Any], session_id:
         try:
             parsed = json.loads(raw_output)
             print("\n\nphase model detected:",parsed,"\n")
-            # Ensure options are merged (LLM might override; prioritize dynamic)
             if phase == "snip_q4":
                 options=[]
             if "options" not in parsed or not parsed["options"]:
                 parsed["options"] = options
             return parsed
         except json.JSONDecodeError:
-            # Robust extraction: Find largest JSON block
             json_part = re.search(r'\{.*\}', raw_output, re.DOTALL)
             if json_part:
                 parsed = json.loads(json_part.group(0))
@@ -1041,22 +853,6 @@ def session_metrics(session_id: str, db: DBSession = Depends(get_db)):
     except Exception as e:
         print("Error in session_metrics:", e)
         return {"session_id": session_id, "timeline": [], "daily": []}
-
-
-@app.post("/upload_pdf/")
-def upload_pdf(file: UploadFile = File(...)):
-    try:
-        file_path = f"data/{file.filename}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        text = extract_text_from_pdf(file_path)
-        global vectorstore
-        vectorstore = create_vectorstore(text)
-        return {"message": f"PDF '{file.filename}' uploaded and processed successfully!"}
-    except Exception as e:
-        if 'file_path' in locals() and os.path.exists(file_path):
-            os.remove(file_path)
-        raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
 
 
 
