@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session as DBSession
 from database import SessionLocal, Session as SessionModel, Message as MessageModel, get_db, init_db 
 from prompt import AnalytxPromptTemp
 from collections import defaultdict
+from CompanyFinder import FindTheComp
 #langchain imports
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -233,13 +234,45 @@ SERVICE_BENEFITS = {
 }
 
 
-# def simulate_company_enrichment(company_name: str, question: str) -> str:
-#     context = query_vectorstore(f"Company info for {company_name}: industry, size, location")
-#     if "industry" in context.lower() or "size" in context.lower():
-#         enrichment = f"{context}" 
-#     else:
-#         enrichment = "No prior data found—exciting new venture!"
-#     return enrichment
+def simulate_company_enrichment(company: str, question: str) -> str:
+    """
+    Dummy function to simulate company data enrichment.
+    Replace with a real enrichment API in the future.
+    """
+    company_lower = company.lower().strip()
+
+    dummy_data = {
+        "infratech": {
+            "industry": "Infrastructure & Construction",
+            "size": "500–1000 employees",
+            "headquarters": "Mumbai, India",
+            "branches": "12 offices across India"
+        },
+        "techsoft": {
+            "industry": "Software Development",
+            "size": "200–500 employees",
+            "headquarters": "Bangalore, India",
+            "branches": "5 global locations"
+        },
+        "medilife": {
+            "industry": "Healthcare & Biotechnology",
+            "size": "1000–5000 employees",
+            "headquarters": "Hyderabad, India",
+            "branches": "8 offices across India"
+        }
+    }
+
+    if company_lower in dummy_data:
+        data = dummy_data[company_lower]
+        enrichment = (
+            f"Fetched details about user company: {company} operates in the {data['industry']} industry. "
+            f"They have about {data['size']}, headquartered in {data['headquarters']}, "
+            f"and around {data['branches']}."
+        )
+    else:
+        enrichment = ""
+
+    return enrichment
 
 def get_bot_response(question: str, current_details: Dict[str, Any], session_id: str = "transient") -> Dict[str, Any]:
     if current_details is None:
@@ -249,19 +282,19 @@ def get_bot_response(question: str, current_details: Dict[str, Any], session_id:
     phase = current_details.get("phase", "initial")
     lead_data = current_details.get("lead_data", {})
     details = current_details.get("details", {})
-    
 
-    # Simulate enrichment if company mentioned
-    company = lead_data.get("q1_company", details.get("company", "unknown"))
-    if company != "unknown" and "company" in question.lower():
-        pass
-        # enrichment = simulate_company_enrichment(company, question)
-    else:
-        enrichment = ""
+    company = lead_data.get("q1_company")
+    print(company)
+    enrichment = ""
+
+    company_name = lead_data.get("q1_company")  
+    if company_name is None and phase in ("snip_q1", "snip_q2", "snip_q2a"):
+        enrichment = FindTheComp(question)
+
+
+        
     options=[]
     context_parts = []
-    if enrichment:
-        context_parts.append(f"Enrichment: {enrichment}")
 
     try:
         if phase == "snip_q2":
@@ -295,7 +328,7 @@ def get_bot_response(question: str, current_details: Dict[str, Any], session_id:
                     Dynamic Options (ALWAYS include full array in JSON if relevant to phase; weave into answer naturally)
                     You must:
                     1. Advance/follow the SNIP flow based on phase and user input. Update lead_data (e.g., 'q1_company': 'value').
-                    2. Personalize: Use enrichment, connect to benefits from vectorstore, build rapport.
+                    2. Personalize: Use enrichment, build rapport.
                     3. If options relevant, weave into answer (e.g., "Which of these?") and include full "options" array in JSON for frontend clickable handling.
                     4. Extract/merge new details (name, email, etc.)—check for business email upsell.
                     5. Assess interest/mood. If flow complete, set "routing" (high_value|nurturing|cre).
@@ -307,6 +340,10 @@ def get_bot_response(question: str, current_details: Dict[str, Any], session_id:
                     Context (from vectorstore—use for services, benefits, company data): {context}
                     User Question/Input: {question}
                 """.strip()
+                
+    if company_name is None and phase in ("snip_q1", "snip_q2", "snip_q2a"):
+        input_text += f"\nCompany enrichment data: {enrichment}\n"
+
 
     # Try LangChain path first (enhanced with robust parsing)
     try:
@@ -926,6 +963,10 @@ async def admin_home(request: Request, db = Depends(get_db)):
 @app.websocket("/ws/chat/{session_id}")
 async def websocket_chat(websocket: WebSocket, session_id: str):
     await manager.connect(websocket, session_id)
+    try:
+        await websocket.accept()
+    except RuntimeError:
+        pass
     await manager.send_history(session_id, websocket)
     try:
         while True:

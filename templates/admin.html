@@ -190,10 +190,10 @@
         <div class="flex items-center gap-2">
           <button id="prevPageBtn" onclick="changePage(-1)" class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded text-xs hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            Prev
+            Next
           </button>
           <button id="nextPageBtn" onclick="changePage(1)" class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded text-xs hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-            Next
+            Prev
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
@@ -401,10 +401,13 @@
                     : ''
                 }
                 ${
-                  session.routing === 'high_value'
-                    ? `<span class="ml-1 inline-block w-2 h-2 rounded-full bg-red-500 blink-dot"></span>`
-                    : ''
-                }
+  session.routing === 'high_value'
+    ? `<span class="ml-0  mb-2 inline-block w-[5px] h-[5px] rounded-full bg-red-500 blink-dot" title="High-Value Lead"></span>`
+    : session.routing === 'cre'
+      ? `<span class="ml-0 mb-2 inline-block w-[5px] h-[5px] rounded-full bg-green-500 blink-dot" title="Request Human"></span>`
+      : ''
+}
+
               </td>
         
               <td class="px-4 py-3 text-xs">${session.name || '—'}</td>
