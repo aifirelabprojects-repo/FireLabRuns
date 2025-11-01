@@ -592,7 +592,7 @@ score_to_interest = lambda s: "low" if s < 0.5 else ("medium" if s < 1.5 else "h
 def get_sessions(
     active: bool = Query(False),
     page: int = Query(1, ge=1),
-    per_page: int = Query(50, ge=1, le=100),
+    per_page: int = Query(5, ge=1, le=100),
     db: DBSession = Depends(get_db)
 ) -> Dict[str, Any]:
     try:

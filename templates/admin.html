@@ -289,7 +289,7 @@
     let currentMode = null;
     let currentWsUrl = null;
     let currentPage = 1;
-    let perPage = 50;
+    let perPage = 5;
     let totalPages = 1;
     let totalSessions = 0;
     let sessionRefreshInterval;
@@ -329,90 +329,88 @@
           const moodCell = `<a class="text-primary underline text-xs" onclick="showMetrics('${session.id}')">${session.mood || '—'}</a>`;
           const idShort = session.id ? session.id.substring(0,8) + '...' : '—';
           let actions = `<button class="text-xs inline-flex items-center gap-2 px-3 py-1 bg-white border border-gray-200 rounded hover:shadow-sm" onclick="openSession(
-  '${session.id}',
-  'control',
-  '${escapeJs(session.name)}',
-  '${escapeJs(session.usr_email)}',
-  '${escapeJs(session.usr_phone)}',
-  '${escapeJs(session.usr_company)}',
-  '${escapeJs(session.mood)}',
-  '${escapeJs(session.interest)}',
-  '${session.lead_company}',
-  '${session.lead_email}',
-  '${session.lead_email_domain}',
-  '${session.lead_role}',
-  '${session.lead_categories}',
-  '${session.lead_services}',
-  '${session.lead_activity}',
-  '${session.lead_timeline}',
-  '${session.lead_budget}'
-)
-">
-                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                          View</button>`;
-
+            '${session.id}',
+            'view',  // Changed: Use 'view' mode for read-only
+            '${escapeJs(session.name)}',
+            '${escapeJs(session.usr_email)}',
+            '${escapeJs(session.usr_phone)}',
+            '${escapeJs(session.usr_company)}',
+            '${escapeJs(session.mood)}',
+            '${escapeJs(session.interest)}',
+            '${session.lead_company}',
+            '${session.lead_email}',
+            '${session.lead_email_domain}',
+            '${session.lead_role}',
+            '${session.lead_categories}',
+            '${session.lead_services}',
+            '${session.lead_activity}',
+            '${session.lead_timeline}',
+            '${session.lead_budget}'
+          )">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            View  <!-- Optional: Added space for readability -->
+                          </button>`;
+        
           if (session.status === 'active') {
             actions += ` <button class="text-xs inline-flex items-center gap-2 px-3 py-1 bg-primary text-white rounded hover:bg-primary/90" onclick="openSession(
-  '${session.id}',
-  'control',
-  '${escapeJs(session.name)}',
-  '${escapeJs(session.usr_email)}',
-  '${escapeJs(session.usr_phone)}',
-  '${escapeJs(session.usr_company)}',
-  '${escapeJs(session.mood)}',
-  '${escapeJs(session.interest)}',
-  '${session.lead_company}',
-  '${session.lead_email}',
-  '${session.lead_email_domain}',
-  '${session.lead_role}',
-  '${session.lead_categories}',
-  '${session.lead_services}',
-  '${session.lead_activity}',
-  '${session.lead_timeline}',
-  '${session.lead_budget}'
-)
-">
-                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="white"><path d="M9 7v10l7-5-7-5z" stroke="none" /></svg>
-                          Control</button>`;
+              '${session.id}',
+              'control',  // Unchanged: 'control' mode for interactive
+              '${escapeJs(session.name)}',
+              '${escapeJs(session.usr_email)}',
+              '${escapeJs(session.usr_phone)}',
+              '${escapeJs(session.usr_company)}',
+              '${escapeJs(session.mood)}',
+              '${escapeJs(session.interest)}',
+              '${session.lead_company}',
+              '${session.lead_email}',
+              '${session.lead_email_domain}',
+              '${session.lead_role}',
+              '${session.lead_categories}',
+              '${session.lead_services}',
+              '${session.lead_activity}',
+              '${session.lead_timeline}',
+              '${session.lead_budget}'
+            )">
+                              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="white"><path d="M9 7v10l7-5-7-5z" stroke="none" /></svg>
+                              Control
+                            </button>`;
           }
-
+        
           return `
-          <tr class="session-row">
-            <td class="px-4 py-3 text-xs text-gray-700">
-              <span class="truncate-id font-mono">${idShort}</span>
-            </td>
-            <td class="px-4 py-3 text-xs text-gray-600">
-              ${new Date(session.created_at).toLocaleString()}
-            </td>
-            <td class="px-4 py-3 text-xs">
-              <span class="px-2 py-1 rounded text-xs ${
-                session.status === 'active'
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-gray-50 text-gray-600'
-              }">${session.status}</span>
-            </td>
-            <td class="px-4 py-3 text-xs">${session.interest || '—'}</td>
-            <td class="px-4 py-3 text-xs">${moodCell}</td>
-            <td class="px-4 py-3 text-xs">
-              ${session.phase}
-              ${
-                session.routing
-                  ? ` <span class="font-mono text-gray-500">(${session.routing})</span>`
-                  : ''
-              }
-              ${
-                session.routing === 'high_value'
-                  ? `<span class="ml-1 inline-block w-2 h-2 rounded-full bg-red-500 blink-dot"></span>`
-                  : ''
-              }
-            </td>
-
-            <td class="px-4 py-3 text-xs">${session.name || '—'}</td>
-            <td class="px-4 py-3 text-xs">${actions}</td>
-          </tr>
-        `;
-
-
+            <tr class="session-row">
+              <td class="px-4 py-3 text-xs text-gray-700">
+                <span class="truncate-id font-mono">${idShort}</span>
+              </td>
+              <td class="px-4 py-3 text-xs text-gray-600">
+                ${new Date(session.created_at).toLocaleString()}
+              </td>
+              <td class="px-4 py-3 text-xs">
+                <span class="px-2 py-1 rounded text-xs ${
+                  session.status === 'active'
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-gray-50 text-gray-600'
+                }">${session.status}</span>
+              </td>
+              <td class="px-4 py-3 text-xs">${session.interest || '—'}</td>
+              <td class="px-4 py-3 text-xs">${moodCell}</td>
+              <td class="px-4 py-3 text-xs">
+                ${session.phase}
+                ${
+                  session.routing
+                    ? ` <span class="font-mono text-gray-500">(${session.routing})</span>`
+                    : ''
+                }
+                ${
+                  session.routing === 'high_value'
+                    ? `<span class="ml-1 inline-block w-2 h-2 rounded-full bg-red-500 blink-dot"></span>`
+                    : ''
+                }
+              </td>
+        
+              <td class="px-4 py-3 text-xs">${session.name || '—'}</td>
+              <td class="px-4 py-3 text-xs">${actions}</td>
+            </tr>
+          `;
         }).join('');
 
         const tableHtml = `
@@ -512,7 +510,12 @@
       }
       currentSessionId = id;
       currentMode = mode;
-      document.getElementById('chatTitle').textContent = `Session: ${id} (Mode: ${mode})`;
+      document.getElementById('chatTitle').innerHTML = `
+      Session: ${id.substring(0,8)}...
+      <span class="ml-2 px-1 py-0.5 rounded text-xs ${
+        mode === 'control' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+      }">(${mode === 'control' ? 'Control' : 'View'})</span>
+      `;
     
 
       const userInfoHtml = `
