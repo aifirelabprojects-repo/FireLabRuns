@@ -1187,7 +1187,7 @@ async def verify_user(payload: VerifyPayload, db: DBSession = Depends(get_db)):
     if result.get("verified") and not db_session.username:
         db_session.username = result.get("details", {}).get("name", "")
     db_session.confidence = result.get("confidence")
-    db_session.evidence = result.get("details", {}).get("name", "")
+    db_session.evidence = result.get("details", {}).get("evidence", "")
     db_session.sources = json.dumps(sources)
 
     db.commit()
