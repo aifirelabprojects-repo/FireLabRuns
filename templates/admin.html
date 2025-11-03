@@ -277,6 +277,24 @@
     </div>
   </div>
 
+  <!-- Warning Modal -->
+<div id="warningModal" class="fixed inset-0 hidden items-center justify-center z-50">
+  <div class="modal-backdrop absolute inset-0"></div>
+  <div class="relative w-11/12 md:w-96 bg-white rounded-lg shadow-lg overflow-hidden z-50">
+    <div class="flex items-center justify-between px-4 py-3 border-b">
+      <h3 class="text-sm font-semibold">Verification Warning</h3>
+      <button class="p-2 rounded hover:bg-gray-50" onclick="closeWarningModal()">✕</button>
+    </div>
+    <div class="p-4">
+      <div id="warningMessage" class="text-sm text-gray-600 mb-4"></div>
+      <div class="flex justify-end gap-2">
+        <button id="cancelBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancel</button>
+        <button id="proceedBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Proceed</button>
+      </div>
+    </div>
+  </div>
+</div>
+
   <script>
     /* --- Keep your original logic and IDs - modernized DOM rendering for Tailwind UI --- */
     let activeOnly = false;
@@ -293,6 +311,7 @@
     let totalPages = 1;
     let totalSessions = 0;
     let sessionRefreshInterval;
+    let lastSentContent = null;  
 
 
     const svgIcons = {
@@ -332,21 +351,23 @@
             '${session.id}',
             'view',  // Changed: Use 'view' mode for read-only
             '${escapeJs(session.name)}',
-            '${escapeJs(session.usr_email)}',
-            '${escapeJs(session.usr_phone)}',
-            '${escapeJs(session.usr_company)}',
-            '${escapeJs(session.mood)}',
-            '${escapeJs(session.interest)}',
-            '${session.lead_company}',
-            '${session.lead_email}',
-            '${session.lead_email_domain}',
-            '${session.lead_role}',
-            '${session.lead_categories}',
-            '${session.lead_services}',
-            '${session.lead_activity}',
-            '${session.lead_timeline}',
-            '${session.lead_budget}'
-          )">
+              '${escapeJs(session.lead_email)}',
+              '${escapeJs(session.usr_phone)}',
+              '${escapeJs(session.lead_company)}',
+              '${escapeJs(session.mood)}',
+              '${escapeJs(session.verified)}',
+              '${escapeJs(session.confidence)}',
+              '${escapeJs(session.evidence)}',
+              '${escapeJs(session.sources)}',
+              '${escapeJs(session.interest)}',
+              '${session.lead_email_domain}',
+              '${session.lead_role}',
+              '${session.lead_categories}',
+              '${session.lead_services}',
+              '${session.lead_activity}',
+              '${session.lead_timeline}',
+              '${session.lead_budget}'
+            )">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             View  <!-- Optional: Added space for readability -->
                           </button>`;
@@ -356,13 +377,15 @@
               '${session.id}',
               'control',  // Unchanged: 'control' mode for interactive
               '${escapeJs(session.name)}',
-              '${escapeJs(session.usr_email)}',
+              '${escapeJs(session.lead_email)}',
               '${escapeJs(session.usr_phone)}',
-              '${escapeJs(session.usr_company)}',
+              '${escapeJs(session.lead_company)}',
               '${escapeJs(session.mood)}',
+              '${escapeJs(session.verified)}',
+              '${escapeJs(session.confidence)}',
+              '${escapeJs(session.evidence)}',
+              '${escapeJs(session.sources)}',
               '${escapeJs(session.interest)}',
-              '${session.lead_company}',
-              '${session.lead_email}',
               '${session.lead_email_domain}',
               '${session.lead_role}',
               '${session.lead_categories}',
@@ -394,23 +417,29 @@
               <td class="px-4 py-3 text-xs">${session.interest || '—'}</td>
               <td class="px-4 py-3 text-xs">${moodCell}</td>
               <td class="px-4 py-3 text-xs">
-                ${session.phase}
+
+                ${session.phase === 'snip_q0' ? 'routing' : session.phase}
                 ${
-                  session.routing
-                    ? ` <span class="font-mono text-gray-500">(${session.routing})</span>`
+                  (session.phase === 'snip_q0' ? 'cre' : session.routing)
+                    ? ` <span class="font-mono text-gray-500">(${session.phase === 'snip_q0' ? 'cre' : session.routing})</span>`
                     : ''
                 }
                 ${
-  session.routing === 'high_value'
-    ? `<span class="ml-0  mb-2 inline-block w-[5px] h-[5px] rounded-full bg-red-500 blink-dot" title="High-Value Lead"></span>`
-    : session.routing === 'cre'
-      ? `<span class="ml-0 mb-2 inline-block w-[5px] h-[5px] rounded-full bg-green-500 blink-dot" title="Request Human"></span>`
-      : ''
-}
+                (session.phase === 'snip_q0' ? 'cre' : session.routing) === 'high_value'
+                  ? `<span class="ml-0  mb-2 inline-block w-[5px] h-[5px] rounded-full bg-red-500 blink-dot" title="High-Value Lead"></span>`
+                  : (session.phase === 'snip_q0' ? 'cre' : session.routing) === 'cre'
+                    ? `<span class="ml-0 mb-2 inline-block w-[5px] h-[5px] rounded-full bg-green-500 blink-dot" title="Request Human"></span>`
+                  : ''
+              }
 
               </td>
         
-              <td class="px-4 py-3 text-xs">${session.name || '—'}</td>
+              <td class="px-4 py-3 text-xs">${session.name || '—'}
+                ${session.verified === "true" ? `
+                <svg class="w-4 h-4 text-blue-500 inline"" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.5924 3.20027C9.34888 3.4078 9.22711 3.51158 9.09706 3.59874C8.79896 3.79854 8.46417 3.93721 8.1121 4.00672C7.95851 4.03705 7.79903 4.04977 7.48008 4.07522C6.6787 4.13918 6.278 4.17115 5.94371 4.28923C5.17051 4.56233 4.56233 5.17051 4.28923 5.94371C4.17115 6.278 4.13918 6.6787 4.07522 7.48008C4.04977 7.79903 4.03705 7.95851 4.00672 8.1121C3.93721 8.46417 3.79854 8.79896 3.59874 9.09706C3.51158 9.22711 3.40781 9.34887 3.20027 9.5924C2.67883 10.2043 2.4181 10.5102 2.26522 10.8301C1.91159 11.57 1.91159 12.43 2.26522 13.1699C2.41811 13.4898 2.67883 13.7957 3.20027 14.4076C3.40778 14.6511 3.51158 14.7729 3.59874 14.9029C3.79854 15.201 3.93721 15.5358 4.00672 15.8879C4.03705 16.0415 4.04977 16.201 4.07522 16.5199C4.13918 17.3213 4.17115 17.722 4.28923 18.0563C4.56233 18.8295 5.17051 19.4377 5.94371 19.7108C6.278 19.8288 6.6787 19.8608 7.48008 19.9248C7.79903 19.9502 7.95851 19.963 8.1121 19.9933C8.46417 20.0628 8.79896 20.2015 9.09706 20.4013C9.22711 20.4884 9.34887 20.5922 9.5924 20.7997C10.2043 21.3212 10.5102 21.5819 10.8301 21.7348C11.57 22.0884 12.43 22.0884 13.1699 21.7348C13.4898 21.5819 13.7957 21.3212 14.4076 20.7997C14.6511 20.5922 14.7729 20.4884 14.9029 20.4013C15.201 20.2015 15.5358 20.0628 15.8879 19.9933C16.0415 19.963 16.201 19.9502 16.5199 19.9248C17.3213 19.8608 17.722 19.8288 18.0563 19.7108C18.8295 19.4377 19.4377 18.8295 19.7108 18.0563C19.8288 17.722 19.8608 17.3213 19.9248 16.5199C19.9502 16.201 19.963 16.0415 19.9933 15.8879C20.0628 15.5358 20.2015 15.201 20.4013 14.9029C20.4884 14.7729 20.5922 14.6511 20.7997 14.4076C21.3212 13.7957 21.5819 13.4898 21.7348 13.1699C22.0884 12.43 22.0884 11.57 21.7348 10.8301C21.5819 10.5102 21.3212 10.2043 20.7997 9.5924C20.5922 9.34887 20.4884 9.22711 20.4013 9.09706C20.2015 8.79896 20.0628 8.46417 19.9933 8.1121C19.963 7.95851 19.9502 7.79903 19.9248 7.48008C19.8608 6.6787 19.8288 6.278 19.7108 5.94371C19.4377 5.17051 18.8295 4.56233 18.0563 4.28923C17.722 4.17115 17.3213 4.13918 16.5199 4.07522C16.201 4.04977 16.0415 4.03705 15.8879 4.00672C15.5358 3.93721 15.201 3.79854 14.9029 3.59874C14.7729 3.51158 14.6511 3.40781 14.4076 3.20027C13.7957 2.67883 13.4898 2.41811 13.1699 2.26522C12.43 1.91159 11.57 1.91159 10.8301 2.26522C10.5102 2.4181 10.2043 2.67883 9.5924 3.20027ZM16.3735 9.86314C16.6913 9.5453 16.6913 9.03 16.3735 8.71216C16.0557 8.39433 15.5403 8.39433 15.2225 8.71216L10.3723 13.5624L8.77746 11.9676C8.45963 11.6498 7.94432 11.6498 7.62649 11.9676C7.30866 12.2854 7.30866 12.8007 7.62649 13.1186L9.79678 15.2889C10.1146 15.6067 10.6299 15.6067 10.9478 15.2889L16.3735 9.86314Z" fill="currentColor"/></svg>
+              ` : ''}
+              </td>
+          
               <td class="px-4 py-3 text-xs">${actions}</td>
             </tr>
           `;
@@ -505,7 +534,7 @@
       return interests[level?.toLowerCase()] || `<span class="text-xs text-gray-400">Not measured</span>`;
     }
 
-    function openSession(id, mode,name,email,phone,company,mood,interest,lead_company,lead_email,lead_email_domain,lead_role,lead_categories,lead_services,lead_activity,lead_timeline,lead_budget)  {
+    async function openSession(id, mode, name, email, phone, company, mood, verified,confidence,evidence,sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget) {
 
       if (currentWs) {
         reconnectAttempts = maxReconnectAttempts;
@@ -514,12 +543,81 @@
       currentSessionId = id;
       currentMode = mode;
       document.getElementById('chatTitle').innerHTML = `
-      Session: ${id.substring(0,8)}...
-      <span class="ml-2 px-1 py-0.5 rounded text-xs ${
-        mode === 'control' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
-      }">(${mode === 'control' ? 'Control' : 'View'})</span>
+        Session: ${id.substring(0,8)}...
+        <span class="ml-2 px-1 py-0.5 rounded text-xs ${mode === 'control' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'}">(${mode === 'control' ? 'Control' : 'View'})</span>
       `;
     
+      const verifyButtonHtml = verified === "true"
+        ? `<button id="verifyBtn" title="verified" class="text-sm font-medium text-gray-800 flex items-center gap-1 rounded-lg" disabled aria-disabled="true">
+             <svg class="w-4 h-4 text-blue-500 inline"" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.5924 3.20027C9.34888 3.4078 9.22711 3.51158 9.09706 3.59874C8.79896 3.79854 8.46417 3.93721 8.1121 4.00672C7.95851 4.03705 7.79903 4.04977 7.48008 4.07522C6.6787 4.13918 6.278 4.17115 5.94371 4.28923C5.17051 4.56233 4.56233 5.17051 4.28923 5.94371C4.17115 6.278 4.13918 6.6787 4.07522 7.48008C4.04977 7.79903 4.03705 7.95851 4.00672 8.1121C3.93721 8.46417 3.79854 8.79896 3.59874 9.09706C3.51158 9.22711 3.40781 9.34887 3.20027 9.5924C2.67883 10.2043 2.4181 10.5102 2.26522 10.8301C1.91159 11.57 1.91159 12.43 2.26522 13.1699C2.41811 13.4898 2.67883 13.7957 3.20027 14.4076C3.40778 14.6511 3.51158 14.7729 3.59874 14.9029C3.79854 15.201 3.93721 15.5358 4.00672 15.8879C4.03705 16.0415 4.04977 16.201 4.07522 16.5199C4.13918 17.3213 4.17115 17.722 4.28923 18.0563C4.56233 18.8295 5.17051 19.4377 5.94371 19.7108C6.278 19.8288 6.6787 19.8608 7.48008 19.9248C7.79903 19.9502 7.95851 19.963 8.1121 19.9933C8.46417 20.0628 8.79896 20.2015 9.09706 20.4013C9.22711 20.4884 9.34887 20.5922 9.5924 20.7997C10.2043 21.3212 10.5102 21.5819 10.8301 21.7348C11.57 22.0884 12.43 22.0884 13.1699 21.7348C13.4898 21.5819 13.7957 21.3212 14.4076 20.7997C14.6511 20.5922 14.7729 20.4884 14.9029 20.4013C15.201 20.2015 15.5358 20.0628 15.8879 19.9933C16.0415 19.963 16.201 19.9502 16.5199 19.9248C17.3213 19.8608 17.722 19.8288 18.0563 19.7108C18.8295 19.4377 19.4377 18.8295 19.7108 18.0563C19.8288 17.722 19.8608 17.3213 19.9248 16.5199C19.9502 16.201 19.963 16.0415 19.9933 15.8879C20.0628 15.5358 20.2015 15.201 20.4013 14.9029C20.4884 14.7729 20.5922 14.6511 20.7997 14.4076C21.3212 13.7957 21.5819 13.4898 21.7348 13.1699C22.0884 12.43 22.0884 11.57 21.7348 10.8301C21.5819 10.5102 21.3212 10.2043 20.7997 9.5924C20.5922 9.34887 20.4884 9.22711 20.4013 9.09706C20.2015 8.79896 20.0628 8.46417 19.9933 8.1121C19.963 7.95851 19.9502 7.79903 19.9248 7.48008C19.8608 6.6787 19.8288 6.278 19.7108 5.94371C19.4377 5.17051 18.8295 4.56233 18.0563 4.28923C17.722 4.17115 17.3213 4.13918 16.5199 4.07522C16.201 4.04977 16.0415 4.03705 15.8879 4.00672C15.5358 3.93721 15.201 3.79854 14.9029 3.59874C14.7729 3.51158 14.6511 3.40781 14.4076 3.20027C13.7957 2.67883 13.4898 2.41811 13.1699 2.26522C12.43 1.91159 11.57 1.91159 10.8301 2.26522C10.5102 2.4181 10.2043 2.67883 9.5924 3.20027ZM16.3735 9.86314C16.6913 9.5453 16.6913 9.03 16.3735 8.71216C16.0557 8.39433 15.5403 8.39433 15.2225 8.71216L10.3723 13.5624L8.77746 11.9676C8.45963 11.6498 7.94432 11.6498 7.62649 11.9676C7.30866 12.2854 7.30866 12.8007 7.62649 13.1186L9.79678 15.2889C10.1146 15.6067 10.6299 15.6067 10.9478 15.2889L16.3735 9.86314Z" fill="currentColor"/></svg>
+           </button>`
+        : `<button id="verifyBtn" title="Click to Verify" class="ml-3 inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 focus:outline-none transition" aria-pressed="false">
+             <span class="verify-text">Verify</span>
+           </button>`;
+    
+      // Build verified section for initial render
+      let verifiedSection = '';
+      console.log(verified);
+      if (verified !== "null" && verified !== null) {
+        const status = verified === "true" ? "Verified" : "Not Verified";
+        const conf = confidence ? `<div><strong>Confidence:</strong> ${confidence}</div>` : '';
+        const evi = evidence ? `<div class="md:col-span-2"><strong>Evidence:</strong> ${evidence}</div>` : '';
+      
+        let srcHtml = '';
+        if (sources && sources !== "[]") {
+          try {
+            const srcList = JSON.parse(sources);
+      
+            // Build a rich source display
+            srcHtml = `
+  <div class="md:col-span-2">
+    <strong class="block mb-3 text-gray-800 text-sm uppercase tracking-wide">Sources</strong>
+    <div class="flex flex-wrap gap-3">
+      ${srcList.map(url => {
+        const domain = new URL(url).hostname.replace('www.', '');
+        const favicon = `https://www.google.com/s2/favicons?sz=64&domain_url=${domain}`;
+        return `
+          <a href="${url}" target="_blank"
+             class="group relative flex items-center overflow-hidden rounded-full border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 hover:pr-4">
+            
+            <!-- Favicon Container -->
+            <div class="flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 border border-gray-200 group-hover:bg-blue-50 transition-all duration-300">
+              <img src="${favicon}" alt="${domain}" class="w-5 h-5">
+            </div>
+
+            <!-- Expanding Label -->
+            <div class="max-w-0 opacity-0 group-hover:max-w-xs group-hover:opacity-100 overflow-hidden transition-all duration-500 ease-in-out pl-3 pr-2">
+              <span class="text-sm font-medium text-gray-800 whitespace-nowrap">${domain}</span>
+            </div>
+
+            <!-- External Link Icon -->
+            <svg class="w-4 h-4 text-gray-400 ml-1 opacity-0 group-hover:opacity-100 transition-all duration-500" fill="currentColor"  viewBox="0 0 24 24" id="up-right" data-name="Flat Line" xmlns="http://www.w3.org/2000/svg" class="icon flat-line"><line id="primary" x1="18.36" y1="5.64" x2="5" y2="19" style="fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></line><polyline id="primary-2" data-name="primary" points="9 5 19 5 19 14.9" style="fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></polyline></svg>
+                              
+          </a>
+        `;
+      }).join('')}
+    </div>
+  </div>
+`;
+
+          } catch (e) {
+            console.warn('Invalid sources JSON in initial load', e);
+          }
+        }
+      
+        verifiedSection = `
+          <div class="mt-3 pt-3 border-t border-gray-100">
+            <h5 class="font-medium text-gray-700 mb-2">Verification Details</h5>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+              <div><strong>Status:</strong> ${status}</div>
+              ${conf}
+              ${evi}
+              ${srcHtml}
+            </div>
+          </div>
+        `;
+      }
+      
 
       const userInfoHtml = `
         <div class="user-card flex flex-col gap-3 border border-gray-100 rounded-xl p-4 bg-white shadow-sm transition-all duration-200">
@@ -529,15 +627,17 @@
                 ${(name && name[0]) || '?'}
               </div>
               <div class="leading-tight">
-                <div class="text-sm font-medium text-gray-800" title="username">
+                <div class="text-sm font-medium text-gray-800 flex items-center gap-1" title="username">
                   ${name || '<span class="text-gray-500">Not provided</span>'}
+                  ${verifyButtonHtml}
                 </div>
+    
                 <div class="text-xs text-gray-500" title="company name">
                   ${company || '—'}
                 </div>
               </div>
             </div>
-
+    
             <div class="flex flex-col md:flex-row md:items-center md:gap-5 gap-2 md:ml-auto">
               <div class="flex flex-wrap items-center gap-3 text-xs text-gray-600">
                 <div class="flex items-center gap-1" title="email">
@@ -549,44 +649,47 @@
                   <div>${phone && phone.trim() ? phone : '<span class="text-gray-400">Not provided</span>'}</div>
                 </div>
                 <div class="flex items-center gap-1" title="mood">
-                  ${svgIcons.mood}
                   <div>${getMoodEmoji(mood)}</div>
                 </div>
+    
                 <div class="flex items-center gap-1" title="interest">
                   ${svgIcons.interest}
                   <div>${getInterestDisplay(interest)}</div>
                 </div>
               </div>
+    
               <button
                 class="toggle-extra-btn flex items-center gap-1 text-gray-500 hover:text-gray-700 text-xs font-medium focus:outline-none transition-transform duration-300 self-end md:self-auto"
               >
                 <span>More</span>
                 <span class="arrow-icon transform transition-transform duration-300"><svg class="mt-[2px]" fill="currentColor" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-	 width="8" height="8" viewBox="0 0 30.727 30.727"
-	 xml:space="preserve">
-<g>
-	<path d="M29.994,10.183L15.363,24.812L0.733,10.184c-0.977-0.978-0.977-2.561,0-3.536c0.977-0.977,2.559-0.976,3.536,0
-		l11.095,11.093L26.461,6.647c0.977-0.976,2.559-0.976,3.535,0C30.971,7.624,30.971,9.206,29.994,10.183z"/>
-</g>
-</svg></span>
+          width="8" height="8" viewBox="0 0 30.727 30.727"
+          xml:space="preserve">
+        <g>
+          <path d="M29.994,10.183L15.363,24.812L0.733,10.184c-0.977-0.978-0.977-2.561,0-3.536c0.977-0.977,2.559-0.976,3.536,0
+            l11.095,11.093L26.461,6.647c0.977-0.976,2.559-0.976,3.535,0C30.971,7.624,30.971,9.206,29.994,10.183z"/>
+        </g>
+        </svg></span>
               </button>
             </div>
           </div>
-
+    
           <div class="extra-info hidden border-t border-gray-100 mt-3 pt-3 text-sm text-gray-600">
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-    ${lead_company ? `<div><strong>Company:</strong> ${lead_company}</div>` : ''}
-    ${lead_email ? `<div><strong>Email:</strong> ${lead_email}</div>` : ''}
-    ${lead_email_domain ? `<div><strong>Email Domain:</strong> ${lead_email_domain}</div>` : ''}
-    ${lead_role ? `<div><strong>Role:</strong> ${lead_role}</div>` : ''}
-    ${lead_categories ? `<div><strong>Categories:</strong> ${lead_categories}</div>` : ''}
-    ${lead_services ? `<div><strong>Services:</strong> ${lead_services}</div>` : ''}
-    ${lead_activity ? `<div><strong>Activity:</strong> ${lead_activity}</div>` : ''}
-    ${lead_timeline ? `<div><strong>Timeline:</strong> ${lead_timeline}</div>` : ''}
-    ${lead_budget ? `<div><strong>Budget:</strong> ${lead_budget}</div>` : ''}
-  </div>
-</div>
-
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            ${company ? `<div><strong>Company:</strong> ${company}</div>` : ''}
+            ${email ? `<div><strong>Email:</strong> ${email}</div>` : ''}
+            ${lead_email_domain ? `<div><strong>Email Domain:</strong> ${lead_email_domain}</div>` : ''}
+            ${lead_role ? `<div><strong>Role:</strong> ${lead_role}</div>` : ''}
+            ${lead_categories ? `<div><strong>Categories:</strong> ${lead_categories}</div>` : ''}
+            ${lead_services ? `<div><strong>Services:</strong> ${lead_services}</div>` : ''}
+            ${lead_activity ? `<div><strong>Activity:</strong> ${lead_activity}</div>` : ''}
+            ${lead_timeline ? `<div><strong>Timeline:</strong> ${lead_timeline}</div>` : ''}
+            ${lead_budget ? `<div><strong>Budget:</strong> ${lead_budget}</div>` : ''}
+          </div>
+          ${verifiedSection}
+        </div>
+    
+        </div>
       `;
     
       const userInfoContainer = document.getElementById("user-info");
@@ -603,6 +706,186 @@
         arrowIcon.classList.toggle('rotate-180');
       });
     
+      // ------- Verification button logic -------
+      const verifyBtn = userInfoContainer.querySelector('#verifyBtn');
+      const verifiedBadge = userInfoContainer.querySelector('#verifiedBadge');
+    
+      if (verifyBtn) {
+        verifyBtn.addEventListener('click', async (e) => {
+          // Prepare UI: disable and show spinner + "Verifying..."
+          verifyBtn.disabled = true;
+          verifyBtn.setAttribute('aria-disabled', 'true');
+          verifyBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+          verifyBtn.classList.add('bg-gray-100', 'text-black', 'border', 'border-gray-200', 'cursor-not-allowed');
+      
+          // Inject spinner + text (keeps button size stable)
+          verifyBtn.innerHTML = `
+            <svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <span class="verify-text">Verifying...</span>
+          `;
+      
+          try {
+            // Check for insufficient details and show warning if needed
+            const trimmedName = (name || '').trim();
+            const trimmedEmail = (email || '').trim();
+            const trimmedCompany = (company || '').trim();
+      
+            if (!trimmedName && !trimmedEmail) {
+              await showWarning("Verification cannot be accurate without both name and email. Proceed anyway?");
+            } else if (!trimmedCompany) {
+              await showWarning("Company name is missing. Verification may be less accurate. Continue?");
+            }
+      
+            // Proceed with verification only if no cancel or after proceed
+            const payload = {
+              id: id,
+              name: trimmedName,
+              email: trimmedEmail,
+              lead_role: lead_role || '',
+              company: trimmedCompany
+            };
+      
+            const resp = await fetch('/api/verify/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload),
+            });
+      
+            // Try to parse response JSON if available
+            let respJson = null;
+            try { respJson = await resp.clone().json(); } catch (err) { /* ignore parse errors */ }
+      
+            if (resp.ok) {
+              // Successful verification (existing logic unchanged)
+              const newVerified = respJson.updated_data.verified;
+              const newConfidence = respJson.updated_data.confidence;
+              const newEvidence = respJson.updated_data.evidence;
+              const newSources = respJson.updated_data.sources;
+              verifyBtn.innerHTML = `Verification Done`;
+              verifyBtn.className = 'ml-3 inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-medium bg-green-100 text-green-800 border border-green-200';
+              verifyBtn.disabled = true;
+              verifyBtn.setAttribute('aria-disabled', 'true');
+      
+              // Update the verified badge area to reflect verified state
+              if (verifiedBadge) {
+                verifiedBadge.innerHTML = `
+                  <span class="inline-flex items-center text-blue-600 text-xs font-medium" title="Verified">
+                    <svg class="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-10.707a1 1 0 00-1.414-1.414L9 8.586 7.707 7.293a1 1 0 00-1.414 1.414L9 11.414l4.707-4.121z" clip-rule="evenodd"/></svg>
+                    Verified
+                  </span>
+                `;
+              }
+              // Update extra-info with new verified details (existing logic unchanged)
+              if (extraInfo) {
+                const newStatus = newVerified === "true" ? "Verified" : "Not Verified";
+                const newConf = newConfidence ? `<div><strong>Confidence:</strong> ${newConfidence}</div>` : '';
+                const newEvi = newEvidence ? `<div class="md:col-span-2"><strong>Evidence:</strong> ${newEvidence}</div>` : '';
+                let newSrcHtml = '';
+                if (newSources && newSources !== "[]") {
+                  try {
+                    const srcList = JSON.parse(newSources);
+                    newSrcHtml = `
+                      <div class="md:col-span-2">
+                        <strong class="block mb-3 text-gray-800 text-sm uppercase tracking-wide">Sources</strong>
+                        <div class="flex flex-wrap gap-3">
+                          ${srcList.map(url => {
+                            const domain = new URL(url).hostname.replace('www.', '');
+                            const favicon = `https://www.google.com/s2/favicons?sz=64&domain_url=${domain}`;
+                            return `
+                              <a href="${url}" target="_blank"
+                                 title="${url}"
+                                 class="group relative flex items-center overflow-hidden rounded-full border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 hover:pr-4">
+                                <!-- Favicon Circle -->
+                                <div class="flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 border border-gray-200 group-hover:bg-blue-50 transition-all duration-300">
+                                  <img src="${favicon}" alt="${domain}" class="w-5 h-5">
+                                </div>
+                                <!-- Expanding Domain Label -->
+                                <div class="max-w-0 opacity-0 group-hover:max-w-xs group-hover:opacity-100 overflow-hidden transition-all duration-500 ease-in-out pl-3 pr-2">
+                                  <span class="text-sm font-medium text-gray-800 whitespace-nowrap">${domain}</span>
+                                </div>
+                                <!-- Link Icon -->
+                                <svg class="w-4 h-4 text-gray-400 ml-1 opacity-0 group-hover:opacity-100 transition-all duration-500" fill="currentColor" viewBox="0 0 24 24" id="up-right" data-name="Flat Line" xmlns="http://www.w3.org/2000/svg" class="icon flat-line"><line id="primary" x1="18.36" y1="5.64" x2="5" y2="19" style="fill: none; stroke: rgb(0, 0, 0); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></line><polyline id="primary-2" data-name="primary" points="9 5 19 5 19 14.9" style="fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></polyline></svg>
+                              </a>
+                            `;
+                          }).join('')}
+                        </div>
+                      </div>
+                    `;
+                  } catch (err) {
+                    console.error("Failed to parse sources:", err);
+                  }
+                }
+                const newVerifiedSection = `
+                  <div class="mt-3 pt-3 border-t border-gray-100">
+                    <h5 class="font-medium text-gray-700 mb-2">Verification Details</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      <div><strong>Status:</strong> ${newStatus}</div>
+                      ${newConf}
+                      ${newEvi}
+                      ${newSrcHtml}
+                    </div>
+                  </div>
+                `;
+                let fullNewContent = '<div class="grid grid-cols-1 md:grid-cols-2 gap-2">';
+                if (company) fullNewContent += `<div><strong>Company:</strong> ${company}</div>`;
+                if (email) fullNewContent += `<div><strong>Email:</strong> ${email}</div>`;
+                if (lead_email_domain) fullNewContent += `<div><strong>Email Domain:</strong> ${lead_email_domain}</div>`;
+                if (lead_role) fullNewContent += `<div><strong>Role:</strong> ${lead_role}</div>`;
+                if (lead_categories) fullNewContent += `<div><strong>Categories:</strong> ${lead_categories}</div>`;
+                if (lead_services) fullNewContent += `<div><strong>Services:</strong> ${lead_services}</div>`;
+                if (lead_activity) fullNewContent += `<div><strong>Activity:</strong> ${lead_activity}</div>`;
+                if (lead_timeline) fullNewContent += `<div><strong>Timeline:</strong> ${lead_timeline}</div>`;
+                if (lead_budget) fullNewContent += `<div><strong>Budget:</strong> ${lead_budget}</div>`;
+                fullNewContent += '</div>' + newVerifiedSection;
+                extraInfo.innerHTML = fullNewContent;
+              }
+            } else {
+              // Server returned an error status (existing logic unchanged)
+              const errMsg = (respJson && respJson.error) ? respJson.error : `HTTP ${resp.status}`;
+              verifyBtn.innerHTML = `<span class="verify-text">Verification failed</span>`;
+              verifyBtn.className = 'ml-3 inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-medium bg-red-100 text-red-700 border border-red-200';
+              // allow retry
+              verifyBtn.disabled = false;
+              verifyBtn.removeAttribute('aria-disabled');
+              // keep a small delay to show failure state clearly, then allow retry text
+              setTimeout(() => {
+                const txt = userInfoContainer.querySelector('.verify-text');
+                if (txt) txt.textContent = 'Retry';
+                verifyBtn.className = 'ml-3 inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 focus:outline-none transition';
+              }, 1400);
+              console.error('Verification failed:', errMsg);
+            }
+          } catch (err) {
+            // Handle cancellation or other errors
+            console.error('Verification process error:', err);
+            if (err.message === 'cancelled') {
+              // Reset button on cancel
+              verifyBtn.innerHTML = `<span class="verify-text">Verify</span>`;
+              verifyBtn.classList.remove('bg-gray-100', 'text-gray-700', 'border', 'border-gray-200', 'cursor-not-allowed');
+              verifyBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+              verifyBtn.disabled = false;
+              verifyBtn.removeAttribute('aria-disabled');
+              return; // Stop execution on cancel
+            }
+            // For non-cancellation errors, show failure and allow retry (similar to network error below)
+            verifyBtn.innerHTML = `<span class="verify-text">Verification failed</span>`;
+            verifyBtn.className = 'ml-3 inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-medium bg-red-100 text-red-700 border border-red-200';
+            verifyBtn.disabled = false;
+            verifyBtn.removeAttribute('aria-disabled');
+            setTimeout(() => {
+              const txt = userInfoContainer.querySelector('.verify-text');
+              if (txt) txt.textContent = 'Retry';
+              verifyBtn.className = 'ml-3 inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 focus:outline-none transition';
+            }, 1400);
+          }
+        });
+      }
+    
       // --- Rest of your logic ---
       document.getElementById('inputArea').style.display = mode === 'control' ? 'block' : 'none';
     
@@ -616,6 +899,7 @@
       document.getElementById('messagesContainer').innerHTML = '';
       connectWebSocket();
     }
+    
     
 
     function closeChat() {
@@ -658,10 +942,14 @@
           if (data.type === 'history') {
             renderMessages(data.messages || []);
           } else if (data.type === 'message') {
-            addMessage(data);
-          } else if (data.type === 'status') {
-            updateStatus(data.status);
-          } else if (data.type === 'handover') {
+            
+            if (data.role === 'admin' && data.content === lastSentContent) {
+              console.log('Skipping duplicate admin message echo');
+              return;  
+            }
+            addMessage(data); 
+          }
+          else if (data.type === 'handover') {
             addMessage({ role: 'system', content: data.content, timestamp: new Date().toISOString() });
           }
         };
@@ -674,9 +962,7 @@
               reconnectAttempts++;
               connectWebSocket();
             }, 1000 * reconnectAttempts);
-          } else {
-            updateStatus('Disconnected');
-          }
+          } 
         };
 
         currentWs.onerror = (error) => {
@@ -792,24 +1078,19 @@
       container.scrollTop = container.scrollHeight;
     }
 
-    function updateStatus(status) {
-      const statusEl = document.getElementById('statusIndicator');
-      statusEl.textContent = `Status: ${status}`;
-      statusEl.className = 'text-xs text-gray-600';
-    }
 
     function sendMessage() {
       if (currentMode !== 'control') return;
       const input = document.getElementById('messageInput');
       const content = input.value.trim();
       if (content && currentWs) {
+        lastSentContent = content;
         currentWs.send(JSON.stringify({ type: 'message', content }));
         input.value = '';
-      
-        addMessage({ role: 'assistant', content: content, timestamp: new Date().toISOString(), name: 'Admin' });
+        addMessage({ role: 'admin', content: content, timestamp: new Date().toISOString(), name: 'Admin' });
+        setTimeout(() => { lastSentContent = null; }, 1000);
       }
     }
-
     function handover() {
       if (currentMode !== 'control' || !currentWs) return;
       currentWs.send(JSON.stringify({ type: 'handover' }));
@@ -823,6 +1104,28 @@
     function closeModal() {
       document.getElementById('metricsModal').style.display = 'none';
       destroyCharts();
+    }
+
+    function closeWarningModal() {
+      document.getElementById('warningModal').style.display = 'none';
+    }
+    
+    function showWarning(message) {
+      return new Promise((resolve, reject) => {
+        document.getElementById('warningMessage').textContent = message;
+        document.getElementById('warningModal').style.display = 'flex';
+    
+        const cancelBtn = document.getElementById('cancelBtn');
+        const proceedBtn = document.getElementById('proceedBtn');
+        const closeAndCleanup = () => {
+          document.getElementById('warningModal').style.display = 'none';
+          cancelBtn.onclick = null;
+          proceedBtn.onclick = null;
+        };
+    
+        cancelBtn.onclick = () => { closeAndCleanup(); reject(new Error('cancelled')); };
+        proceedBtn.onclick = () => { closeAndCleanup(); resolve(); };
+      });
     }
 
     async function showMetrics(sessionId) {

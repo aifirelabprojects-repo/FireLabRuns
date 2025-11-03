@@ -19,3 +19,5 @@ uvicorn[standard]
 websockets
 wsproto
 langchain-openai
+fuzzywuzzy
+aiohttp

@@ -1,30 +1,26 @@
 import math
 import os
-import shutil
 import uuid
 import json
 import asyncio
 import re
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Set, Optional
-from fastapi import Depends, FastAPI, File, Request, UploadFile, Form, WebSocket, WebSocketDisconnect, Query, HTTPException
-from fastapi.responses import JSONResponse
+from typing import Any, Dict, List, Set
+from fastapi import Depends, FastAPI, Request, WebSocket, WebSocketDisconnect, Query, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface.embeddings import HuggingFaceEmbeddings
-from langchain_community.docstore.document import Document
 from openai import OpenAI, APIError, AuthenticationError, RateLimitError
-from PyPDF2 import PdfReader
 from starlette.concurrency import run_in_threadpool
 from dotenv import load_dotenv
 from sqlalchemy import create_engine,func
 from sqlalchemy.orm import Session as DBSession
+from VerifyUser import VerifyUser
 from database import SessionLocal, Session as SessionModel, Message as MessageModel, get_db, init_db 
 from prompt import AnalytxPromptTemp
 from collections import defaultdict
 from CompanyFinder import FindTheComp
+from FindUser import find_existing_customer
+from pydantic import BaseModel
 #langchain imports
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -135,31 +131,31 @@ _MAIN_CATEGORIES="""MAIN_CATEGORIES = [
 
 _SUB_SERVICES = """SUB_SERVICES = {
             "Market Entry & Business Setup": [
-            {"text": "Business Setup Saudi Arabia", "value": "setup_sa"},
-            {"text": "Business Setup in other GCC (UAE, Qatar, etc.)", "value": "setup_gcc"},
-            {"text": "Premium Residency & Investor Visas", "value": "visas"},
-            {"text": "Entrepreneur License (IT & Tech Services)", "value": "entrepreneur_license"},
-            {"text": "Virtual Office & Business Center", "value": "virtual_office"}
+            {"text": "Business Setup Saudi Arabia", "value": "Business Setup Saudi Arabia"},
+            {"text": "Business Setup in other GCC (UAE, Qatar, etc.)", "value": "Business Setup in other GCC"},
+            {"text": "Premium Residency & Investor Visas", "value": "Premium Residency & Investor Visas"},
+            {"text": "Entrepreneur License (IT & Tech Services)", "value": "Entrepreneur License (IT & Tech Services)"},
+            {"text": "Virtual Office & Business Center", "value": "Virtual Office & Business Center"}
             ],
             "Strategic Growth & Management": [
-            {"text": "Management Consultancy (Business Restructuring, Market Strategy, M&A)", "value": "consultancy"},
-            {"text": "Vendor Registration & Certification (for NEOM, Aramco, etc.)", "value": "vendor_reg"},
-            {"text": "HR & Talent Solutions (Recruitment, EOR, Training)", "value": "hr_solutions"}
+            {"text": "Management Consultancy (Business Restructuring, Market Strategy, M&A)", "value": ""Management Consultancy"},
+            {"text": "Vendor Registration & Certification (for NEOM, Aramco, etc.)", "value": "Vendor Registration & Certification"},
+            {"text": "HR & Talent Solutions (Recruitment, EOR, Training)", "value": ""HR & Talent Solutions"}
             ],
             "Financial Services & Compliance": [
-            {"text": "Accounting & Bookkeeping", "value": "accounting"},
-            {"text": "Tax Consulting & Audit", "value": "tax_audit"},
-            {"text": "Bank Account & Finance Assistance", "value": "finance_assist"}
+            {"text": "Accounting & Bookkeeping", "value": "Accounting & Bookkeeping"},
+            {"text": "Tax Consulting & Audit", "value": "Tax Consulting & Audit"},
+            {"text": "Bank Account & Finance Assistance", "value": "Bank Account & Finance Assistance"}
             ],
             "Industrial & Specialized Operations": [
-            {"text": "Industrial License & Factory Setup", "value": "industrial_license"},
-            {"text": "ISO & Local Content Certification", "value": "iso_cert"},
-            {"text": "Technology & Process Automation", "value": "automation"}
+            {"text": "Industrial License & Factory Setup", "value": "Industrial License & Factory Setup"},
+            {"text": "ISO & Local Content Certification", "value": "ISO & Local Content Certification"},
+            {"text": "Technology & Process Automation", "value": "Technology & Process Automation"}
             ],
             "Legal & Business Protection": [
-            {"text": "Legal Advisory & Contract Drafting", "value": "legal_advisory"},
-            {"text": "Debt Recovery & Dispute Resolution", "value": "debt_recovery"},
-            {"text": "Trademark Registration", "value": "trademark"}
+            {"text": "Legal Advisory & Contract Drafting", "value": "Legal Advisory & Contract Drafting"},
+            {"text": "Debt Recovery & Dispute Resolution", "value": "Debt Recovery & Dispute Resolution"},
+            {"text": "Trademark Registration", "value": "Trademark Registration"}
             ]
             }"""
 
@@ -187,7 +183,7 @@ llm = ChatOpenAI(
     model=MODEL_NAME,
     api_key=OPENAI_API_KEY,
     temperature=0.0,
-    max_tokens=800,
+    max_tokens=1000,
     model_kwargs={"response_format": {"type": "json_object"}} 
 )
 
@@ -212,86 +208,59 @@ MAIN_CATEGORIES = []
 SUB_SERVICES = {}  
 TIMELINE_OPTIONS = []  
 BUDGET_RANGES = ""  
-SERVICE_BENEFITS = {
-    "setup_sa": "complete full business setup in under 30 days",
-    "setup_gcc": "expand seamlessly across GCC with unified compliance",
-    "trademark": "protect their brand and avoid costly legal disputes",
-    "pro_services": "save 40+ hours/month on government paperwork",
-    "visa_relocation": "relocate key talent in 2 weeks with zero delays",
-    "virtual_office": "establish a Saudi address instantly at 1/10th the cost",
-    "consulting_strategy": "increase revenue by 25% in the first year",
-    "marketing_digital": "secure government tenders through targeted campaigns",
-    "hr_talent": "meet Saudization goals without compromising quality",
-    "tech_implementation": "deploy ERP systems with 99% uptime",
-    "factory_setup": "launch industrial operations within 90 days",
-    "vendor_reg": "get approved on major vendor lists in 2 weeks",
-    "legal_advisory": "avoid fines up to SAR 100k with full compliance",
-    "financial_audit": "pass ZATCA audits on first attempt",
-    "tax_compliance": "reduce tax liability by 15-20% legally",
-    "accelerator": "raise funding 3x faster through Vision 2030 programs",
-    "feasibility": "validate market entry with 95% accuracy",
-    "funding_assist": "secure up to SAR 5M in non-dilutive grants"
-}
 
 
-def simulate_company_enrichment(company: str, question: str) -> str:
-    """
-    Dummy function to simulate company data enrichment.
-    Replace with a real enrichment API in the future.
-    """
-    company_lower = company.lower().strip()
 
-    dummy_data = {
-        "infratech": {
-            "industry": "Infrastructure & Construction",
-            "size": "500–1000 employees",
-            "headquarters": "Mumbai, India",
-            "branches": "12 offices across India"
-        },
-        "techsoft": {
-            "industry": "Software Development",
-            "size": "200–500 employees",
-            "headquarters": "Bangalore, India",
-            "branches": "5 global locations"
-        },
-        "medilife": {
-            "industry": "Healthcare & Biotechnology",
-            "size": "1000–5000 employees",
-            "headquarters": "Hyderabad, India",
-            "branches": "8 offices across India"
-        }
-    }
-
-    if company_lower in dummy_data:
-        data = dummy_data[company_lower]
-        enrichment = (
-            f"Fetched details about user company: {company} operates in the {data['industry']} industry. "
-            f"They have about {data['size']}, headquartered in {data['headquarters']}, "
-            f"and around {data['branches']}."
-        )
-    else:
-        enrichment = ""
-
-    return enrichment
-
-def get_bot_response(question: str, current_details: Dict[str, Any], session_id: str = "transient") -> Dict[str, Any]:
-    if current_details is None:
-        current_details = {}
+def get_bot_response(question: str, session_obj: SessionModel, session_id: str = "transient") -> Dict[str, Any]:
 
     # Extract state from current_details
-    phase = current_details.get("phase", "initial")
-    lead_data = current_details.get("lead_data", {})
-    details = current_details.get("details", {})
-
-    company = lead_data.get("q1_company")
-    print(company)
-    enrichment = ""
-
-    company_name = lead_data.get("q1_company")  
+    phase = session_obj.phase if session_obj.phase else "initial"
+    routing = session_obj.routing
+    customer_enrichment = None
+    fetch_trigger_phases = ["existing_fetch","snip_q0"]
+    if phase in fetch_trigger_phases and session_obj.q1_company is None:
+        customer_enrichment,kind = asyncio.run(find_existing_customer(question))
+        print(customer_enrichment)
+        if customer_enrichment:
+            session_obj.q1_email=customer_enrichment["email"]
+            session_obj.q1_company=customer_enrichment["company"]
+            session_obj.q2_role=customer_enrichment["role"]
+            session_obj.q3_categories=customer_enrichment["categories"]
+            session_obj.q4_services=customer_enrichment["services"]
+            session_obj.q5_activity=customer_enrichment["activity"]
+            session_obj.q6_timeline=customer_enrichment["timeline"]
+            session_obj.q7_budget=customer_enrichment["budget"]
+            session_obj.username=customer_enrichment["username"]
+            session_obj.mobile=customer_enrichment["mobile"]
+            session_obj.routing = "cre"  
+            session_obj.phase = "routing"  
+            routing = "cre"  
+        else:
+            if phase == "initial":
+                phase = "existing_fetch"
+                session_obj.phase = "existing_fetch"
+                
+    enrichment = None
+    company_name = session_obj.q1_company
     if company_name is None and phase in ("snip_q1", "snip_q2", "snip_q2a"):
         enrichment = FindTheComp(question)
+        print(enrichment)
 
-
+    lead_data =json.dumps({
+                "name": session_obj.username,
+                "phone": session_obj.mobile,
+                "phase": session_obj.phase,
+                "routing": session_obj.routing,
+                "lead_company": session_obj.q1_company,
+                "lead_email": session_obj.q1_email,
+                "lead_email_domain": session_obj.q1_email_domain,
+                "lead_role":session_obj.q2_role,
+                "lead_categories":session_obj.q3_categories,
+                "lead_services":session_obj.q4_services,
+                "lead_activity":session_obj.q5_activity,
+                "lead_timeline":session_obj.q6_timeline,
+                "lead_budget":session_obj.q7_budget 
+                })
         
     options=[]
     context_parts = []
@@ -310,7 +279,7 @@ def get_bot_response(question: str, current_details: Dict[str, Any], session_id:
             # main_cats = query_vectorstore("MAIN_CATEGORIES for services")
             main_cats = _SUB_SERVICES
             context_parts.append(main_cats)
-        if phase == "snip_q4" and "q4_services" in lead_data:
+        if phase == "snip_q4" and session_obj.q4_services:
                 print("\n\n\nentered in phase q4")
         elif phase == "snip_q5":
             context_parts.append(_TIMELINE_OPTIONS)
@@ -323,8 +292,9 @@ def get_bot_response(question: str, current_details: Dict[str, Any], session_id:
         pass  
     context = "\n".join(context_parts)
     print("\n\nphase:",phase,"\n")
-
-    input_text=f"""Current state from session: Phase='{phase}', Lead Data={json.dumps(lead_data)}, Known Details={json.dumps(details)}
+    ScrapedDet = enrichment if enrichment else ""
+    EnrData = f"Existing Customer Data (if applicable): {json.dumps(lead_data)}" if routing == "cre" else " "
+    input_text=f"""Current state from session: Phase='{phase}'
                     Dynamic Options (ALWAYS include full array in JSON if relevant to phase; weave into answer naturally)
                     You must:
                     1. Advance/follow the SNIP flow based on phase and user input. Update lead_data (e.g., 'q1_company': 'value').
@@ -336,8 +306,9 @@ def get_bot_response(question: str, current_details: Dict[str, Any], session_id:
                     7. Query vectorstore for services/categories dynamically.
                     8. Return STRICTLY valid JSON ONLY—no extra text. Use EXACT format provided.
                     9. Use contractions ("you're", "we'll"), occasional emojis (like 😊), and a conversational tone.
-
+                    {ScrapedDet}
                     Context (from vectorstore—use for services, benefits, company data): {context}
+                    {EnrData}
                     User Question/Input: {question}
                 """.strip()
                 
@@ -379,7 +350,7 @@ def get_bot_response(question: str, current_details: Dict[str, Any], session_id:
                 "analysis": {
                     "interest": "unknown",
                     "mood": "unknown",
-                    "details": {"name": "unknown", "email": "unknown", "phone": "unknown", "company": "unknown"}
+                    
                 }
             }
     except Exception as lc_err:
@@ -416,7 +387,7 @@ def get_bot_response(question: str, current_details: Dict[str, Any], session_id:
                         "analysis": {
                             "interest": "unknown",
                             "mood": "unknown",
-                            "details": {"name": "unknown", "email": "unknown", "phone": "unknown", "company": "unknown"}
+                            
                         }
                     }
         except AuthenticationError as e:
@@ -501,6 +472,7 @@ def insert_user_message(session_id: str, content: str):
     finally:
         db.close()
 
+
 def handle_bot_response(session_id: str, question: str) -> Dict[str, Any]:
     db = SessionLocal()
     try:
@@ -509,40 +481,28 @@ def handle_bot_response(session_id: str, question: str) -> Dict[str, Any]:
         if not session_obj:
             raise ValueError(f"Session {session_id} not found")
 
-        current_details = json.loads(session_obj.details) if session_obj.details else {
+        current_details =  {
             "phase": "initial",
             "lead_data": {},
             "details": {}
         }
 
-        response_data = get_bot_response(question, current_details, session_id)
+        response_data = get_bot_response(question, session_obj, session_id)
+
+        # Extract main response components
         answer = response_data.get("answer", "")
         options = response_data.get("options", [])
-        next_phase = response_data.get("phase", current_details.get("phase", "initial"))
-        lead_data = response_data.get("lead_data", current_details.get("lead_data", {}))
-        routing = response_data.get("routing", current_details.get("routing", "none"))
+        next_phase = response_data.get("phase", session_obj.phase)
+        lead_data = response_data.get("lead_data", {}) or {}
+        routing = response_data.get("routing", session_obj.routing)
 
-        # Safe handling of analysis
+        # Extract analysis safely
         analysis = response_data.get("analysis") or {}
         interest = analysis.get("interest", "medium")
         mood = analysis.get("mood", "neutral")
-        details_update = analysis.get("details", {})
 
-        # Merge details
-        details = {**current_details.get("details", {}), **details_update}
-        for k, v in details_update.items():
-            if details.get(k) == "unknown" or v != "unknown":
-                details[k] = v
 
-        updated_details = {
-            **current_details,
-            "phase": next_phase,
-            "lead_data": lead_data,
-            "details": details,
-            "routing": routing if routing != "none" else current_details.get("routing", "none")
-        }
-
-        # Add bot message
+        # Create a bot message
         bot_message = MessageModel(
             session_id=session_id,
             role="bot",
@@ -553,16 +513,53 @@ def handle_bot_response(session_id: str, question: str) -> Dict[str, Any]:
         )
         db.add(bot_message)
 
-        # Update session
-        session_obj.details = json.dumps(updated_details)
+        # --- Clean and save lead_data safely ---
+        lead_fields = [
+            "q1_company",
+            "q1_email",
+            "q1_email_domain",
+            "q2_role",
+            "q3_categories",  
+            "q4_services",
+            "q5_activity",
+            "q6_timeline",
+            "q7_budget",
+            "username",
+            "mobile"
+        ]
+
+        for field in lead_fields:
+            if field in lead_data:
+                val = lead_data.get(field)
+
+                # Convert list → comma-separated string
+                if isinstance(val, list):
+                    val = ", ".join(str(v).strip() for v in val if str(v).strip())
+
+                # Skip None or empty/whitespace values
+                if val is None or (isinstance(val, str) and val.strip() == ""):
+                    continue
+
+                # Set cleaned value if the model has this attribute
+                if hasattr(session_obj, field):
+                    try:
+                        setattr(session_obj, field, str(val).strip())
+                    except Exception:
+                        pass  # avoid crash if unexpected type
+
         session_obj.interest = interest
         session_obj.mood = mood
         session_obj.phase = next_phase
-        session_obj.routing = routing
+        if routing != "none":
+            session_obj.routing = routing
         session_obj.updated_at = datetime.utcnow()
         session_obj.status = "active"
 
+        db.add(session_obj)
         db.commit()
+
+        # Response payload
+        bot_ts = bot_message.timestamp.isoformat() if getattr(bot_message, "timestamp", None) else datetime.utcnow().isoformat()
 
         return {
             "answer": answer,
@@ -571,13 +568,15 @@ def handle_bot_response(session_id: str, question: str) -> Dict[str, Any]:
             "lead_data": lead_data,
             "routing": routing,
             "analysis": analysis,
-            "bot_ts": bot_message.timestamp.isoformat()
+            "bot_ts": bot_ts
         }
+
     except Exception:
         db.rollback()
         raise
     finally:
         db.close()
+
 
 
 
@@ -698,20 +697,6 @@ def get_sessions(
             except Exception:
                 details_json = {}
 
-            inner_details = details_json.get("details", {})
-            lead_data = details_json.get("lead_data", {})
-
-            # Backward compatibility (old data may not have nested dict)
-            name = inner_details.get("name") or details_json.get("name", "Unknown")
-            usr_email = inner_details.get("email") or details_json.get("email", "Unknown")
-            usr_phone = inner_details.get("phone") or details_json.get("phone", "Unknown")
-            usr_company = inner_details.get("company") or details_json.get("company", "Unknown")
-            
-            lead_company = lead_data.get("q1_company") or details_json.get("q1_company") or None
-            lead_email = lead_data.get("q1_email") or details_json.get("q1_email") or None
-            phase = details_json.get("phase", "unknown")
-            routing = details_json.get("routing", "none")
-
             # Get messages for this session from grouped data
             msg_rows = messages_by_session.get(sess.id, [])
 
@@ -769,25 +754,26 @@ def get_sessions(
                 "id": sess.id,
                 "created_at": sess.created_at,
                 "status": sess.status,
+                "verified": sess.verified,
+                "confidence": sess.confidence,
+                "evidence": sess.evidence,
+                "sources": sess.sources,
                 "interest": overall_interest_label,
                 "mood": overall_mood_label,
-                "name": name,
-                "usr_email": usr_email,
-                "usr_phone": usr_phone,
-                "usr_company": usr_company,
-                "phase": phase,
-                "routing": routing,
+                "name": sess.username,
+                "usr_phone": sess.mobile,
+                "phase": sess.phase,
+                "routing": sess.routing,
                 "last_message": last_msg,
-                
-                "lead_company": lead_company,
-                "lead_email": lead_email,
-                "lead_email_domain": lead_data.get("q1_email_domain") or details_json.get("q1_email_domain") or None,
-                "lead_role": lead_data.get("q2_role") or details_json.get("q2_role") or None,
-                "lead_categories": lead_data.get("q3_categories") or details_json.get("q3_categories") or None,
-                "lead_services": lead_data.get("q4_services") or details_json.get("q4_services") or None,
-                "lead_activity": lead_data.get("q5_activity") or details_json.get("q5_activity") or None,
-                "lead_timeline": lead_data.get("q6_timeline") or details_json.get("q6_timeline") or None,
-                "lead_budget": lead_data.get("q7_budget") or details_json.get("q7_budget") or None,
+                "lead_company": sess.q1_company,
+                "lead_email": sess.q1_email,
+                "lead_email_domain": sess.q1_email_domain,
+                "lead_role":sess.q2_role,
+                "lead_categories":sess.q3_categories,
+                "lead_services":sess.q4_services,
+                "lead_activity":sess.q5_activity,
+                "lead_timeline":sess.q6_timeline,
+                "lead_budget":sess.q7_budget,
             })
 
         pages = math.ceil(total / per_page)
@@ -963,10 +949,6 @@ async def admin_home(request: Request, db = Depends(get_db)):
 @app.websocket("/ws/chat/{session_id}")
 async def websocket_chat(websocket: WebSocket, session_id: str):
     await manager.connect(websocket, session_id)
-    try:
-        await websocket.accept()
-    except RuntimeError:
-        pass
     await manager.send_history(session_id, websocket)
     try:
         while True:
@@ -1041,7 +1023,6 @@ async def websocket_view(websocket: WebSocket, session_id: str):
 
 @app.websocket("/ws/control/{session_id}")
 async def websocket_control(websocket: WebSocket, session_id: str):
-    # --- Sync DB helpers (run inside run_in_threadpool) ---
     def set_admin_status(session_id: str):
         db: DBSession = SessionLocal()
         try:
@@ -1071,10 +1052,7 @@ async def websocket_control(websocket: WebSocket, session_id: str):
             db.close()
 
     def insert_admin_message(session_id: str, content: str) -> str:
-        """
-        Inserts an admin message and updates session.updated_at.
-        Returns ISO timestamp string for broadcasting.
-        """
+
         db: DBSession = SessionLocal()
         try:
             ts = datetime.utcnow()
@@ -1116,8 +1094,6 @@ async def websocket_control(websocket: WebSocket, session_id: str):
             # swallow errors similar to original finally block behavior
         finally:
             db.close()
-
-    # --- Main websocket flow ---
     try:
         # Set session status = 'admin' (blocking DB op)
         try:
@@ -1169,16 +1145,61 @@ async def websocket_control(websocket: WebSocket, session_id: str):
                     }
                     await manager.broadcast(json.dumps(admin_msg), session_id)
                 except Exception:
-                    # swallow DB/broadcast errors (same as original)
+                    # swallow DB/broadcast errors 
                     pass
-
-            # ignore other types (same as original)
-
     except WebSocketDisconnect:
-        # client disconnected; fall through to finally
         pass
     finally:
-        # restore session status -> active (best-effort)
+        # restore session status -> active 
         await run_in_threadpool(lambda: set_active_status(session_id))
         await manager.broadcast(json.dumps({"type": "status", "status": "active"}), session_id)
         manager.disconnect(websocket, session_id)
+        
+
+class VerifyPayload(BaseModel):
+    id: str
+    name: str = ""
+    email: str = ""
+    lead_role: str = ""
+    company: str = ""
+
+@app.post("/api/verify/")
+async def verify_user(payload: VerifyPayload, db: DBSession = Depends(get_db)):
+    company = payload.company
+    role = payload.lead_role
+    username = payload.name
+    email = payload.email
+
+    result, sources = await VerifyUser(company, role, username, email)
+    print(result)
+
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=500, detail=f"Invalid JSON returned by VerifyUser: {result}")
+
+    db_session = db.query(SessionModel).filter(SessionModel.id == payload.id).first()
+    if not db_session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    db_session.verified = "true" if result.get("verified") else "false"
+    if result.get("verified") and not db_session.username:
+        db_session.username = result.get("details", {}).get("name", "")
+    db_session.confidence = result.get("confidence")
+    db_session.evidence = result.get("details", {}).get("name", "")
+    db_session.sources = json.dumps(sources)
+
+    db.commit()
+    db.refresh(db_session)  
+    
+    return {
+        "status": "success",
+        "message": "User verification details updated in session",
+        "updated_data": {
+            "verified": db_session.verified,
+            "confidence": db_session.confidence,
+            "evidence": db_session.evidence,
+            "sources": db_session.sources
+        }
+    }
