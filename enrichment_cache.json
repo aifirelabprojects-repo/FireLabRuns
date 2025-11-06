@@ -1,22 +1,122 @@
 {
+  "0d9fc1a84983d10d305902f22800fdc6": {
+    "result": {
+      "summary": "Cybrosys Technologies Pvt Ltd is an IT company that specializes in providing various technological solutions. The company is led by CEO Sainul Nannat and has a team that includes professionals with diverse expertise in the IT field. Cybrosys is known for its work in areas such as blockchain technology and Odoo, a business management software. The company is based in Cochin, India, and has been involved in the tech industry for over a decade. With a focus on innovation and customer satisfaction, Cybrosys aims to deliver high-quality services to its clients.",
+      "details": {
+        "founded": null,
+        "employees": null,
+        "founders": null,
+        "location": "Cochin, India",
+        "revenue": null,
+        "industry": "Information Technology"
+      },
+      "sources": [
+        {
+          "title": "Sainul Nannat - Cybrosys Ltd",
+          "link": "https://uk.linkedin.com/in/sainu"
+        },
+        {
+          "title": "CYBROSYS Technologies Pvt Ltd",
+          "link": "https://in.linkedin.com/company/cybrosys"
+        },
+        {
+          "title": "Jafar Shareef - Director at Cybrosys Technologies Pvt Ltd ...",
+          "link": "https://in.linkedin.com/in/jafarshareefc"
+        },
+        {
+          "title": "Yousuf Al ghazali - Owner, GTC",
+          "link": "https://www.linkedin.com/in/yousuf-al-ghazali-aa93984"
+        },
+        {
+          "title": "Nirja Das - S E at Cybrosys Technologies",
+          "link": "https://in.linkedin.com/in/nirja-das-4a07481a"
+        }
+      ],
+      "images": [
+        "https://play-lh.googleusercontent.com/lpOBjhm0UvNsEasfex50vqZDogdz6POwTC6rBYvP-IJk7BUyqprAbhBF4fQ8dLmJ-A",
+        "https://media.licdn.com/dms/image/v2/C560BAQG6SfBGaVMnxQ/company-logo_200_200/company-logo_200_200/0/1669204698996/cybrosys_logo?e=2147483647&v=beta&t=w05F-2NfsQMf09UwyprnbOZH9sOPddY-Y8HkmGELFsQ"
+      ]
+    },
+    "timestamp": 1762269218.8518748
+  },
   "ce1401a09c32db579aea7e24b742ef90": {
-    "result": "Source: Ai Firelab (https://sa.linkedin.com/company/ai-firelab) | Source: How Small Language Models are transforming enterprise AI in ... (https://www.linkedin.com/posts/ai-firelab_slm-enterpriseai-saudivision2030-activity-7370922065777881089-0TOt) | Source: From ML hobbyist to AI automation engineer: My journey (https://www.linkedin.com/posts/mohammedek_ai-automation-startups-activity-7353463709739999233-xFCL) | Source: Built AI agent for UGC videos and AI in Saudi Arabia (https://www.linkedin.com/posts/muhammad-umair-hayat-durrani-acca-mcom-cpa-21179026_ai-n8n-agentdevelopment-activity-7366467903346446336-GnVW) | Employees info: The company also introduced its AI Employees\u2014digital teammates | Source: Nisham Sajjad - Project Manager @ Aifirelab (https://au.linkedin.com/in/nisham-sajjad-a5b4b6258) | Source: MENA governments launch Arabic-first AI platforms ... (https://www.linkedin.com/posts/maryamahassani_ai-innovation-tech-activity-7368992650441547776-qi1I) | Source: Gulf's AI push: How Arabic can benefit from Gulf's wealth (https://www.linkedin.com/posts/abeer-alnajjar-a8205617_ai-arabic-languagetech-activity-7370484138304372736-2cQF) | Source: Saudi Arabia's Digital Future: AI and BPO as Growth Drivers (https://www.linkedin.com/posts/habibshaikh_saudiarabia-digitaltransformation-bpo-activity-7371862156264239104-tJNI) | Source: HUMAIN to Launch 6 AI Products in October 2025 (https://www.linkedin.com/posts/girnas_saudiinnovation-humain-aileadership-activity-7366358739664224256-utdG) | Employees info: Employees' that can interact in Arabic | Founders: MENA governments launch Arabic; HUMAIN to Launch; Ai Firelab We partner with forward; Built AI agent for UGC videos and AI in Saudi Arabia; From ML hobbyist to AI automation engineer; Gulf; How Small Language Models are transforming enterprise AI in; Nisham Sajjad; Saudi Arabia | Location: Based in Riyadh",
-    "timestamp": 1762103258.9628444
+    "result": {
+      "summary": "AI FireLab is a company focused on designing and deploying intelligent systems, including LLM-powered agents and large-scale API infrastructures. Co-founded by Mohammed Ek and Nisham Sajjad, the company operates out of Riyadh and aims to leverage AI automation to enhance various applications. The team is dedicated to creating innovative solutions that connect skilled and unskilled workers through technology. With a commitment to advancing AI capabilities, AI FireLab is positioned to make significant contributions in the field of automation.",
+      "details": {
+        "founded": null,
+        "employees": null,
+        "founders": "Mohammed Ek, Nisham Sajjad",
+        "location": "Riyadh",
+        "revenue": null,
+        "industry": "AI Automation"
+      },
+      "sources": [
+        {
+          "title": "Mohammed ek\u200f - \u200fAI Automation Engineer | Co-founder at AI ...",
+          "link": "https://sa.linkedin.com/in/mohammedek"
+        },
+        {
+          "title": "Ai Firelab",
+          "link": "https://sa.linkedin.com/company/ai-firelab"
+        },
+        {
+          "title": "Nisham Sajjad - Project Manager @ Aifirelab",
+          "link": "https://au.linkedin.com/in/nisham-sajjad-a5b4b6258"
+        },
+        {
+          "title": "Ai Firelabs - Aifirelabs | AI Automation",
+          "link": "https://uk.linkedin.com/in/ai-firelabs-818064354"
+        },
+        {
+          "title": "Riya Fathima K P - Exploring Technology and Leadership",
+          "link": "https://in.linkedin.com/in/riya-fathima-k-p"
+        }
+      ],
+      "images": [
+        "https://aifirelab.com/logo.svg",
+        "https://media.licdn.com/dms/image/v2/D563DAQGSO7Xo3RNw7g/image-scale_191_1128/B56ZiFRZipG0Ag-/0/1754582589854/ai_firelab_cover?e=2147483647&v=beta&t=HP3s2Ad3X_VIW2i3tA7O4Fn2UMlcLPo4iJK0ywVgDNs"
+      ]
+    },
+    "timestamp": 1762269275.195856
   },
-  "68d5f2c559893b606673554a0bdb7eed": {
-    "result": "Source: Ai Firelab (https://sa.linkedin.com/company/ai-firelab) | Source: Mohammed ek\u200f - \u200fAI Automation Engineer | Co-founder at AI ... (https://sa.linkedin.com/in/mohammedek) | Source: From Curiosity to Smarter AI: A New Path for LLMs | Ai Firelab (https://www.linkedin.com/posts/ai-firelab_from-curiosity-to-smarter-ai-a-new-path-activity-7372876937951825920-6or2) | Source: AI-Tree Search Boosts Scientific Software Development (https://www.linkedin.com/posts/ai-firelab_2509-activity-7371459188914450432-K_Y6) | Source: Built AI agent for UGC videos and AI in Saudi Arabia (https://www.linkedin.com/posts/muhammad-umair-hayat-durrani-acca-mcom-cpa-21179026_ai-n8n-agentdevelopment-activity-7366467903346446336-GnVW) | Employees info: The company also introduced its AI Employees\u2014digital teammates | Source: Apurva Garware's Post (https://www.linkedin.com/posts/apurvacg_the-newest-pm-superpower-in-the-age-of-ai-activity-7371184371120263169-ATk-) | Source: Alibaba's Tongyi Lab introduces Agentic CPT, a new AI ... (https://www.linkedin.com/posts/ai-firelab_tongyi-lab-activity-7375461883434360832-VooT) | Source: John Fullerton on imagination, intuition, and regenerative ... (https://www.linkedin.com/posts/corrinagrace_systemschange-regeneration-complexitythinking-activity-7383702882883338240-9wff) | Source: \"Transforming ChatGPT with 'Absolute Mode' for precise ... (https://www.linkedin.com/posts/ai-firelab_ai-chatgpt-productivityhacks-activity-7374397253710438400-sQMN) | Source: Rob Guerriere's Post (https://www.linkedin.com/posts/guerriere_what-is-the-one-magic-word-mentioned-in-activity-7381637009997582336-jIWO) | Founding info: company founded by two MIT mathematicians | Founders: AI; Ai Firelab Mohammed ek; From Curiosity to Smarter AI; Built AI agent for UGC videos and AI in Saudi Arabia View organization page for Ai Firelab; Apurva Garware; John Fullerton on imagination; Rob Guerriere; Mohammed ek; Alibaba; Transforming ChatGPT with",
-    "timestamp": 1762105544.5327132
-  },
-  "dbd97b526109d954cd5e198411dc9e24": {
-    "result": "Limited information found for 'aifirlab'. It may be a small or emerging company.",
-    "timestamp": 1762110071.2648134
-  },
-  "958f114ece0e11225f194fcf8596ffdb": {
-    "result": "Limited information found for 'alohya tech'. It may be a small or emerging company.",
-    "timestamp": 1762147192.9722948
-  },
-  "175c8369a9a488820f836310a9100357": {
-    "result": "Source: Analytix Group (https://www.linkedin.com/company/analytix-group) | Location info: Headquarters: Eagle, Idaho | Source: \u200fShiju S Pillai\u200f - \u200fGlobal CEO | Saudi & GCC Market Entry ... (https://ae.linkedin.com/in/shiju-s-pillai-8546967) | Source: Shiju S Pillai's Post (https://www.linkedin.com/posts/shiju-s-pillai-8546967_from-a-small-dream-to-a-global-vision-the-activity-7333107090913132548-Hesl) | Source: Phillip Stafford - Managing Director @ Analytix Group (https://www.linkedin.com/in/philliptstafford) | Source: Gale Pooley (https://en.wikipedia.org/wiki/Gale_Pooley) | Founding info: In 1986, he founded Analytix Group, a real estate valuation and consulting firm, which has conducted over 5,000 appraisals in the U | Source: Nishad Abdu Rahiman's Post (https://www.linkedin.com/posts/nishad-abdu-rahiman-business-consultant_%D8%A7%D9%84%D8%AD%D9%85%D8%AF-%D9%84%D9%84%D9%87-%D8%B1%D8%A8-%D8%A7%D9%84%D8%B9%D8%A7%D9%84%D9%85%D9%8A%D9%86-from-a-small-dream-activity-7333401146725646336-qOHK) | Employees: 10 employees | Founders: Analytix Group http; Nishad Abdu Rahiman; Phillip Stafford; Gale Pooley In; Shiju",
-    "timestamp": 1762156530.292302
+  "c822c1b63853ed273b89687ac505f9fa": {
+    "result": {
+      "summary": "Google is a multinational technology company that specializes in Internet-related services and products. It is known for its search engine, which organizes the world's information and makes it universally accessible and useful. Google is also involved in various sectors including advertising, cloud computing, software, and hardware. The company has a significant impact on the digital landscape and continues to innovate in areas such as artificial intelligence and machine learning. Founded in 1998, Google has grown to become one of the most valuable brands in the world, operating under its parent company, Alphabet Inc.",
+      "details": {
+        "founded": "1998",
+        "employees": null,
+        "founders": null,
+        "location": null,
+        "revenue": null,
+        "industry": "Technology"
+      },
+      "sources": [
+        {
+          "title": "Sundar Pichai - CEO at Google",
+          "link": "https://www.linkedin.com/in/sundarpichai"
+        },
+        {
+          "title": "Laszlo Bock - x-Google SVP of People Operations",
+          "link": "https://www.linkedin.com/in/laszlobock"
+        },
+        {
+          "title": "Adam Gavish - Google",
+          "link": "https://www.linkedin.com/in/adamgavish"
+        },
+        {
+          "title": "Eric Schmidt - Former CEO and Chairman, Google",
+          "link": "https://www.linkedin.com/in/eric-e-schmidt"
+        },
+        {
+          "title": "Adam Guild - Owner",
+          "link": "https://www.linkedin.com/in/adamharrisonguild"
+        }
+      ],
+      "images": [
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png",
+        "https://lookaside.fbsbx.com/lookaside/crawler/media/?media_id=100044408950171"
+      ]
+    },
+    "timestamp": 1762342383.3089728
   }
 }

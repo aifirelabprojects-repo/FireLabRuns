@@ -1,5 +1,6 @@
 import math
 import os
+import threading
 import uuid
 import json
 import asyncio
@@ -14,6 +15,7 @@ from starlette.concurrency import run_in_threadpool
 from dotenv import load_dotenv
 from sqlalchemy import create_engine,func
 from sqlalchemy.orm import Session as DBSession
+from BotGraph import invoke_chat
 from VerifyUser import VerifyUser
 from database import SessionLocal, Session as SessionModel, Message as MessageModel, get_db, init_db 
 from prompt import AnalytxPromptTemp
@@ -21,11 +23,7 @@ from collections import defaultdict
 from CompanyFinder import FindTheComp
 from FindUser import find_existing_customer
 from pydantic import BaseModel
-#langchain imports
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_community.chat_message_histories import SQLChatMessageHistory
+
 
 
 load_dotenv()
@@ -176,34 +174,6 @@ _BUDGET_OPTIONS = [
 ]
            
 
-
-memory_engine = create_engine("sqlite:///chat_memory.db", connect_args={"check_same_thread": False})
-
-llm = ChatOpenAI(
-    model=MODEL_NAME,
-    api_key=OPENAI_API_KEY,
-    temperature=0.0,
-    max_tokens=1000,
-    model_kwargs={"response_format": {"type": "json_object"}} 
-)
-
-def _get_memory(session_id: str):
-    return SQLChatMessageHistory(session_id=session_id, connection=memory_engine)
-
-prompt = ChatPromptTemplate.from_messages([
-    ("system", AnalytxPromptTemp),
-    MessagesPlaceholder(variable_name="history"),("human", "{input}"),
-])
-
-chain = prompt | llm
-chat_chain = RunnableWithMessageHistory(
-    chain,
-    _get_memory,
-    input_messages_key="input",
-    history_messages_key="history",
-)
-
-
 MAIN_CATEGORIES = []  
 SUB_SERVICES = {}  
 TIMELINE_OPTIONS = []  
@@ -213,7 +183,6 @@ BUDGET_RANGES = ""
 
 def get_bot_response(question: str, session_obj: SessionModel, session_id: str = "transient") -> Dict[str, Any]:
 
-    # Extract state from current_details
     phase = session_obj.phase if session_obj.phase else "initial"
     routing = session_obj.routing
     customer_enrichment = None
@@ -241,10 +210,11 @@ def get_bot_response(question: str, session_obj: SessionModel, session_id: str =
                 session_obj.phase = "existing_fetch"
                 
     enrichment = None
-    company_name = session_obj.q1_company
-    if company_name is None and phase in ("snip_q1", "snip_q2", "snip_q2a"):
-        enrichment = FindTheComp(question)
-        print(enrichment)
+    company_det_used= False
+    company_det = session_obj.c_info
+    if company_det is None and phase in ("snip_q1", "snip_q2", "snip_q2a") :
+        FindTheCompThread = threading.Thread(target=FindTheComp, args=(question,session_obj,))
+        FindTheCompThread.start()
 
     lead_data =json.dumps({
                 "name": session_obj.username,
@@ -292,36 +262,23 @@ def get_bot_response(question: str, session_obj: SessionModel, session_id: str =
         pass  
     context = "\n".join(context_parts)
     print("\n\nphase:",phase,"\n")
-    ScrapedDet = enrichment if enrichment else ""
     EnrData = f"Existing Customer Data (if applicable): {json.dumps(lead_data)}" if routing == "cre" else " "
     input_text=f"""Current state from session: Phase='{phase}'
-                    Dynamic Options (ALWAYS include full array in JSON if relevant to phase; weave into answer naturally)
-                    You must:
-                    1. Advance/follow the SNIP flow based on phase and user input. Update lead_data (e.g., 'q1_company': 'value').
-                    2. Personalize: Use enrichment, build rapport.
-                    3. If options relevant, weave into answer (e.g., "Which of these?") and include full "options" array in JSON for frontend clickable handling.
-                    4. Extract/merge new details (name, email, etc.)—check for business email upsell.
-                    5. Assess interest/mood. If flow complete, set "routing" (high_value|nurturing|cre).
-                    6. For existing customer: Simulate Odoo fetch from vectorstore context.
-                    7. Query vectorstore for services/categories dynamically.
-                    8. Return STRICTLY valid JSON ONLY—no extra text. Use EXACT format provided.
-                    9. Use contractions ("you're", "we'll"), occasional emojis (like 😊), and a conversational tone.
-                    {ScrapedDet}
                     Context (from vectorstore—use for services, benefits, company data): {context}
                     {EnrData}
                     User Question/Input: {question}
                 """.strip()
                 
-    if company_name is None and phase in ("snip_q1", "snip_q2", "snip_q2a"):
-        input_text += f"\nCompany enrichment data: {enrichment}\n"
+    if company_det is not None and phase in ("snip_q1", "snip_q2", "snip_q2a") and not company_det_used:
+        print("triggered\n")
+        print(company_det)
+        input_text += f"\nUSE THE FOLLOWING COMPANY DETAILS IN YOUR RESPONSE. Refer to them whenever relevant:\n{company_det}\n"
+        company_det_used =True
 
 
     # Try LangChain path first (enhanced with robust parsing)
     try:
-        result = chat_chain.invoke(
-            {"input": input_text},
-            config={"configurable": {"session_id": session_id}},
-        )
+        result = invoke_chat(input_text, session_id)
         raw_output = getattr(result, "content", str(result))
         try:
             parsed = json.loads(raw_output)
@@ -757,7 +714,7 @@ def get_sessions(
                 "verified": sess.verified,
                 "confidence": sess.confidence,
                 "evidence": sess.evidence,
-                "sources": sess.sources,
+                "sources": sess.v_sources,
                 "interest": overall_interest_label,
                 "mood": overall_mood_label,
                 "name": sess.username,
@@ -774,6 +731,10 @@ def get_sessions(
                 "lead_activity":sess.q5_activity,
                 "lead_timeline":sess.q6_timeline,
                 "lead_budget":sess.q7_budget,
+                "c_sources": sess.c_sources,
+                "c_info": sess.c_info,
+                "c_data": sess.c_data,
+                "c_images": sess.c_images,
             })
 
         pages = math.ceil(total / per_page)
@@ -1188,7 +1149,7 @@ async def verify_user(payload: VerifyPayload, db: DBSession = Depends(get_db)):
         db_session.username = result.get("details", {}).get("name", "")
     db_session.confidence = result.get("confidence")
     db_session.evidence = result.get("details", {}).get("evidence", "")
-    db_session.sources = json.dumps(sources)
+    db_session.v_sources = json.dumps(sources)
 
     db.commit()
     db.refresh(db_session)  
@@ -1200,6 +1161,6 @@ async def verify_user(payload: VerifyPayload, db: DBSession = Depends(get_db)):
             "verified": db_session.verified,
             "confidence": db_session.confidence,
             "evidence": db_session.evidence,
-            "sources": db_session.sources
+            "sources": db_session.v_sources
         }
     }

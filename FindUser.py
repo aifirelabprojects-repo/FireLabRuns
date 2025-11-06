@@ -264,32 +264,3 @@ def FindExistingCustomer(input_identifier: str) -> Tuple[Optional[Dict[str, Any]
         print(f"Runtime error in FindExistingCustomer: {e}")
         return None, "error"
       
-async def test_find_customer():
-    print("Testing find_existing_customer...\n")
-    
-    # Test 1: Using Groupcode
-    # print("1. Searching by groupcode: GRP-001")
-    # result, kind = await find_existing_customer("GRP-001")
-    # print(f"   Type: {kind}")
-    # print(f"   Result: {result}\n")
-
-    # # Test 2: Using Company name
-    print("2. Searching by company: Acme Tech")
-    result, kind = await find_existing_customer("Acme Tech")
-    print(f"   Type: {kind}")
-    print(f"   Result: {result}\n")
-
-    # # Test 3: Exact company match
-    # print("3. Searching by full company: Global Finance Inc")
-    # result, kind = await find_existing_customer("Global Finance Inc")
-    # print(f"   Type: {kind}")
-    # print(f"   Result: {result}\n")
-
-    # # Test 4: Fuzzy company match
-    # print("4. Fuzzy search: finance")
-    # result, kind = await find_existing_customer("finance")
-    # print(f"   Type: {kind}")
-    # print(f"   Result: {len(result)} record(s) found\n")
-
-if __name__ == "__main__":
-    asyncio.run(test_find_customer())
