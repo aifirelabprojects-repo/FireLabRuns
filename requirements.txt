@@ -21,7 +21,6 @@ wsproto
 fuzzywuzzy
 aiohttp
 aiosqlite
-langgraph[redis]
 redis 
 loguru 
 slowapi 

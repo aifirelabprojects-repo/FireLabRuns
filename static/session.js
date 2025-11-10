@@ -18,6 +18,9 @@ const svgIcons = {
     phone: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5.5C3 14.0604 9.93959 21 18.5 21C18.8862 21 19.2691 20.9859 19.6483 20.9581C20.0834 20.9262 20.3009 20.9103 20.499 20.7963C20.663 20.7019 20.8185 20.5345 20.9007 20.364C21 20.1582 21 19.9181 21 19.438V16.6207C21 16.2169 21 16.015 20.9335 15.842C20.8749 15.6891 20.7795 15.553 20.6559 15.4456C20.516 15.324 20.3262 15.255 19.9468 15.117L16.74 13.9509C16.2985 13.7904 16.0777 13.7101 15.8683 13.7237C15.6836 13.7357 15.5059 13.7988 15.3549 13.9058C15.1837 14.0271 15.0629 14.2285 14.8212 14.6314L14 16C11.3501 14.7999 9.2019 12.6489 8 10L9.36863 9.17882C9.77145 8.93713 9.97286 8.81628 10.0942 8.64506C10.2012 8.49408 10.2643 8.31637 10.2763 8.1317C10.2899 7.92227 10.2096 7.70153 10.0491 7.26005L8.88299 4.05321C8.745 3.67376 8.67601 3.48403 8.55442 3.3441C8.44701 3.22049 8.31089 3.12515 8.15802 3.06645C7.98496 3 7.78308 3 7.37932 3H4.56201C4.08188 3 3.84181 3 3.63598 3.09925C3.4655 3.18146 3.29814 3.33701 3.2037 3.50103C3.08968 3.69907 3.07375 3.91662 3.04189 4.35173C3.01413 4.73086 3 5.11378 3 5.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     company: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M4 7H20M4 12H20M4 17H20M6 17V7M18 17V7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
+
+
+
 async function loadSessions(page = currentPage) {
     currentPage = page;
     const url = `/api/sessions/?active=${activeOnly}&page=${currentPage}&per_page=${perPage}`;
@@ -65,6 +68,7 @@ async function loadSessions(page = currentPage) {
         '${escapeJs(session.c_images)}',
         '${escapeJs(session.c_info)}',
         '${escapeJs(session.c_data)}',
+        '${escapeJs(session.research_data)}',
         '${session.approved}'
         )">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -96,6 +100,7 @@ async function loadSessions(page = currentPage) {
             '${escapeJs(session.c_images)}',
             '${escapeJs(session.c_info)}',
             '${escapeJs(session.c_data)}',
+            '${escapeJs(session.research_data)}',
             '${session.approved}'
         )">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="white"><path d="M9 7v10l7-5-7-5z" stroke="none" /></svg>
@@ -219,7 +224,7 @@ async function approveSession(id) {
 
   function renderUserDetails() {
     const { name, email, phone, company, mood, verified, confidence, evidence, sources, interest,
-            lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, id, c_sources, c_images, c_info, c_data,approved } = currentUserData;
+            lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, id, c_sources, c_images, c_info, c_data,research_data,approved } = currentUserData;
 
     const verifyButtonHtml = verified === "true"
     ? `<button id="verifyBtn" title="Verified" class="text-sm font-medium text-white flex items-center gap-1 rounded-md px-2 py-1 " disabled aria-disabled="true">
@@ -231,7 +236,55 @@ async function approveSession(id) {
             <span class="verify-text">Verify</span>
         </button>`;
 
-    // Contact Information Section
+    function markdownToHtml(text) {
+        if (!text) return '';
+        text = text.replace(/^######\s+(.*)$/gm, '<h6>$1</h6>')
+            .replace(/^#####\s+(.*)$/gm, '<h5>$1</h5>')
+            .replace(/^####\s+(.*)$/gm, '<h4>$1</h4>')
+            .replace(/^###\s+(.*)$/gm, '<h3>$1</h3>')
+            .replace(/^##\s+(.*)$/gm, '<h2>$1</h2>')
+            .replace(/^#\s+(.*)$/gm, '<h1>$1</h1>');
+        // Formatting
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/~~(.*?)~~/g, '<del>$1</del>')
+            .replace(/__(.*?)__/g, '<u>$1</u>');
+        return text;
+    }
+
+    // Function to get a teaser (first ~200 chars, truncated nicely)
+    function getTeaser(text) {
+        if (!text || text.trim().length === 0) return '';
+        const maxLength = 200;
+        let teaser = text.substring(0, maxLength);
+        // Truncate at last space to avoid cutting words
+        const lastSpace = teaser.lastIndexOf(' ');
+        if (lastSpace > 0 && lastSpace < maxLength - 10) {
+            teaser = teaser.substring(0, lastSpace);
+        }
+        return teaser + '...';
+    }
+
+    // Generate the teaser button HTML (using a class for event listener instead of inline onclick)
+    let ResearchInfoHtml = '';
+    if (research_data && research_data.trim()) {
+        const teaserText = getTeaser(research_data);
+        ResearchInfoHtml = `
+        <div class="research-teaser mt-3 p-3 bg-gray-50/80 rounded-md border border-gray-200/50 cursor-pointer hover:bg-gray-100 transition-colors">
+            <h6 class="text-sm font-semibold text-gray-900 mb-1.5 flex items-center">
+                Company Overview
+                <svg class="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </h6>
+            <div class="relative overflow-hidden max-h-20">
+                <p class="text-sm text-gray-700 leading-tight">${teaserText}</p>
+                <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+            </div>
+        </div>
+        `;
+    }
+
     const contactSection = `
     <div class="bg-white rounded-lg  overflow-hidden">
 
@@ -298,7 +351,9 @@ async function approveSession(id) {
             </div>
             </div>
             ` : ''}
+            
         </div>
+        ${ResearchInfoHtml}
         </div>
     </div>
     `;
@@ -315,6 +370,10 @@ async function approveSession(id) {
         </div>
         `;
     }
+
+    
+
+    
 
     let cDataHtml = '';
     if (c_data && c_data !== '{}' && c_data !== 'null' && c_data !== null) {
@@ -591,6 +650,74 @@ async function approveSession(id) {
 
     document.getElementById('userDetailsSection').innerHTML = userInfoHtml;
 
+   
+    function setupResearchModal() {
+        // Append modal if not exists
+        if (document.getElementById('researchModal')) return;
+        
+        const modalHtml = `
+        <div id="researchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white p-6 rounded-xl shadow-xl max-w-[40%] max-h-[90vh] overflow-y-auto m-4 relative max-w-[90vw]">
+                <div id="researchModalContent" class=" text-[16px] prose prose-sm max-w-none mt-6">
+                    
+                </div>
+            </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Event listener for the teaser (using event delegation on userDetailsSection)
+        const userDetailsSection = document.getElementById('userDetailsSection');
+        if (userDetailsSection) {
+            userDetailsSection.addEventListener('click', (event) => {
+                if (event.target.closest('.research-teaser')) {
+                    // Inject content
+                    const contentDiv = document.getElementById('researchModalContent');
+                    if (contentDiv) {
+                        contentDiv.innerHTML = markdownToHtml(research_data);
+                    }
+                    
+                    // Show modal
+                    const modal = document.getElementById('researchModal');
+                    modal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+        }
+        
+        // Modal close listeners (event delegation on document for modal elements)
+        document.addEventListener('click', (event) => {
+            const modal = document.getElementById('researchModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                if (event.target === modal || event.target.classList.contains('close-modal')) {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            }
+        });
+        
+        // Prevent modal close when clicking inside modal content
+        const modalContent = document.querySelector('#researchModal > div');
+        if (modalContent) {
+            modalContent.addEventListener('click', (event) => event.stopPropagation());
+        }
+    }
+
+    // Call setup after rendering
+    setupResearchModal();
+
+    // Close on Escape (one-time listener, but check if modal is open)
+    const escapeListener = (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('researchModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        }
+    };
+    document.addEventListener('keydown', escapeListener);
+
     // Attach tab listeners
     const tabBtns = document.querySelectorAll('.user-tab-btn');
     const tabPanels = document.querySelectorAll('.user-tab-panel');
@@ -812,14 +939,14 @@ async function handleVerification() {
     }, 1400);
     }
 }
-async function openSession(id, mode, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget,c_sources,c_images,c_info,c_data,approved) {
+async function openSession(id, mode, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget,c_sources,c_images,c_info,c_data,research_data,approved) {
     if (currentWs) {
     reconnectAttempts = maxReconnectAttempts;
     currentWs.close();
     }
     currentSessionId = id;
     currentMode = mode;
-    currentUserData = { id, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget,c_sources,c_images,c_info,c_data,approved };
+    currentUserData = { id, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget,c_sources,c_images,c_info,c_data,research_data,approved };
     console.log(approved);
     const isApproved = approved === true || approved === "true";
 
