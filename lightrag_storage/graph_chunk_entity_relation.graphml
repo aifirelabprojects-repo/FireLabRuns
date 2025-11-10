@@ -1,0 +1,729 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key id="d13" for="edge" attr.name="truncate" attr.type="string"/>
+<key id="d12" for="edge" attr.name="created_at" attr.type="long"/>
+<key id="d11" for="edge" attr.name="file_path" attr.type="string"/>
+<key id="d10" for="edge" attr.name="source_id" attr.type="string"/>
+<key id="d9" for="edge" attr.name="keywords" attr.type="string"/>
+<key id="d8" for="edge" attr.name="description" attr.type="string"/>
+<key id="d7" for="edge" attr.name="weight" attr.type="double"/>
+<key id="d6" for="node" attr.name="truncate" attr.type="string"/>
+<key id="d5" for="node" attr.name="created_at" attr.type="long"/>
+<key id="d4" for="node" attr.name="file_path" attr.type="string"/>
+<key id="d3" for="node" attr.name="source_id" attr.type="string"/>
+<key id="d2" for="node" attr.name="description" attr.type="string"/>
+<key id="d1" for="node" attr.name="entity_type" attr.type="string"/>
+<key id="d0" for="node" attr.name="entity_id" attr.type="string"/>
+<graph edgedefault="undirected"><node id="Market Entry &amp; Business Setup">
+  <data key="d0">Market Entry &amp; Business Setup</data>
+  <data key="d1">concept</data>
+  <data key="d2">Market Entry &amp; Business Setup is a category focusing on establishing legal presence for new entrants and entrepreneurs.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751828</data>
+  <data key="d6"></data>
+</node>
+<node id="Business Setup Saudi Arabia">
+  <data key="d0">Business Setup Saudi Arabia</data>
+  <data key="d1">method</data>
+  <data key="d2">Business Setup Saudi Arabia involves tailored processes for establishing businesses in Saudi Arabia.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751828</data>
+  <data key="d6"></data>
+</node>
+<node id="Business Setup in Other GCC">
+  <data key="d0">Business Setup in Other GCC</data>
+  <data key="d1">method</data>
+  <data key="d2">Business Setup in Other GCC refers to tailored processes for business establishment in GCC countries like UAE and Qatar.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751828</data>
+  <data key="d6"></data>
+</node>
+<node id="Premium Residency &amp; Investor Visas">
+  <data key="d0">Premium Residency &amp; Investor Visas</data>
+  <data key="d1">service</data>
+  <data key="d2">Premium Residency &amp; Investor Visas offer legal residency options for investors and entrepreneurs.&lt;SEP&gt;Premium Residency &amp; Investor Visas are services provided to facilitate residency and investment opportunities for individuals in Saudi Arabia.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a&lt;SEP&gt;chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752649</data>
+  <data key="d6"></data>
+</node>
+<node id="Entrepreneur License (IT &amp; Tech Services)">
+  <data key="d0">Entrepreneur License (IT &amp; Tech Services)</data>
+  <data key="d1">content</data>
+  <data key="d2">Entrepreneur License (IT &amp; Tech Services) allows new businesses in the IT and tech sectors to operate legally.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751828</data>
+  <data key="d6"></data>
+</node>
+<node id="Virtual Office &amp; Business Center">
+  <data key="d0">Virtual Office &amp; Business Center</data>
+  <data key="d1">service</data>
+  <data key="d2">Virtual Office &amp; Business Center provides physical and virtual office solutions for businesses.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751828</data>
+  <data key="d6"></data>
+</node>
+<node id="Business Growth &amp; Management">
+  <data key="d0">Business Growth &amp; Management</data>
+  <data key="d1">concept</data>
+  <data key="d2">Business Growth &amp; Management is a category aimed at helping established businesses scale and optimize operations.&lt;SEP&gt;Business Growth &amp; Management encompasses strategies and solutions for established businesses aiming to scale and optimize operations.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a&lt;SEP&gt;chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752650</data>
+  <data key="d6"></data>
+</node>
+<node id="Management Consultancy">
+  <data key="d0">Management Consultancy</data>
+  <data key="d1">service</data>
+  <data key="d2">Management Consultancy includes services like business restructuring and market strategy advising.&lt;SEP&gt;Management Consultancy includes services like business restructuring, market strategy, and M&amp;A for established businesses.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a&lt;SEP&gt;chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752649</data>
+  <data key="d6"></data>
+</node>
+<node id="Vendor Registration &amp; Certification">
+  <data key="d0">Vendor Registration &amp; Certification</data>
+  <data key="d1">service</data>
+  <data key="d2">Vendor Registration &amp; Certification is a process for companies to certify for contracts with organizations like NEOM and Aramco.&lt;SEP&gt;Vendor Registration &amp; Certification services help businesses establish partnerships with entities like NEOM and Aramco.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a&lt;SEP&gt;chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752649</data>
+  <data key="d6"></data>
+</node>
+<node id="HR &amp; Talent Solutions">
+  <data key="d0">HR &amp; Talent Solutions</data>
+  <data key="d1">service</data>
+  <data key="d2">HR &amp; Talent Solutions offer services such as recruitment and training for businesses.&lt;SEP&gt;HR &amp; Talent Solutions offer recruitment, EOR (Employer of Record), and training services to support business growth.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a&lt;SEP&gt;chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752649</data>
+  <data key="d6"></data>
+</node>
+<node id="Financial Services &amp; Compliance">
+  <data key="d0">Financial Services &amp; Compliance</data>
+  <data key="d1">concept</data>
+  <data key="d2">Financial Services &amp; Compliance ensures financial health and operational legitimacy for businesses.&lt;SEP&gt;Financial Services &amp; Compliance ensure businesses maintain financial health, tax compliance, and operational legitimacy in Saudi Arabia.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a&lt;SEP&gt;chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752649</data>
+  <data key="d6"></data>
+</node>
+<node id="Accounting &amp; Bookkeeping">
+  <data key="d0">Accounting &amp; Bookkeeping</data>
+  <data key="d1">service</data>
+  <data key="d2">Accounting &amp; Bookkeeping involves managing financial records and bookkeeping for businesses.&lt;SEP&gt;Accounting &amp; Bookkeeping are essential services for businesses to track financial transactions and ensure compliance.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a&lt;SEP&gt;chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752650</data>
+  <data key="d6"></data>
+</node>
+<node id="Tax Consulting &amp; Audit">
+  <data key="d0">Tax Consulting &amp; Audit</data>
+  <data key="d1">service</data>
+  <data key="d2">Tax Consulting &amp; Audit provides guidance on tax compliance and auditing processes for companies.&lt;SEP&gt;Tax Consulting &amp; Audit services provide guidance on tax obligations and ensure accurate financial reporting.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a&lt;SEP&gt;chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752650</data>
+  <data key="d6"></data>
+</node>
+<node id="Bank Account &amp; Finance Assistance">
+  <data key="d0">Bank Account &amp; Finance Assistance</data>
+  <data key="d1">service</data>
+  <data key="d2">Bank Account &amp; Finance Assistance aids businesses in opening accounts and securing financial help.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751829</data>
+  <data key="d6"></data>
+</node>
+<node id="Industrial &amp; Specialized Operations">
+  <data key="d0">Industrial &amp; Specialized Operations</data>
+  <data key="d1">concept</data>
+  <data key="d2">Industrial &amp; Specialized Operations focuses on needs within manufacturing and specialized sectors.&lt;SEP&gt;Industrial &amp; Specialized Operations focus on providing services tailored for manufacturing and specialized industry needs.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a&lt;SEP&gt;chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752650</data>
+  <data key="d6"></data>
+</node>
+<node id="Industrial License &amp; Factory Setup">
+  <data key="d0">Industrial License &amp; Factory Setup</data>
+  <data key="d1">method</data>
+  <data key="d2">Industrial License &amp; Factory Setup involves processes for establishing operational factories and industrial licenses.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751829</data>
+  <data key="d6"></data>
+</node>
+<node id="ISO &amp; Local Content Certification">
+  <data key="d0">ISO &amp; Local Content Certification</data>
+  <data key="d1">method</data>
+  <data key="d2">ISO &amp; Local Content Certification is a process for certifying compliance with international and local standards.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751829</data>
+  <data key="d6"></data>
+</node>
+<node id="Technology &amp; Process Automation">
+  <data key="d0">Technology &amp; Process Automation</data>
+  <data key="d1">method</data>
+  <data key="d2">Technology &amp; Process Automation refers to implementing technologies to enhance industrial processes.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751829</data>
+  <data key="d6"></data>
+</node>
+<node id="Legal &amp; Business Protection">
+  <data key="d0">Legal &amp; Business Protection</data>
+  <data key="d1">concept</data>
+  <data key="d2">Legal &amp; Business Protection involves safeguarding businesses from financial and legal risks.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751829</data>
+  <data key="d6"></data>
+</node>
+<node id="Legal Advisory &amp; Contract Drafting">
+  <data key="d0">Legal Advisory &amp; Contract Drafting</data>
+  <data key="d1">service</data>
+  <data key="d2">Legal Advisory &amp; Contract Drafting provides legal guidance and contract formulation for businesses.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751829</data>
+  <data key="d6"></data>
+</node>
+<node id="Debt Recovery &amp; Dispute Resolution">
+  <data key="d0">Debt Recovery &amp; Dispute Resolution</data>
+  <data key="d1">service</data>
+  <data key="d2">Debt Recovery &amp; Dispute Resolution assists businesses in recovering debts and resolving disputes.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751829</data>
+  <data key="d6"></data>
+</node>
+<node id="Trademark Registration">
+  <data key="d0">Trademark Registration</data>
+  <data key="d1">method</data>
+  <data key="d2">Trademark Registration is the process for legally registering trademarks for protection.&lt;SEP&gt;Trademark Registration is the legal process of protecting brand names, logos, and symbols associated with products or services.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a&lt;SEP&gt;chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752649</data>
+  <data key="d6"></data>
+</node>
+<node id="200 Employees">
+  <data key="d0">200 Employees</data>
+  <data key="d1">data</data>
+  <data key="d2">The entity noted has a workforce comprising 200 employees for operational functions.</data>
+  <data key="d3">chunk-f1b87a1f44933dd8ae3ee066b349b85a</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762751830</data>
+  <data key="d6"></data>
+</node>
+<node id="Analytix">
+  <data key="d0">Analytix</data>
+  <data key="d1">organization</data>
+  <data key="d2">Analytix is a government-approved partner for business expansion in Saudi Arabia. The organization specializes in a range of services that facilitate market entry and business setup, aimed at assisting companies in their growth strategies. As a trusted partner, Analytix provides comprehensive support to various businesses, helping them navigate the complexities of establishment and operational processes within the Saudi market.
+
+Analytix's offerings include assistance with licensing and compliance, ensuring that companies can enter and operate in the market effectively. By focusing on facilitating seamless market entry, Analytix plays a crucial role in supporting businesses as they expand their operations in Saudi Arabia. This partnership underscores Analytix's commitment to helping businesses succeed in a competitive landscape, making it a valuable resource for any company looking to grow in the region.&lt;SEP&gt;Analytix is a government-approved partner for business expansion in Saudi Arabia, employing 200 full-time staff members across various departments.</data>
+  <data key="d3">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b&lt;SEP&gt;chunk-0933d28082a9b7d482fd254a1cfffd8c&lt;SEP&gt;chunk-e8747d8d5681e57b29954bb69d570bf3&lt;SEP&gt;chunk-3332591fde49da452fe1292f0b9f5938&lt;SEP&gt;chunk-772544c5c84dd2e0b74b9e1b357d93f2&lt;SEP&gt;chunk-6704745ef8e22dc07ffbfd6b9dc4460e&lt;SEP&gt;chunk-31321d5f955edba1b7bf245c7bf4a054&lt;SEP&gt;chunk-fb946c67f02bbb07299b4be23a9b4190&lt;SEP&gt;chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753108</data>
+  <data key="d6"></data>
+</node>
+<node id="Industrial License">
+  <data key="d0">Industrial License</data>
+  <data key="d1">concept</data>
+  <data key="d2">The Industrial License is a certification that allows businesses to operate legally within certain industrial sectors.</data>
+  <data key="d3">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752648</data>
+  <data key="d6"></data>
+</node>
+<node id="Factory Setup">
+  <data key="d0">Factory Setup</data>
+  <data key="d1">concept</data>
+  <data key="d2">Factory Setup refers to the process of establishing a manufacturing facility to produce goods efficiently.</data>
+  <data key="d3">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752648</data>
+  <data key="d6"></data>
+</node>
+<node id="ISO Certification">
+  <data key="d0">ISO Certification</data>
+  <data key="d1">concept</data>
+  <data key="d2">ISO Certification is an internationally recognized standard that ensures quality management in businesses.</data>
+  <data key="d3">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752648</data>
+  <data key="d6"></data>
+</node>
+<node id="Local Content Certification">
+  <data key="d0">Local Content Certification</data>
+  <data key="d1">concept</data>
+  <data key="d2">Local Content Certification is a validation process to promote the use of local materials and labor in business operations.</data>
+  <data key="d3">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752648</data>
+  <data key="d6"></data>
+</node>
+<node id="Technology Automation">
+  <data key="d0">Technology Automation</data>
+  <data key="d1">method</data>
+  <data key="d2">Technology Automation involves implementing automated processes to enhance efficiency and productivity in businesses.</data>
+  <data key="d3">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752648</data>
+  <data key="d6"></data>
+</node>
+<node id="Legal Advisory">
+  <data key="d0">Legal Advisory</data>
+  <data key="d1">service</data>
+  <data key="d2">Legal Advisory refers to the service providing legal guidance to businesses on various legal matters.</data>
+  <data key="d3">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752648</data>
+  <data key="d6"></data>
+</node>
+<node id="Contract Drafting">
+  <data key="d0">Contract Drafting</data>
+  <data key="d1">method</data>
+  <data key="d2">Contract Drafting is the process of creating legally binding agreements between parties.</data>
+  <data key="d3">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752648</data>
+  <data key="d6"></data>
+</node>
+<node id="Debt Recovery">
+  <data key="d0">Debt Recovery</data>
+  <data key="d1">method</data>
+  <data key="d2">Debt Recovery involves strategies and processes to recover owed funds from individuals or businesses.</data>
+  <data key="d3">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752648</data>
+  <data key="d6"></data>
+</node>
+<node id="Dispute Resolution">
+  <data key="d0">Dispute Resolution</data>
+  <data key="d1">method</data>
+  <data key="d2">Dispute Resolution refers to techniques used to resolve conflicts between parties without going to court.</data>
+  <data key="d3">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752649</data>
+  <data key="d6"></data>
+</node>
+<node id="Number of Employees">
+  <data key="d0">Number of Employees</data>
+  <data key="d1">data</data>
+  <data key="d2">The number of employees at Analytix is currently recorded as 200.</data>
+  <data key="d3">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752649</data>
+  <data key="d6"></data>
+</node>
+<node id="Saudi Arabia">
+  <data key="d0">Saudi Arabia</data>
+  <data key="d1">location</data>
+  <data key="d2">Saudi Arabia is a country in the Middle East where Analytix provides business expansion services.&lt;SEP&gt;Saudi Arabia is a country in the Middle East where Analytix operates as a partner for business expansion.&lt;SEP&gt;Saudi Arabia is the country where Analytix operates as a partner for business expansion.&lt;SEP&gt;Saudi Arabia is the country where Analytix operates as a partner for business expansion.&lt;SEP&gt;Saudi Arabia is a country in the Middle East where Analytix provides business expansion services.&lt;SEP&gt;Saudi Arabia is the country where Analytix operates as a government-approved partner for business expansion.&lt;SEP&gt;Saudi Arabia is the country where Analytix operates, focusing on empowering businesses.</data>
+  <data key="d3">chunk-0933d28082a9b7d482fd254a1cfffd8c&lt;SEP&gt;chunk-e8747d8d5681e57b29954bb69d570bf3&lt;SEP&gt;chunk-3332591fde49da452fe1292f0b9f5938&lt;SEP&gt;chunk-772544c5c84dd2e0b74b9e1b357d93f2&lt;SEP&gt;chunk-6704745ef8e22dc07ffbfd6b9dc4460e&lt;SEP&gt;chunk-fb946c67f02bbb07299b4be23a9b4190&lt;SEP&gt;chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753108</data>
+  <data key="d6"></data>
+</node>
+<node id="Business Setup">
+  <data key="d0">Business Setup</data>
+  <data key="d1">concept</data>
+  <data key="d2">Business Setup refers to establishing a legal presence for new entrants and entrepreneurs in Saudi Arabia and other GCC countries.</data>
+  <data key="d3">chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752649</data>
+  <data key="d6"></data>
+</node>
+<node id="GCC">
+  <data key="d0">GCC</data>
+  <data key="d1">location</data>
+  <data key="d2">GCC refers to the Gulf Cooperation Council, which includes countries like UAE and Qatar where business setup services are offered.</data>
+  <data key="d3">chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752649</data>
+  <data key="d6"></data>
+</node>
+<node id="Company Revenue">
+  <data key="d0">Company Revenue</data>
+  <data key="d1">data</data>
+  <data key="d2">Company revenue is reported to be 50 lakhs, indicating a financial measure of earnings.&lt;SEP&gt;Company revenue is stated to be 50 lakhs, denoting a specific financial figure.</data>
+  <data key="d3">chunk-e8747d8d5681e57b29954bb69d570bf3&lt;SEP&gt;chunk-6704745ef8e22dc07ffbfd6b9dc4460e</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752825</data>
+  <data key="d6"></data>
+</node>
+<node id="50 Lakhs">
+  <data key="d0">50 Lakhs</data>
+  <data key="d1">data</data>
+  <data key="d2">50 Lakhs represents a figure related to company revenue.&lt;SEP&gt;50 Lakhs refers to a specific revenue figure mentioned in the business context.</data>
+  <data key="d3">chunk-3332591fde49da452fe1292f0b9f5938&lt;SEP&gt;chunk-772544c5c84dd2e0b74b9e1b357d93f2</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762752819</data>
+  <data key="d6"></data>
+</node>
+<node id="TechNova FZ LLC">
+  <data key="d0">TechNova FZ LLC</data>
+  <data key="d1">organization</data>
+  <data key="d2">TechNova FZ LLC is a company that, with assistance from Analytix, established its Saudi entity rapidly and secured a B2G contract.</data>
+  <data key="d3">chunk-31321d5f955edba1b7bf245c7bf4a054</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753067</data>
+  <data key="d6"></data>
+</node>
+<node id="GreenBuild International">
+  <data key="d0">GreenBuild International</data>
+  <data key="d1">organization</data>
+  <data key="d2">GreenBuild International is a company that received support from Analytix to obtain commercial registration and necessary permits.</data>
+  <data key="d3">chunk-31321d5f955edba1b7bf245c7bf4a054</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753067</data>
+  <data key="d6"></data>
+</node>
+<node id="EduSmart Global">
+  <data key="d0">EduSmart Global</data>
+  <data key="d1">organization</data>
+  <data key="d2">EduSmart Global leveraged Analytix's PRO services to deploy expatriate professionals in Saudi schools.</data>
+  <data key="d3">chunk-31321d5f955edba1b7bf245c7bf4a054</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753067</data>
+  <data key="d6"></data>
+</node>
+<node id="Riyadh">
+  <data key="d0">Riyadh</data>
+  <data key="d1">location</data>
+  <data key="d2">Riyadh is one of the key regions in Saudi Arabia where Analytix has supported businesses in setting up operations.</data>
+  <data key="d3">chunk-fb946c67f02bbb07299b4be23a9b4190</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753082</data>
+  <data key="d6"></data>
+</node>
+<node id="Jeddah">
+  <data key="d0">Jeddah</data>
+  <data key="d1">location</data>
+  <data key="d2">Jeddah is another key region in Saudi Arabia where Analytix has assisted businesses in establishing their operations.</data>
+  <data key="d3">chunk-fb946c67f02bbb07299b4be23a9b4190</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753082</data>
+  <data key="d6"></data>
+</node>
+<node id="Dammam">
+  <data key="d0">Dammam</data>
+  <data key="d1">location</data>
+  <data key="d2">Dammam is a significant region in Saudi Arabia supported by Analytix for business expansion and setup.</data>
+  <data key="d3">chunk-fb946c67f02bbb07299b4be23a9b4190</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753082</data>
+  <data key="d6"></data>
+</node>
+<node id="200 Businesses">
+  <data key="d0">200 Businesses</data>
+  <data key="d1">data</data>
+  <data key="d2">Analytix has supported more than 200 businesses in setting up their operations across Saudi Arabia's key regions.</data>
+  <data key="d3">chunk-fb946c67f02bbb07299b4be23a9b4190</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753082</data>
+  <data key="d6"></data>
+</node>
+<node id="Compliance and Legal">
+  <data key="d0">Compliance and Legal</data>
+  <data key="d1">department</data>
+  <data key="d2">The Compliance and Legal department consists of 35 employees responsible for regulatory adherence and legal matters.</data>
+  <data key="d3">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753108</data>
+  <data key="d6"></data>
+</node>
+<node id="Market Research">
+  <data key="d0">Market Research</data>
+  <data key="d1">department</data>
+  <data key="d2">The Market Research department has 40 employees dedicated to analyzing market trends and consumer behavior.</data>
+  <data key="d3">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753108</data>
+  <data key="d6"></data>
+</node>
+<node id="Client Success">
+  <data key="d0">Client Success</data>
+  <data key="d1">department</data>
+  <data key="d2">The Client Success department includes 25 employees focusing on enhancing client satisfaction and support.</data>
+  <data key="d3">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753108</data>
+  <data key="d6"></data>
+</node>
+<node id="Operations and Admin">
+  <data key="d0">Operations and Admin</data>
+  <data key="d1">department</data>
+  <data key="d2">The Operations and Admin department is made up of 50 employees managing internal processes and administrative functions.</data>
+  <data key="d3">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753108</data>
+  <data key="d6"></data>
+</node>
+<node id="Technology and Data">
+  <data key="d0">Technology and Data</data>
+  <data key="d1">department</data>
+  <data key="d2">The Technology and Data department consists of 30 employees working on technological solutions and data management.</data>
+  <data key="d3">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753108</data>
+  <data key="d6"></data>
+</node>
+<node id="Government Liaison">
+  <data key="d0">Government Liaison</data>
+  <data key="d1">department</data>
+  <data key="d2">The Government Liaison department comprises 20 employees facilitating communication between Analytix and government entities.</data>
+  <data key="d3">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753108</data>
+  <data key="d6"></data>
+</node>
+<node id="Multicultural Team">
+  <data key="d0">Multicultural Team</data>
+  <data key="d1">concept</data>
+  <data key="d2">The multicultural team at Analytix represents 12 nationalities, unified by their goal of empowering businesses.</data>
+  <data key="d3">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d4">unknown_source</data>
+  <data key="d5">1762753108</data>
+  <data key="d6"></data>
+</node>
+<edge source="Premium Residency &amp; Investor Visas" target="Business Setup">
+  <data key="d7">1.0</data>
+  <data key="d8">Premium Residency &amp; Investor Visas are part of the Business Setup category offered to entrepreneurs.</data>
+  <data key="d9">investment facilitation,service component</data>
+  <data key="d10">chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762752651</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Business Growth &amp; Management" target="Management Consultancy">
+  <data key="d7">1.0</data>
+  <data key="d8">Management Consultancy services are designed to aid established businesses in their growth and management strategies.</data>
+  <data key="d9">service offering,strategic growth</data>
+  <data key="d10">chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762752651</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Business Growth &amp; Management" target="Analytix">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix offers services related to Business Growth &amp; Management for established businesses.</data>
+  <data key="d9">service offering,strategic partner</data>
+  <data key="d10">chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762752655</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Management Consultancy" target="Vendor Registration &amp; Certification">
+  <data key="d7">1.0</data>
+  <data key="d8">Vendor Registration &amp; Certification is a key aspect of Management Consultancy for businesses wanting to partner with specific organizations.</data>
+  <data key="d9">business partnership,service component</data>
+  <data key="d10">chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762752651</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Industrial &amp; Specialized Operations" target="Analytix">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix provides services in Industrial &amp; Specialized Operations to meet the demands of various industries.</data>
+  <data key="d9">operational solutions,service offering</data>
+  <data key="d10">chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762752656</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Trademark Registration" target="Analytix">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix assists businesses in Trademark Registration to safeguard their intellectual property.</data>
+  <data key="d9">brand protection,business service</data>
+  <data key="d10">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762752654</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Industrial License">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix provides assistance in obtaining an Industrial License to ensure businesses operate legally.</data>
+  <data key="d9">business service,legal compliance</data>
+  <data key="d10">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762752650</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="ISO Certification">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix offers support for businesses to achieve ISO Certification, ensuring adherence to international quality standards.</data>
+  <data key="d9">business service,quality assurance</data>
+  <data key="d10">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762752651</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Local Content Certification">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix facilitates Local Content Certification to encourage the use of local resources in business operations.</data>
+  <data key="d9">business service,local development</data>
+  <data key="d10">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762752651</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Debt Recovery">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix provides services for Debt Recovery to help businesses manage their financial liabilities.</data>
+  <data key="d9">business service,financial management</data>
+  <data key="d10">chunk-ef11a4d666ecb3f86f7fc3974d2ead9b</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762752652</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Saudi Arabia">
+  <data key="d7">6.0</data>
+  <data key="d8">Analytix serves as a partner for business expansion specifically in Saudi Arabia.&lt;SEP&gt;Analytix partners with businesses in Saudi Arabia to facilitate their expansion efforts.&lt;SEP&gt;Analytix is recognized as a government-approved partner for business expansion in Saudi Arabia.&lt;SEP&gt;Analytix serves as a partner for business expansion in Saudi Arabia.&lt;SEP&gt;Analytix operates as a government-approved partner specifically for business expansion in Saudi Arabia.&lt;SEP&gt;Analytix operates in Saudi Arabia, focusing on empowering local businesses.</data>
+  <data key="d9">business expansion,business partnership,business support,expansion services,expansion support,government approval,government partnership,partnership,regional focus</data>
+  <data key="d10">chunk-0933d28082a9b7d482fd254a1cfffd8c&lt;SEP&gt;chunk-e8747d8d5681e57b29954bb69d570bf3&lt;SEP&gt;chunk-3332591fde49da452fe1292f0b9f5938&lt;SEP&gt;chunk-6704745ef8e22dc07ffbfd6b9dc4460e&lt;SEP&gt;chunk-fb946c67f02bbb07299b4be23a9b4190&lt;SEP&gt;chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753109</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="TechNova FZ LLC">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix supported TechNova in establishing its Saudi entity and securing its first B2G contract.</data>
+  <data key="d9">business support,establishment</data>
+  <data key="d10">chunk-31321d5f955edba1b7bf245c7bf4a054</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753068</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="GreenBuild International">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix helped GreenBuild obtain commercial registration and necessary permits effectively.</data>
+  <data key="d9">business registration,operational support</data>
+  <data key="d10">chunk-31321d5f955edba1b7bf245c7bf4a054</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753069</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="EduSmart Global">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix provided PRO services to EduSmart for deploying expatriate professionals in schools.</data>
+  <data key="d9">PRO services,expatriate deployment</data>
+  <data key="d10">chunk-31321d5f955edba1b7bf245c7bf4a054</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753070</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Riyadh">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix has helped businesses set up operations in Riyadh.</data>
+  <data key="d9">business support,operational setup</data>
+  <data key="d10">chunk-fb946c67f02bbb07299b4be23a9b4190</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753089</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Jeddah">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix has assisted businesses in establishing operations in Jeddah.</data>
+  <data key="d9">business support,operational setup</data>
+  <data key="d10">chunk-fb946c67f02bbb07299b4be23a9b4190</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753089</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Dammam">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix has supported businesses in setting up operations in Dammam.</data>
+  <data key="d9">business support,operational setup</data>
+  <data key="d10">chunk-fb946c67f02bbb07299b4be23a9b4190</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753090</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="200 Businesses">
+  <data key="d7">1.0</data>
+  <data key="d8">Analytix has provided support to over 200 businesses for their operational setup in Saudi Arabia.</data>
+  <data key="d9">business assistance,operational setup</data>
+  <data key="d10">chunk-fb946c67f02bbb07299b4be23a9b4190</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753091</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Compliance and Legal">
+  <data key="d7">1.0</data>
+  <data key="d8">The Compliance and Legal department is part of Analytix's organizational structure, responsible for legal and compliance issues.</data>
+  <data key="d9">employee roles,organizational structure</data>
+  <data key="d10">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753110</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Market Research">
+  <data key="d7">1.0</data>
+  <data key="d8">The Market Research department is part of Analytix, analyzing market trends to inform business strategies.</data>
+  <data key="d9">employee roles,organizational structure</data>
+  <data key="d10">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753110</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Client Success">
+  <data key="d7">1.0</data>
+  <data key="d8">The Client Success department enhances client satisfaction and is part of Analytix's overall team structure.</data>
+  <data key="d9">employee roles,organizational structure</data>
+  <data key="d10">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753111</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Operations and Admin">
+  <data key="d7">1.0</data>
+  <data key="d8">The Operations and Admin department manages internal processes for Analytix.</data>
+  <data key="d9">employee roles,organizational structure</data>
+  <data key="d10">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753111</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Technology and Data">
+  <data key="d7">1.0</data>
+  <data key="d8">The Technology and Data department provides technological solutions within Analytix.</data>
+  <data key="d9">employee roles,organizational structure</data>
+  <data key="d10">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753112</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Government Liaison">
+  <data key="d7">1.0</data>
+  <data key="d8">The Government Liaison department facilitates relations between Analytix and government bodies.</data>
+  <data key="d9">employee roles,organizational structure</data>
+  <data key="d10">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753113</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Analytix" target="Multicultural Team">
+  <data key="d7">1.0</data>
+  <data key="d8">The multicultural team at Analytix represents diversity, united by a common objective of empowering businesses.</data>
+  <data key="d9">diversity,shared goals</data>
+  <data key="d10">chunk-ad40c98b922dd97a4793d772fb7b8af3</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762753113</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Saudi Arabia" target="Business Setup">
+  <data key="d7">1.0</data>
+  <data key="d8">Business setup services are tailored for entrepreneurs establishing their presence in Saudi Arabia.</data>
+  <data key="d9">market presence,service offering</data>
+  <data key="d10">chunk-0933d28082a9b7d482fd254a1cfffd8c</data>
+  <data key="d11">unknown_source</data>
+  <data key="d12">1762752651</data>
+  <data key="d13"></data>
+</edge>
+</graph></graphml>

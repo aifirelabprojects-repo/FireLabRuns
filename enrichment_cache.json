@@ -1,122 +1,76 @@
 {
-  "0d9fc1a84983d10d305902f22800fdc6": {
-    "result": {
-      "summary": "Cybrosys Technologies Pvt Ltd is an IT company that specializes in providing various technological solutions. The company is led by CEO Sainul Nannat and has a team that includes professionals with diverse expertise in the IT field. Cybrosys is known for its work in areas such as blockchain technology and Odoo, a business management software. The company is based in Cochin, India, and has been involved in the tech industry for over a decade. With a focus on innovation and customer satisfaction, Cybrosys aims to deliver high-quality services to its clients.",
-      "details": {
-        "founded": null,
-        "employees": null,
-        "founders": null,
-        "location": "Cochin, India",
-        "revenue": null,
-        "industry": "Information Technology"
-      },
-      "sources": [
-        {
-          "title": "Sainul Nannat - Cybrosys Ltd",
-          "link": "https://uk.linkedin.com/in/sainu"
-        },
-        {
-          "title": "CYBROSYS Technologies Pvt Ltd",
-          "link": "https://in.linkedin.com/company/cybrosys"
-        },
-        {
-          "title": "Jafar Shareef - Director at Cybrosys Technologies Pvt Ltd ...",
-          "link": "https://in.linkedin.com/in/jafarshareefc"
-        },
-        {
-          "title": "Yousuf Al ghazali - Owner, GTC",
-          "link": "https://www.linkedin.com/in/yousuf-al-ghazali-aa93984"
-        },
-        {
-          "title": "Nirja Das - S E at Cybrosys Technologies",
-          "link": "https://in.linkedin.com/in/nirja-das-4a07481a"
-        }
-      ],
-      "images": [
-        "https://play-lh.googleusercontent.com/lpOBjhm0UvNsEasfex50vqZDogdz6POwTC6rBYvP-IJk7BUyqprAbhBF4fQ8dLmJ-A",
-        "https://media.licdn.com/dms/image/v2/C560BAQG6SfBGaVMnxQ/company-logo_200_200/company-logo_200_200/0/1669204698996/cybrosys_logo?e=2147483647&v=beta&t=w05F-2NfsQMf09UwyprnbOZH9sOPddY-Y8HkmGELFsQ"
-      ]
-    },
-    "timestamp": 1762269218.8518748
-  },
   "ce1401a09c32db579aea7e24b742ef90": {
     "result": {
-      "summary": "AI FireLab is a company focused on designing and deploying intelligent systems, including LLM-powered agents and large-scale API infrastructures. Co-founded by Mohammed Ek and Nisham Sajjad, the company operates out of Riyadh and aims to leverage AI automation to enhance various applications. The team is dedicated to creating innovative solutions that connect skilled and unskilled workers through technology. With a commitment to advancing AI capabilities, AI FireLab is positioned to make significant contributions in the field of automation.",
+      "summary": "Aifirelab is a Saudi Arabian company founded in 2025 that specializes in delivering customized automated workflows for enterprises, large companies, and medium businesses using artificial intelligence. Their solutions automate tasks traditionally performed by humans, including those requiring reasoning, through custom AI models built with technologies like Langraph, Langchain, and Python. The company offers a user-friendly dashboard allowing clients to monitor and customize AI workflows without technical assistance. Aifirelab develops AI agents that handle business functions such as follow-ups, hiring, sales, and operations, aiming to improve efficiency and reduce the need for additional staff. Their AI-powered chatbots integrate with existing software to automate appointments, customer interactions, and routine processes across industries including healthcare and real estate. The company was co-founded by Nisham Sajjad, who has experience in project management and has led multiple major projects. Aifirelab is headquartered in Riyadh, Saudi Arabia.",
       "details": {
-        "founded": null,
+        "founded": "2025",
         "employees": null,
-        "founders": "Mohammed Ek, Nisham Sajjad",
-        "location": "Riyadh",
+        "founders": "Nisham Sajjad, Asbah Riyas, Mohammed Ek",
+        "location": "Riyadh, Saudi Arabia",
         "revenue": null,
-        "industry": "AI Automation"
+        "industry": "Artificial Intelligence, Automation, AI-powered Chatbots"
       },
       "sources": [
-        {
-          "title": "Mohammed ek\u200f - \u200fAI Automation Engineer | Co-founder at AI ...",
-          "link": "https://sa.linkedin.com/in/mohammedek"
-        },
-        {
-          "title": "Ai Firelab",
-          "link": "https://sa.linkedin.com/company/ai-firelab"
-        },
-        {
-          "title": "Nisham Sajjad - Project Manager @ Aifirelab",
-          "link": "https://au.linkedin.com/in/nisham-sajjad-a5b4b6258"
-        },
-        {
-          "title": "Ai Firelabs - Aifirelabs | AI Automation",
-          "link": "https://uk.linkedin.com/in/ai-firelabs-818064354"
-        },
-        {
-          "title": "Riya Fathima K P - Exploring Technology and Leadership",
-          "link": "https://in.linkedin.com/in/riya-fathima-k-p"
-        }
+        "https://www.f6s.com/company/aifirelab",
+        "https://www.aifirelabs.ai/about/",
+        "https://aifirelab.com",
+        "https://www.aifirelabs.ai",
+        "https://prezi.com/p/ptp9jot2n7ne/aifirelab/"
       ],
       "images": [
-        "https://aifirelab.com/logo.svg",
-        "https://media.licdn.com/dms/image/v2/D563DAQGSO7Xo3RNw7g/image-scale_191_1128/B56ZiFRZipG0Ag-/0/1754582589854/ai_firelab_cover?e=2147483647&v=beta&t=HP3s2Ad3X_VIW2i3tA7O4Fn2UMlcLPo4iJK0ywVgDNs"
+        "https://aifirelab.com/logo.png",
+        "https://www.f6s.com/company/aifirelab/logo"
       ]
     },
-    "timestamp": 1762269275.195856
+    "timestamp": 1762578583.3204596
   },
-  "c822c1b63853ed273b89687ac505f9fa": {
+  "0d9fc1a84983d10d305902f22800fdc6": {
     "result": {
-      "summary": "Google is a multinational technology company that specializes in Internet-related services and products. It is known for its search engine, which organizes the world's information and makes it universally accessible and useful. Google is also involved in various sectors including advertising, cloud computing, software, and hardware. The company has a significant impact on the digital landscape and continues to innovate in areas such as artificial intelligence and machine learning. Founded in 1998, Google has grown to become one of the most valuable brands in the world, operating under its parent company, Alphabet Inc.",
+      "summary": "Cybrosys Technologies Pvt Ltd is a private limited software and IT services company founded in 2008, headquartered in Kerala, India, with additional offices in Kochi and Bangalore. It specializes in Odoo ERP implementation, customization, and support, serving over 3000 clients globally across India, the USA, the UK, the Middle East, and Europe. The company has more than 300 employees and generates approximately $12.3 million in annual revenue. Cybrosys is an ISO-certified Odoo Gold Partner with strategic partnerships with major technology firms such as Microsoft, IBM, Intel, HP, and NASSCOM. Their offerings include ERP solutions for MSMEs, anti-money laundering software for banks, web and desktop applications, and employee outsourcing services. Cybrosys also invests in research and development and provides training in software development tools as part of its corporate social responsibility.",
       "details": {
-        "founded": "1998",
-        "employees": null,
+        "founded": "2008",
+        "employees": "300+",
         "founders": null,
+        "location": "Kerala, India",
+        "revenue": "$12.3 million",
+        "industry": "Software, IT Services, IT Consulting"
+      },
+      "sources": [
+        "https://rocketreach.co/cybrosys-technologies-pvt-ltd-profile_b448f334fce56b7d",
+        "https://apps.odoo.com/apps/modules/16.0/master_search",
+        "https://techreviewer.co/companies/cybrosys-technologies-pvt-ltd",
+        "https://www.cybrosys.com/odoo/odoo-books/v17-ce/website/",
+        "https://www.topdevelopers.co/profile/cybrosys"
+      ],
+      "images": [
+        "https://www.cybrosys.com/static/description/cybrosys-logo.png",
+        "https://rocketreach.co/images/company/cybrosys-technologies-pvt-ltd-logo.png"
+      ]
+    },
+    "timestamp": 1762579572.580257
+  },
+  "dbd97b526109d954cd5e198411dc9e24": {
+    "result": {
+      "summary": "AIRLAB, founded in 2017, is an artificial intelligence company owned by the founders of the Ubisoft group. The team consists of global specialists in AI and cutting-edge technologies with extensive experience in machine learning and deep learning applications. AIRLAB focuses on deploying AI techniques in advertising, user acquisition, automated quality assurance, and automated customer care to support mobile app developers. The company is led by Michel Guillemot, a veteran in the video game industry and founder of Ubisoft and Gameloft. AIRLAB emphasizes continuous research and development to stay at the forefront of emerging AI technologies. The company is known for integrating AI to boost business performance in mobile applications.",
+      "details": {
+        "founded": "2017",
+        "employees": null,
+        "founders": "Founders of the Ubisoft group, including Michel Guillemot",
         "location": null,
         "revenue": null,
-        "industry": "Technology"
+        "industry": "Artificial Intelligence, Machine Learning, Mobile App Development"
       },
       "sources": [
-        {
-          "title": "Sundar Pichai - CEO at Google",
-          "link": "https://www.linkedin.com/in/sundarpichai"
-        },
-        {
-          "title": "Laszlo Bock - x-Google SVP of People Operations",
-          "link": "https://www.linkedin.com/in/laszlobock"
-        },
-        {
-          "title": "Adam Gavish - Google",
-          "link": "https://www.linkedin.com/in/adamgavish"
-        },
-        {
-          "title": "Eric Schmidt - Former CEO and Chairman, Google",
-          "link": "https://www.linkedin.com/in/eric-e-schmidt"
-        },
-        {
-          "title": "Adam Guild - Owner",
-          "link": "https://www.linkedin.com/in/adamharrisonguild"
-        }
+        "https://www.airlab.ai/about/",
+        "https://dot.la/fitlab-raise-2656430769.html",
+        "https://airlab.global/more-about-us/",
+        "https://www.fitlab.com",
+        "https://app.dealroom.co/companies/airlab_1"
       ],
       "images": [
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png",
-        "https://lookaside.fbsbx.com/lookaside/crawler/media/?media_id=100044408950171"
+        "https://www.airlab.ai/wp-content/uploads/2020/10/airlab-logo.png"
       ]
     },
-    "timestamp": 1762342383.3089728
+    "timestamp": 1762611569.8197942
   }
 }

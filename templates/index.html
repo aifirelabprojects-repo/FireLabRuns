@@ -3,92 +3,198 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="Test- Business ChatBot Main">
+  <meta name="description" content="Test- Business ChatBot Widget">
   <link rel="icon" href="/static/logo.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
   <title>Business ChatBot</title>
   <script src="/static/tailwind.js"></script>
   <style>
-    /* subtle scroll bar */
-    #messages::-webkit-scrollbar { width: 8px; }
-    #messages::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.18); border-radius: 8px; }
-    /* spinner */
+    #messages::-webkit-scrollbar { width: 6px; }
+    #messages::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.2); border-radius: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner { border: 2px solid rgba(100,100,100,0.2); border-top: 2px solid #6b7280; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
-    /* fade-in */
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0);} }
-    .fade-up { animation: fadeUp .22s ease-out; }
+    .spinner { border: 2px solid rgba(100,100,100,0.2); border-top: 2px solid #6b7280; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-up { animation: fadeUp .2s ease-out; }
+    @keyframes hoverInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .hover-in-right { animation: hoverInRight .3s ease-out; }
+    .chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+    .chat-popup { 
+      position: fixed; 
+      top: 20px; 
+      right: 20px; 
+      width: 100%; 
+      max-width: 420px; 
+      height: calc(100vh - 40px); 
+      background: white; 
+      z-index: 999; 
+      transform: translateX(100%); 
+      opacity: 0; 
+      transition: transform .3s ease-out, opacity .3s ease-out; 
+      box-shadow: -4px 0 20px rgba(0,0,0,0.15); 
+      border-radius: 12px; 
+      overflow: hidden; 
+    }
+    .chat-popup.open { transform: translateX(0); opacity: 1; }
+    #chatToggle{
+      box-shadow: 0px 0px 5px 1px #d9d9d9;
+    }
+    @media (max-width: 768px) { 
+      .chat-popup { 
+        max-width: calc(100% - 20px); 
+        top: 10px; 
+        right: 10px; 
+        height: calc(100vh - 20px); 
+      } 
+    }
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 998; opacity: 0; visibility: hidden; transition: all .3s ease-out; }
+    .overlay.open { opacity: 1; visibility: visible; }
+
+    .email-popup {
+      position: absolute;
+      top: 68px;
+      right: 9px;
+      left: 9px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: 1001;
+      display: none;
+      animation: fadeUp 0.5s ease-out;
+    }
+    .email-popup.show {
+      display: block;
+    }
+    .email-popup:not(.show) {
+      animation: fadeOut 0.5s ease-out forwards;
+    }
+    .email-popup .close-popup {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+    @media (max-width: 768px) {
+      .email-popup {
+        max-width: calc(100% - 40px);
+        right: 10px;
+        top: 10px;
+      }
+    }
   </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 font-sans text-sm text-slate-700">
+<body class="bg-slate-50 min-h-screen font-sans text-sm text-slate-700 relative">
+  <button id="chatToggle" class="chat-widget p-3 bg-white hover:bg-gray-100 text-gray-700 rounded-full  transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-slate-200 z-10">
+    <svg class="w-6 h-6" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <g id="Product-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="ic_fluent_bot_24_regular" fill="#000" fill-rule="nonzero">
+          <path d="M17.7530511,13.999921 C18.9956918,13.999921 20.0030511,15.0072804 20.0030511,16.249921 L20.0030511,17.1550008 C20.0030511,18.2486786 19.5255957,19.2878579 18.6957793,20.0002733 C17.1303315,21.344244 14.8899962,22.0010712 12,22.0010712 C9.11050247,22.0010712 6.87168436,21.3444691 5.30881727,20.0007885 C4.48019625,19.2883988 4.00354153,18.2500002 4.00354153,17.1572408 L4.00354153,16.249921 C4.00354153,15.0072804 5.01090084,13.999921 6.25354153,13.999921 L17.7530511,13.999921 Z M17.7530511,15.499921 L6.25354153,15.499921 C5.83932796,15.499921 5.50354153,15.8357075 5.50354153,16.249921 L5.50354153,17.1572408 C5.50354153,17.8128951 5.78953221,18.4359296 6.28670709,18.8633654 C7.5447918,19.9450082 9.44080155,20.5010712 12,20.5010712 C14.5599799,20.5010712 16.4578003,19.9446634 17.7186879,18.8621641 C18.2165778,18.4347149 18.5030511,17.8112072 18.5030511,17.1550005 L18.5030511,16.249921 C18.5030511,15.8357075 18.1672647,15.499921 17.7530511,15.499921 Z M11.8985607,2.00734093 L12.0003312,2.00049432 C12.380027,2.00049432 12.6938222,2.2826482 12.7434846,2.64872376 L12.7503312,2.75049432 L12.7495415,3.49949432 L16.25,3.5 C17.4926407,3.5 18.5,4.50735931 18.5,5.75 L18.5,10.254591 C18.5,11.4972317 17.4926407,12.504591 16.25,12.504591 L7.75,12.504591 C6.50735931,12.504591 5.5,11.4972317 5.5,10.254591 L5.5,5.75 C5.5,4.50735931 6.50735931,3.5 7.75,3.5 L11.2495415,3.49949432 L11.2503312,2.75049432 C11.2503312,2.37079855 11.5324851,2.05700336 11.8985607,2.00734093 L12.0003312,2.00049432 L11.8985607,2.00734093 Z M16.25,5 L7.75,5 C7.33578644,5 7,5.33578644 7,5.75 L7,10.254591 C7,10.6688046 7.33578644,11.004591 7.75,11.004591 L16.25,11.004591 C16.6642136,11.004591 17,10.6688046 17,10.254591 L17,5.75 C17,5.33578644 16.6642136,5 16.25,5 Z M9.74928905,6.5 C10.4392523,6.5 10.9985781,7.05932576 10.9985781,7.74928905 C10.9985781,8.43925235 10.4392523,8.99857811 9.74928905,8.99857811 C9.05932576,8.99857811 8.5,8.43925235 8.5,7.74928905 C8.5,7.05932576 9.05932576,6.5 9.74928905,6.5 Z M14.2420255,6.5 C14.9319888,6.5 15.4913145,7.05932576 15.4913145,7.74928905 C15.4913145,8.43925235 14.9319888,8.99857811 14.2420255,8.99857811 C13.5520622,8.99857811 12.9927364,8.43925235 12.9927364,7.74928905 C12.9927364,7.05932576 13.5520622,6.5 14.2420255,6.5 Z" id="🎨-Color"></path>
+        </g>
+      </g>
+    </svg>
+  </button>
+  <div id="overlay" class="overlay"></div>
 
-  <div class="w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col" style="height: 80vh;">
-    <header class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 bg-white">
-      <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100">
-        <svg class="w-6 h-6" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-          <g id="Product-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+  <div id="chatDiv" class="chat-popup rounded-2xl  flex flex-col">
+    <div id="emailPopup" class="email-popup">
+      <button class="close-popup" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-slate-500">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <p class="text-sm text-slate-700">Unlock 20% off our expert advisory services with your Business</p>
+    </div>
+    <header class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100 bg-white">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <g id="Product-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
               <g id="ic_fluent_bot_24_regular" fill="#000" fill-rule="nonzero">
-                  <path d="M17.7530511,13.999921 C18.9956918,13.999921 20.0030511,15.0072804 20.0030511,16.249921 L20.0030511,17.1550008 C20.0030511,18.2486786 19.5255957,19.2878579 18.6957793,20.0002733 C17.1303315,21.344244 14.8899962,22.0010712 12,22.0010712 C9.11050247,22.0010712 6.87168436,21.3444691 5.30881727,20.0007885 C4.48019625,19.2883988 4.00354153,18.2500002 4.00354153,17.1572408 L4.00354153,16.249921 C4.00354153,15.0072804 5.01090084,13.999921 6.25354153,13.999921 L17.7530511,13.999921 Z M17.7530511,15.499921 L6.25354153,15.499921 C5.83932796,15.499921 5.50354153,15.8357075 5.50354153,16.249921 L5.50354153,17.1572408 C5.50354153,17.8128951 5.78953221,18.4359296 6.28670709,18.8633654 C7.5447918,19.9450082 9.44080155,20.5010712 12,20.5010712 C14.5599799,20.5010712 16.4578003,19.9446634 17.7186879,18.8621641 C18.2165778,18.4347149 18.5030511,17.8112072 18.5030511,17.1550005 L18.5030511,16.249921 C18.5030511,15.8357075 18.1672647,15.499921 17.7530511,15.499921 Z M11.8985607,2.00734093 L12.0003312,2.00049432 C12.380027,2.00049432 12.6938222,2.2826482 12.7434846,2.64872376 L12.7503312,2.75049432 L12.7495415,3.49949432 L16.25,3.5 C17.4926407,3.5 18.5,4.50735931 18.5,5.75 L18.5,10.254591 C18.5,11.4972317 17.4926407,12.504591 16.25,12.504591 L7.75,12.504591 C6.50735931,12.504591 5.5,11.4972317 5.5,10.254591 L5.5,5.75 C5.5,4.50735931 6.50735931,3.5 7.75,3.5 L11.2495415,3.49949432 L11.2503312,2.75049432 C11.2503312,2.37079855 11.5324851,2.05700336 11.8985607,2.00734093 L12.0003312,2.00049432 L11.8985607,2.00734093 Z M16.25,5 L7.75,5 C7.33578644,5 7,5.33578644 7,5.75 L7,10.254591 C7,10.6688046 7.33578644,11.004591 7.75,11.004591 L16.25,11.004591 C16.6642136,11.004591 17,10.6688046 17,10.254591 L17,5.75 C17,5.33578644 16.6642136,5 16.25,5 Z M9.74928905,6.5 C10.4392523,6.5 10.9985781,7.05932576 10.9985781,7.74928905 C10.9985781,8.43925235 10.4392523,8.99857811 9.74928905,8.99857811 C9.05932576,8.99857811 8.5,8.43925235 8.5,7.74928905 C8.5,7.05932576 9.05932576,6.5 9.74928905,6.5 Z M14.2420255,6.5 C14.9319888,6.5 15.4913145,7.05932576 15.4913145,7.74928905 C15.4913145,8.43925235 14.9319888,8.99857811 14.2420255,8.99857811 C13.5520622,8.99857811 12.9927364,8.43925235 12.9927364,7.74928905 C12.9927364,7.05932576 13.5520622,6.5 14.2420255,6.5 Z" id="🎨-Color">
-      
-      </path>
+                <path d="M17.7530511,13.999921 C18.9956918,13.999921 20.0030511,15.0072804 20.0030511,16.249921 L20.0030511,17.1550008 C20.0030511,18.2486786 19.5255957,19.2878579 18.6957793,20.0002733 C17.1303315,21.344244 14.8899962,22.0010712 12,22.0010712 C9.11050247,22.0010712 6.87168436,21.3444691 5.30881727,20.0007885 C4.48019625,19.2883988 4.00354153,18.2500002 4.00354153,17.1572408 L4.00354153,16.249921 C4.00354153,15.0072804 5.01090084,13.999921 6.25354153,13.999921 L17.7530511,13.999921 Z M17.7530511,15.499921 L6.25354153,15.499921 C5.83932796,15.499921 5.50354153,15.8357075 5.50354153,16.249921 L5.50354153,17.1572408 C5.50354153,17.8128951 5.78953221,18.4359296 6.28670709,18.8633654 C7.5447918,19.9450082 9.44080155,20.5010712 12,20.5010712 C14.5599799,20.5010712 16.4578003,19.9446634 17.7186879,18.8621641 C18.2165778,18.4347149 18.5030511,17.8112072 18.5030511,17.1550005 L18.5030511,16.249921 C18.5030511,15.8357075 18.1672647,15.499921 17.7530511,15.499921 Z M11.8985607,2.00734093 L12.0003312,2.00049432 C12.380027,2.00049432 12.6938222,2.2826482 12.7434846,2.64872376 L12.7503312,2.75049432 L12.7495415,3.49949432 L16.25,3.5 C17.4926407,3.5 18.5,4.50735931 18.5,5.75 L18.5,10.254591 C18.5,11.4972317 17.4926407,12.504591 16.25,12.504591 L7.75,12.504591 C6.50735931,12.504591 5.5,11.4972317 5.5,10.254591 L5.5,5.75 C5.5,4.50735931 6.50735931,3.5 7.75,3.5 L11.2495415,3.49949432 L11.2503312,2.75049432 C11.2503312,2.37079855 11.5324851,2.05700336 11.8985607,2.00734093 L12.0003312,2.00049432 L11.8985607,2.00734093 Z M16.25,5 L7.75,5 C7.33578644,5 7,5.33578644 7,5.75 L7,10.254591 C7,10.6688046 7.33578644,11.004591 7.75,11.004591 L16.25,11.004591 C16.6642136,11.004591 17,10.6688046 17,10.254591 L17,5.75 C17,5.33578644 16.6642136,5 16.25,5 Z M9.74928905,6.5 C10.4392523,6.5 10.9985781,7.05932576 10.9985781,7.74928905 C10.9985781,8.43925235 10.4392523,8.99857811 9.74928905,8.99857811 C9.05932576,8.99857811 8.5,8.43925235 8.5,7.74928905 C8.5,7.05932576 9.05932576,6.5 9.74928905,6.5 Z M14.2420255,6.5 C14.9319888,6.5 15.4913145,7.05932576 15.4913145,7.74928905 C15.4913145,8.43925235 14.9319888,8.99857811 14.2420255,8.99857811 C13.5520622,8.99857811 12.9927364,8.43925235 12.9927364,7.74928905 C12.9927364,7.05932576 13.5520622,6.5 14.2420255,6.5 Z" id="🎨-Color"></path>
               </g>
-          </g>
-      </svg>
+            </g>
+          </svg>
+        </div>
+        <div>
+          <div class="text-slate-900 font-medium leading-tight">Business Chatbot</div>
+          <div class="text-xs text-slate-400">Testing</div>
+        </div>
       </div>
-      <div class="flex-1">
-        <div class="text-slate-900 font-medium leading-tight">Business Chatbot</div>
-        <div class="text-xs text-slate-400">Testing </div>
-      </div>
-
       <div class="flex items-center gap-2">
         <button id="newBtn" title="New Chat" class="p-2 rounded-md hover:bg-slate-50">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-slate-500">
             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
+        <button id="closeBtn" title="Close" class="p-2 rounded-md hover:bg-slate-50">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-slate-500">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
       </div>
     </header>
 
- 
-    <main id="messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-white">
+    <main id="messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-white hover-in-right">
 
     </main>
 
-
-    <div class="border-t border-slate-100 bg-white p-3">
+    <div class="bg-white p-7">
       <form id="composer" class="flex items-center gap-2" onsubmit="return false;">
-
-        <input id="input" type="text" autocomplete="off" placeholder="nthelu choik..." 
-               class="flex-1 bg-slate-50 border border-slate-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-200" />
-
-        <button id="sendBtn" title="Send" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-xs rounded-full px-3 py-2">
-         
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="inline-block">
-            <path d="M22 2L11 13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M22 2l-7 20  -4-9-9-4 20-7z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-          </svg>
-          <span class="hidden sm:inline">Send</span>
-        </button>
+        <div class="absolute right-2 left-2 bottom-3">
+          <input
+            id="input"
+            type="text"
+            autocomplete="off"
+            placeholder="Type your message..."
+            class="w-full bg-slate-50 border border-slate-200 rounded-full px-[15px] py-[15px]  text-sm focus:outline-none  "
+          />
+          <button id="sendBtn" class="absolute right-[0.3rem] top-1/2 transform -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 bg-gray-800 text-white rounded-full hover:bg-gray-800/90 transition shadow-sm hover:shadow focus:outline-none focus:ring-1" title="Send"><svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="icon"><path d="M8.99992 16V6.41407L5.70696 9.70704C5.31643 10.0976 4.68342 10.0976 4.29289 9.70704C3.90237 9.31652 3.90237 8.6835 4.29289 8.29298L9.29289 3.29298L9.36907 3.22462C9.76184 2.90427 10.3408 2.92686 10.707 3.29298L15.707 8.29298L15.7753 8.36915C16.0957 8.76192 16.0731 9.34092 15.707 9.70704C15.3408 10.0732 14.7618 10.0958 14.3691 9.7754L14.2929 9.70704L10.9999 6.41407V16C10.9999 16.5523 10.5522 17 9.99992 17C9.44764 17 8.99992 16.5523 8.99992 16Z"></path></svg>
+                  </button>
+              
+        </div>
       </form>
     </div>
   </div>
 
   <script>
- 
     let ws;
     let sessionId = localStorage.getItem('chatSessionId');
     const messagesEl = document.getElementById('messages');
     const inputEl = document.getElementById('input');
     const sendBtn = document.getElementById('sendBtn');
     const newBtn = document.getElementById('newBtn');
+    const chatToggle = document.getElementById('chatToggle');
+    const chatDiv = document.getElementById('chatDiv');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('closeBtn');
 
- 
+    function toggleChat(open) {
+      if (open) {
+        chatDiv.classList.add('open');
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden'; 
+      } else {
+        chatDiv.classList.remove('open');
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    }
+
+    chatToggle.addEventListener('click', () => toggleChat(true));
+    closeBtn.addEventListener('click', () => toggleChat(false));
+    overlay.addEventListener('click', () => toggleChat(false));
+
     function appendHTML(html) {
       const wrapper = document.createElement('div');
       wrapper.className = 'fade-up';
       wrapper.innerHTML = html;
       messagesEl.appendChild(wrapper);
       messagesEl.scrollTop = messagesEl.scrollHeight;
-      return wrapper; // Return wrapper for attaching listeners
+      return wrapper;
     }
 
     function formatTime(ts = new Date().toISOString()) {
@@ -97,86 +203,64 @@
     }
 
     function addMessage(role, content, timestamp = new Date().toISOString(), options = null) {
-  
       const safe = String(content).replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\n','<br>');
       let html = '';
       if (role === 'user') {
         html = `
-          <div class="flex justify-end">
-            <div class="max-w-[78%] text-slate-50 bg-slate-800 rounded-2xl rounded-br-none px-4 py-2 leading-tight shadow-sm">
-              <div class="text-[13px]">${safe}</div>
-              <div class="text-[11px] text-slate-300 text-right mt-1">${formatTime(timestamp)}</div>
+        <div class="msg-animate in flex flex justify-end">
+        <div class="max-w-[80%]">
+            <div class="px-4 py-[0.6rem] min-w-20 flex justify-end bg-gray-900 text-white rounded-2xl shadow-sm text-sm max-w-md">
+            ${safe}
             </div>
-          </div>`;
+        </div>
+        </div>
+          
+          `;
       } else if (role === 'bot') {
         const optionsHtml = (options && options.length > 0) ? `
           <div class="mt-2 flex flex-wrap gap-2">
             ${options.map(o => `
-              <button class="option-btn px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs border border-slate-200 transition-colors" 
-                      data-value="${o.value.replace(/"/g, '&quot;')}" 
-                      data-text="${o.text.replace(/"/g, '&quot;')}">
-                ${o.text}
+              <button class="option-btn px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs border border-slate-200 transition-colors" 
+                      data-value="${o.replace(/"/g, '&quot;')}" 
+                      data-text="${o.replace(/"/g, '&quot;')}">
+                ${o}
               </button>
             `).join('')}
           </div>
         ` : '';
         html = `
           <div class="flex items-start gap-3">
-            <div class="w-8 h-8 flex items-center justify-center rounded-md bg-slate-100">
-           
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-slate-600">
-                <rect x="3" y="7" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.1"></rect>
-                <path d="M8 12h.01M16 12h.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"></path>
-                <path d="M8 4v2M16 4v2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"></path>
-              </svg>
-            </div>
-            <div class="max-w-[85%] bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl rounded-bl-none px-4 py-2 leading-tight shadow-sm">
+            <div class="max-w-[85%] p-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm">
               <div class="text-[13px]">${safe}</div>
               ${optionsHtml}
-              <div class="text-[11px] text-slate-400 mt-1">${formatTime(timestamp)}</div>
+              <div class="text-[10px] text-slate-400 mt-1">${formatTime(timestamp)}</div>
             </div>
           </div>`;
       } else if (role === 'admin') {
         html = `
           <div class="flex justify-start gap-3">
-            <div class="w-8 h-8 flex items-center justify-center rounded-md bg-slate-100">
-              
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg width="16" height="16" class="text-slate-600" viewBox="0 -0.5 17 17" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="si-glyph si-glyph-customer-support">
-    
-    <title>715</title>
-    
-    <defs>
-
-</defs>
-    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g transform="translate(1.000000, 0.000000)" fill="currentColor">
-            <g transform="translate(0.000000, 2.000000)">
-                <path d="M8.005,10.094 C6.563,10.094 5.098,9.238 4.243,8.105 C0.141,8.105 0.017,13.965 0.017,13.965 L15.992,13.965 C15.992,13.965 16.314,8.079 11.701,8.079 C10.847,9.226 9.447,10.094 8.005,10.094 Z" class="si-glyph-fill">
-
-</path>
-                <path d="M11.441,3.069 C11.441,4.755 9.902,7.979 8.002,7.979 C6.105,7.979 4.565,4.754 4.565,3.069 C4.565,1.384 6.104,0.016 8.002,0.016 C9.902,0.017 11.441,1.385 11.441,3.069 L11.441,3.069 Z" class="si-glyph-fill">
-
-</path>
-            </g>
-            <path d="M12.975,3.614 C12.975,3.298 12.535,3.043 11.989,3.041 L11.989,2.39 C11.989,2.293 12.026,0.022 8.014,0.022 C4.004,0.022 4.041,2.293 4.041,2.39 L4.041,3.064 C4.031,3.064 4.023,3.061 4.014,3.061 C3.471,3.061 3.034,3.312 3.034,3.623 L3.034,6.377 C3.034,6.686 3.472,6.938 4.014,6.938 C4.556,6.938 4.996,6.686 4.996,6.377 L4.996,3.623 C4.996,3.58 4.969,3.541 4.953,3.501 L4.953,2.75 C4.953,2.681 4.665,0.967 8.014,0.967 C11.364,0.967 11.016,2.681 11.016,2.75 L11.016,3.541 C11.01,3.566 10.991,3.588 10.991,3.614 L10.991,6.431 C10.991,6.748 11.434,7.005 11.983,7.005 C11.995,7.005 12.004,7.001 12.016,7.001 L12.016,8.03 L11.032,8.03 L11.032,9 L12.985,9 L12.975,3.614 L12.975,3.614 Z" class="si-glyph-fill">
-
-</path>
-        </g>
-    </g>
-</svg>
+            <div class="w-7 h-7 flex items-center justify-center rounded-md bg-slate-100 flex-shrink-0">
+              <svg width="14" height="14" class="text-slate-600" viewBox="0 -0.5 17 17" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                  <g transform="translate(1.000000, 0.000000)" fill="currentColor">
+                    <g transform="translate(0.000000, 2.000000)">
+                      <path d="M8.005,10.094 C6.563,10.094 5.098,9.238 4.243,8.105 C0.141,8.105 0.017,13.965 0.017,13.965 L15.992,13.965 C15.992,13.965 16.314,8.079 11.701,8.079 C10.847,9.226 9.447,10.094 8.005,10.094 Z"></path>
+                      <path d="M11.441,3.069 C11.441,4.755 9.902,7.979 8.002,7.979 C6.105,7.979 4.565,4.754 4.565,3.069 C4.565,1.384 6.104,0.016 8.002,0.016 C9.902,0.017 11.441,1.385 11.441,3.069 L11.441,3.069 Z"></path>
+                    </g>
+                    <path d="M12.975,3.614 C12.975,3.298 12.535,3.043 11.989,3.041 L11.989,2.39 C11.989,2.293 12.026,0.022 8.014,0.022 C4.004,0.022 4.041,2.293 4.041,2.39 L4.041,3.064 C4.031,3.064 4.023,3.061 4.014,3.061 C3.471,3.061 3.034,3.312 3.034,3.623 L3.034,6.377 C3.034,6.686 3.472,6.938 4.014,6.938 C4.556,6.938 4.996,6.686 4.996,6.377 L4.996,3.623 C4.996,3.58 4.969,3.541 4.953,3.501 L4.953,2.75 C4.953,2.681 4.665,0.967 8.014,0.967 C11.364,0.967 11.016,2.681 11.016,2.75 L11.016,3.541 C11.01,3.566 10.991,3.588 10.991,3.614 L10.991,6.431 C10.991,6.748 11.434,7.005 11.983,7.005 C11.995,7.005 12.004,7.001 12.016,7.001 L12.016,8.03 L11.032,8.03 L11.032,9 L12.985,9 L12.975,3.614 L12.975,3.614 Z"></path>
+                  </g>
+                </g>
+              </svg>
             </div>
-            <div class="max-w-[85%] bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl rounded-bl-none px-4 py-2 leading-tight shadow-sm">
+            <div class="max-w-[85%] bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl rounded-bl-none px-3 py-2 leading-tight shadow-sm">
               <div class="text-[13px]">${safe}</div>
               <div class="text-[11px] text-slate-400 mt-1">${formatTime(timestamp)}</div>
             </div>
           </div>`;
       } else { 
-        html = `<div class="flex justify-center"><div class="text-[12px] italic text-slate-400 px-2">${safe}</div></div>`;
+        html = `<div class="msg-animate in flex justify-center"><div class="text-xs px-4 py-2 bg-gray-100 rounded-full border border-gray-200 text-gray-500">${safe}</div></div>`;
       }
       const wrapper = appendHTML(html);
-      // Attach event listeners to option buttons if present
       if (options && options.length > 0 && role === 'bot') {
         const btns = wrapper.querySelectorAll('.option-btn');
         btns.forEach(btn => {
@@ -190,29 +274,16 @@
     }
 
     function showGenerating() {
-   
       hideGenerating();
-      
       const el = document.createElement('div');
       el.id = 'generating-row';
       el.className = 'fade-up flex items-start gap-3';
       el.innerHTML = `
-        <div class="w-8 h-8 flex items-center justify-center rounded-md bg-slate-100">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-slate-600">
-            <rect x="3" y="7" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.1"></rect>
-            <path d="M8 12h.01M16 12h.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"></path>
-            <path d="M8 4v2M16 4v2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div class="bg-slate-50 border border-slate-100 rounded-2xl px-4 py-2 inline-flex items-center gap-2">
+        <div class="bg-slate-50 border border-slate-100 rounded-2xl px-3 py-3 inline-flex items-center gap-2">
           <div class="spinner"></div>
-          <span class="text-xs text-slate-500">Typing...</span>
         </div>`;
       messagesEl.appendChild(el);
- 
-      setTimeout(() => {
-        messagesEl.scrollTop = messagesEl.scrollHeight;
-      }, 10);
+      setTimeout(() => { messagesEl.scrollTop = messagesEl.scrollHeight; }, 10);
     }
     
     function hideGenerating() {
@@ -229,7 +300,6 @@
         sessionId = data.session_id;
         localStorage.setItem('chatSessionId', sessionId);
       } catch (error) {
-        console.error('Error creating session:', error);
         throw error;
       }
     }
@@ -237,9 +307,6 @@
     function createWebSocket() {
       const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
       ws = new WebSocket(`${proto}://${window.location.host}/ws/chat/${sessionId}`);
-
-      ws.addEventListener('open', () => console.log('ws open'));
-      ws.addEventListener('close', () => console.log('ws close'));
       ws.addEventListener('message', (e) => {
         const msg = JSON.parse(e.data);
         if (msg.type === 'history') {
@@ -251,9 +318,12 @@
           }
         } else if (msg.type === 'status' || msg.type === 'error' || msg.type === 'handover') {
           hideGenerating();
-          addMessage('system', msg.content || msg.status || msg.error);
+          if (msg.type === 'handover') {
+            addMessage('system', 'Chat now controlled by AI');
+          } else if (msg.type === 'status') {
+            addMessage('system', 'Chat handed over to customer care');
+          }
         } else if (msg.type === 'typing') {
-    
           if (msg.on) showGenerating(); else hideGenerating();
         }
       });
@@ -266,9 +336,7 @@
           return;
         }
         createWebSocket();
-        const timeout = setTimeout(() => {
-          reject(new Error('Connection timeout'));
-        }, 5000);
+        const timeout = setTimeout(() => reject(new Error('Connection timeout')), 5000);
         const tempOnOpen = ws.onopen;
         ws.onopen = () => {
           clearTimeout(timeout);
@@ -279,9 +347,7 @@
         ws.onclose = (event) => {
           clearTimeout(timeout);
           if (tempOnClose) tempOnClose(event);
-          if (event.code !== 1000) {
-            reject(new Error(`Connection closed with code ${event.code}`));
-          }
+          if (event.code !== 1000) reject(new Error(`Connection closed with code ${event.code}`));
         };
         const tempOnError = ws.onerror;
         ws.onerror = (error) => {
@@ -299,32 +365,51 @@
 
     async function initChat() {
       try {
-        if (sessionId) {
-          await ensureSessionAndConnect();
-        }
+        if (sessionId) await ensureSessionAndConnect();
       } catch (err) {
-        console.error(err);
         addMessage('system', 'Unable to load chat history');
       }
     }
 
+    const emailRegex = /@[a-zA-Z0-9.-]*(?:gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|icloud\.com|proton\.me|zoho\.com|aol\.com|gmx\.com|tutanota\.com|mail\.com|yandex\.com)\b/i;
+
+    // Function to show email popup
+    function showEmailPopup() {
+      const popup = document.getElementById('emailPopup');
+      popup.classList.add('show');
+      const closePopupBtn = popup.querySelector('.close-popup');
+      // Remove existing listeners to prevent duplicates
+      closePopupBtn.removeEventListener('click', closePopupHandler);
+      closePopupBtn.addEventListener('click', closePopupHandler);
+      // Auto-close after 2 seconds, accounting for 0.2s animation
+      setTimeout(() => {
+        popup.classList.remove('show');
+      }, 4000);
+    }
+
+    function closePopupHandler() {
+      const popup = document.getElementById('emailPopup');
+      popup.classList.remove('show');
+    }
+    
+
     async function sendMessage() {
       const text = inputEl.value.trim();
       if (!text) return;
+      const originalText = text;
+      inputEl.value = ''; // Clear input immediately
+      // Check for personal email domains
+      if (emailRegex.test(originalText)) {
+        showEmailPopup();
+      }
       try {
         await ensureSessionAndConnect();
-        if (ws.readyState !== WebSocket.OPEN) {
-          throw new Error('WebSocket not open');
-        }
-
-        addMessage('user', text);
-        inputEl.value = '';
- 
+        if (ws.readyState !== WebSocket.OPEN) throw new Error('WebSocket not open');
+        addMessage('user', originalText);
         showGenerating();
-        ws.send(JSON.stringify({ type: 'message', content: text }));
+        ws.send(JSON.stringify({ type: 'message', content: originalText }));
       } catch (err) {
-        console.error(err);
-        hideGenerating();
+        inputEl.value = originalText; // Restore input on failure
         addMessage('system', 'Unable to send message. Please try again.');
       }
     }
@@ -332,21 +417,15 @@
     async function sendOption(value, text) {
       try {
         await ensureSessionAndConnect();
-        if (ws.readyState !== WebSocket.OPEN) {
-          throw new Error('WebSocket not open');
-        }
-
+        if (ws.readyState !== WebSocket.OPEN) throw new Error('WebSocket not open');
         addMessage('user', text);
- 
         showGenerating();
         ws.send(JSON.stringify({ type: 'message', content: value }));
       } catch (err) {
-        console.error(err);
         hideGenerating();
         addMessage('system', 'Unable to send option. Please try again.');
       }
     }
-
 
     sendBtn.addEventListener('click', sendMessage);
     inputEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
@@ -359,7 +438,11 @@
       addMessage('system', 'Started a new conversation.');
     });
 
+    chatDiv.addEventListener('transitionend', () => {
+      if (chatDiv.classList.contains('open')) inputEl.focus();
+    });
 
+  
     initChat();
   </script>
 </body>

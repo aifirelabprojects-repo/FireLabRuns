@@ -1,0 +1,161 @@
+{
+  "doc-f1b87a1f44933dd8ae3ee066b349b85a": {
+    "entity_names": [
+      "Virtual Office & Business Center",
+      "Market Entry & Business Setup",
+      "Legal Advisory & Contract Drafting",
+      "200 Employees",
+      "Legal & Business Protection",
+      "Management Consultancy",
+      "Trademark Registration",
+      "Premium Residency & Investor Visas",
+      "Industrial License & Factory Setup",
+      "Financial Services & Compliance",
+      "ISO & Local Content Certification",
+      "Bank Account & Finance Assistance",
+      "Business Setup in Other GCC",
+      "Debt Recovery & Dispute Resolution",
+      "Tax Consulting & Audit",
+      "Industrial & Specialized Operations",
+      "Accounting & Bookkeeping",
+      "HR & Talent Solutions",
+      "Vendor Registration & Certification",
+      "Entrepreneur License (IT & Tech Services)",
+      "Business Growth & Management",
+      "Business Setup Saudi Arabia",
+      "Technology & Process Automation"
+    ],
+    "count": 23,
+    "create_time": 1762751831,
+    "update_time": 1762751831,
+    "_id": "doc-f1b87a1f44933dd8ae3ee066b349b85a"
+  },
+  "doc-ef11a4d666ecb3f86f7fc3974d2ead9b": {
+    "entity_names": [
+      "Local Content Certification",
+      "ISO Certification",
+      "Debt Recovery",
+      "Trademark Registration",
+      "Number of Employees",
+      "Contract Drafting",
+      "Technology Automation",
+      "Industrial License",
+      "Dispute Resolution",
+      "Factory Setup",
+      "Analytix",
+      "Legal Advisory"
+    ],
+    "count": 12,
+    "create_time": 1762752654,
+    "update_time": 1762752654,
+    "_id": "doc-ef11a4d666ecb3f86f7fc3974d2ead9b"
+  },
+  "doc-0933d28082a9b7d482fd254a1cfffd8c": {
+    "entity_names": [
+      "GCC",
+      "Premium Residency & Investor Visas",
+      "Management Consultancy",
+      "Financial Services & Compliance",
+      "Accounting & Bookkeeping",
+      "Industrial & Specialized Operations",
+      "Business Growth & Management",
+      "Vendor Registration & Certification",
+      "HR & Talent Solutions",
+      "Saudi Arabia",
+      "Analytix",
+      "Tax Consulting & Audit",
+      "Business Setup"
+    ],
+    "count": 13,
+    "create_time": 1762752657,
+    "update_time": 1762752657,
+    "_id": "doc-0933d28082a9b7d482fd254a1cfffd8c"
+  },
+  "doc-e8747d8d5681e57b29954bb69d570bf3": {
+    "entity_names": [
+      "Saudi Arabia",
+      "Analytix",
+      "Company Revenue"
+    ],
+    "count": 3,
+    "create_time": 1762752730,
+    "update_time": 1762752730,
+    "_id": "doc-e8747d8d5681e57b29954bb69d570bf3"
+  },
+  "doc-3332591fde49da452fe1292f0b9f5938": {
+    "entity_names": [
+      "50 Lakhs",
+      "Analytix",
+      "Saudi Arabia"
+    ],
+    "count": 3,
+    "create_time": 1762752759,
+    "update_time": 1762752759,
+    "_id": "doc-3332591fde49da452fe1292f0b9f5938"
+  },
+  "doc-772544c5c84dd2e0b74b9e1b357d93f2": {
+    "entity_names": [
+      "50 Lakhs",
+      "Analytix",
+      "Saudi Arabia"
+    ],
+    "count": 3,
+    "create_time": 1762752819,
+    "update_time": 1762752819,
+    "_id": "doc-772544c5c84dd2e0b74b9e1b357d93f2"
+  },
+  "doc-6704745ef8e22dc07ffbfd6b9dc4460e": {
+    "entity_names": [
+      "Saudi Arabia",
+      "Analytix",
+      "Company Revenue"
+    ],
+    "count": 3,
+    "create_time": 1762752827,
+    "update_time": 1762752827,
+    "_id": "doc-6704745ef8e22dc07ffbfd6b9dc4460e"
+  },
+  "doc-31321d5f955edba1b7bf245c7bf4a054": {
+    "entity_names": [
+      "GreenBuild International",
+      "TechNova FZ LLC",
+      "EduSmart Global",
+      "Analytix"
+    ],
+    "count": 4,
+    "create_time": 1762753070,
+    "update_time": 1762753070,
+    "_id": "doc-31321d5f955edba1b7bf245c7bf4a054"
+  },
+  "doc-fb946c67f02bbb07299b4be23a9b4190": {
+    "entity_names": [
+      "Dammam",
+      "Analytix",
+      "200 Businesses",
+      "Jeddah",
+      "Saudi Arabia",
+      "Riyadh"
+    ],
+    "count": 6,
+    "create_time": 1762753091,
+    "update_time": 1762753091,
+    "_id": "doc-fb946c67f02bbb07299b4be23a9b4190"
+  },
+  "doc-ad40c98b922dd97a4793d772fb7b8af3": {
+    "entity_names": [
+      "Compliance and Legal",
+      "Government Liaison",
+      "Analytix",
+      "Market Research",
+      "Client Success",
+      "Multicultural Team",
+      "Saudi Arabia",
+      "Technology and Data",
+      "Operations and Admin"
+    ],
+    "count": 9,
+    "create_time": 1762753114,
+    "update_time": 1762753114,
+    "_id": "doc-ad40c98b922dd97a4793d772fb7b8af3"
+  }
+}

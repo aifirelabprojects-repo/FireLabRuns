@@ -1,0 +1,491 @@
+{
+  "Market Entry & Business Setup": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751828,
+    "update_time": 1762751828,
+    "_id": "Market Entry & Business Setup"
+  },
+  "Business Setup Saudi Arabia": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751828,
+    "update_time": 1762751828,
+    "_id": "Business Setup Saudi Arabia"
+  },
+  "Business Setup in Other GCC": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751828,
+    "update_time": 1762751828,
+    "_id": "Business Setup in Other GCC"
+  },
+  "Premium Residency & Investor Visas": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a",
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+    ],
+    "count": 2,
+    "update_time": 1762752649,
+    "_id": "Premium Residency & Investor Visas"
+  },
+  "Entrepreneur License (IT & Tech Services)": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751828,
+    "update_time": 1762751828,
+    "_id": "Entrepreneur License (IT & Tech Services)"
+  },
+  "Virtual Office & Business Center": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751828,
+    "update_time": 1762751828,
+    "_id": "Virtual Office & Business Center"
+  },
+  "Business Growth & Management": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a",
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+    ],
+    "count": 2,
+    "update_time": 1762752650,
+    "_id": "Business Growth & Management"
+  },
+  "Management Consultancy": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a",
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+    ],
+    "count": 2,
+    "update_time": 1762752649,
+    "_id": "Management Consultancy"
+  },
+  "Vendor Registration & Certification": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a",
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+    ],
+    "count": 2,
+    "update_time": 1762752649,
+    "_id": "Vendor Registration & Certification"
+  },
+  "HR & Talent Solutions": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a",
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+    ],
+    "count": 2,
+    "update_time": 1762752649,
+    "_id": "HR & Talent Solutions"
+  },
+  "Financial Services & Compliance": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a",
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+    ],
+    "count": 2,
+    "update_time": 1762752649,
+    "_id": "Financial Services & Compliance"
+  },
+  "Accounting & Bookkeeping": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a",
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+    ],
+    "count": 2,
+    "update_time": 1762752650,
+    "_id": "Accounting & Bookkeeping"
+  },
+  "Tax Consulting & Audit": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a",
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+    ],
+    "count": 2,
+    "update_time": 1762752650,
+    "_id": "Tax Consulting & Audit"
+  },
+  "Bank Account & Finance Assistance": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751829,
+    "update_time": 1762751829,
+    "_id": "Bank Account & Finance Assistance"
+  },
+  "Industrial & Specialized Operations": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a",
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+    ],
+    "count": 2,
+    "update_time": 1762752650,
+    "_id": "Industrial & Specialized Operations"
+  },
+  "Industrial License & Factory Setup": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751829,
+    "update_time": 1762751829,
+    "_id": "Industrial License & Factory Setup"
+  },
+  "ISO & Local Content Certification": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751829,
+    "update_time": 1762751829,
+    "_id": "ISO & Local Content Certification"
+  },
+  "Technology & Process Automation": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751829,
+    "update_time": 1762751829,
+    "_id": "Technology & Process Automation"
+  },
+  "Legal & Business Protection": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751829,
+    "update_time": 1762751829,
+    "_id": "Legal & Business Protection"
+  },
+  "Legal Advisory & Contract Drafting": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751829,
+    "update_time": 1762751829,
+    "_id": "Legal Advisory & Contract Drafting"
+  },
+  "Debt Recovery & Dispute Resolution": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751829,
+    "update_time": 1762751829,
+    "_id": "Debt Recovery & Dispute Resolution"
+  },
+  "Trademark Registration": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a",
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+    ],
+    "count": 2,
+    "update_time": 1762752649,
+    "_id": "Trademark Registration"
+  },
+  "200 Employees": {
+    "chunk_ids": [
+      "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+    ],
+    "count": 1,
+    "create_time": 1762751830,
+    "update_time": 1762751830,
+    "_id": "200 Employees"
+  },
+  "Analytix": {
+    "chunk_ids": [
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b",
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c",
+      "chunk-e8747d8d5681e57b29954bb69d570bf3",
+      "chunk-3332591fde49da452fe1292f0b9f5938",
+      "chunk-772544c5c84dd2e0b74b9e1b357d93f2",
+      "chunk-6704745ef8e22dc07ffbfd6b9dc4460e",
+      "chunk-31321d5f955edba1b7bf245c7bf4a054",
+      "chunk-fb946c67f02bbb07299b4be23a9b4190",
+      "chunk-ad40c98b922dd97a4793d772fb7b8af3"
+    ],
+    "count": 9,
+    "update_time": 1762753108,
+    "_id": "Analytix"
+  },
+  "Industrial License": {
+    "chunk_ids": [
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+    ],
+    "count": 1,
+    "create_time": 1762752648,
+    "update_time": 1762752648,
+    "_id": "Industrial License"
+  },
+  "Factory Setup": {
+    "chunk_ids": [
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+    ],
+    "count": 1,
+    "create_time": 1762752648,
+    "update_time": 1762752648,
+    "_id": "Factory Setup"
+  },
+  "ISO Certification": {
+    "chunk_ids": [
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+    ],
+    "count": 1,
+    "create_time": 1762752648,
+    "update_time": 1762752648,
+    "_id": "ISO Certification"
+  },
+  "Local Content Certification": {
+    "chunk_ids": [
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+    ],
+    "count": 1,
+    "create_time": 1762752648,
+    "update_time": 1762752648,
+    "_id": "Local Content Certification"
+  },
+  "Technology Automation": {
+    "chunk_ids": [
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+    ],
+    "count": 1,
+    "create_time": 1762752648,
+    "update_time": 1762752648,
+    "_id": "Technology Automation"
+  },
+  "Legal Advisory": {
+    "chunk_ids": [
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+    ],
+    "count": 1,
+    "create_time": 1762752648,
+    "update_time": 1762752648,
+    "_id": "Legal Advisory"
+  },
+  "Contract Drafting": {
+    "chunk_ids": [
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+    ],
+    "count": 1,
+    "create_time": 1762752648,
+    "update_time": 1762752648,
+    "_id": "Contract Drafting"
+  },
+  "Debt Recovery": {
+    "chunk_ids": [
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+    ],
+    "count": 1,
+    "create_time": 1762752648,
+    "update_time": 1762752648,
+    "_id": "Debt Recovery"
+  },
+  "Dispute Resolution": {
+    "chunk_ids": [
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+    ],
+    "count": 1,
+    "create_time": 1762752649,
+    "update_time": 1762752649,
+    "_id": "Dispute Resolution"
+  },
+  "Number of Employees": {
+    "chunk_ids": [
+      "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+    ],
+    "count": 1,
+    "create_time": 1762752649,
+    "update_time": 1762752649,
+    "_id": "Number of Employees"
+  },
+  "Saudi Arabia": {
+    "chunk_ids": [
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c",
+      "chunk-e8747d8d5681e57b29954bb69d570bf3",
+      "chunk-3332591fde49da452fe1292f0b9f5938",
+      "chunk-772544c5c84dd2e0b74b9e1b357d93f2",
+      "chunk-6704745ef8e22dc07ffbfd6b9dc4460e",
+      "chunk-fb946c67f02bbb07299b4be23a9b4190",
+      "chunk-ad40c98b922dd97a4793d772fb7b8af3"
+    ],
+    "count": 7,
+    "update_time": 1762753108,
+    "_id": "Saudi Arabia"
+  },
+  "Business Setup": {
+    "chunk_ids": [
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+    ],
+    "count": 1,
+    "create_time": 1762752649,
+    "update_time": 1762752649,
+    "_id": "Business Setup"
+  },
+  "GCC": {
+    "chunk_ids": [
+      "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+    ],
+    "count": 1,
+    "create_time": 1762752649,
+    "update_time": 1762752649,
+    "_id": "GCC"
+  },
+  "Company Revenue": {
+    "chunk_ids": [
+      "chunk-e8747d8d5681e57b29954bb69d570bf3",
+      "chunk-6704745ef8e22dc07ffbfd6b9dc4460e"
+    ],
+    "count": 2,
+    "update_time": 1762752825,
+    "_id": "Company Revenue"
+  },
+  "50 Lakhs": {
+    "chunk_ids": [
+      "chunk-3332591fde49da452fe1292f0b9f5938",
+      "chunk-772544c5c84dd2e0b74b9e1b357d93f2"
+    ],
+    "count": 2,
+    "update_time": 1762752819,
+    "_id": "50 Lakhs"
+  },
+  "TechNova FZ LLC": {
+    "chunk_ids": [
+      "chunk-31321d5f955edba1b7bf245c7bf4a054"
+    ],
+    "count": 1,
+    "create_time": 1762753067,
+    "update_time": 1762753067,
+    "_id": "TechNova FZ LLC"
+  },
+  "GreenBuild International": {
+    "chunk_ids": [
+      "chunk-31321d5f955edba1b7bf245c7bf4a054"
+    ],
+    "count": 1,
+    "create_time": 1762753067,
+    "update_time": 1762753067,
+    "_id": "GreenBuild International"
+  },
+  "EduSmart Global": {
+    "chunk_ids": [
+      "chunk-31321d5f955edba1b7bf245c7bf4a054"
+    ],
+    "count": 1,
+    "create_time": 1762753067,
+    "update_time": 1762753067,
+    "_id": "EduSmart Global"
+  },
+  "Riyadh": {
+    "chunk_ids": [
+      "chunk-fb946c67f02bbb07299b4be23a9b4190"
+    ],
+    "count": 1,
+    "create_time": 1762753082,
+    "update_time": 1762753082,
+    "_id": "Riyadh"
+  },
+  "Jeddah": {
+    "chunk_ids": [
+      "chunk-fb946c67f02bbb07299b4be23a9b4190"
+    ],
+    "count": 1,
+    "create_time": 1762753082,
+    "update_time": 1762753082,
+    "_id": "Jeddah"
+  },
+  "Dammam": {
+    "chunk_ids": [
+      "chunk-fb946c67f02bbb07299b4be23a9b4190"
+    ],
+    "count": 1,
+    "create_time": 1762753082,
+    "update_time": 1762753082,
+    "_id": "Dammam"
+  },
+  "200 Businesses": {
+    "chunk_ids": [
+      "chunk-fb946c67f02bbb07299b4be23a9b4190"
+    ],
+    "count": 1,
+    "create_time": 1762753082,
+    "update_time": 1762753082,
+    "_id": "200 Businesses"
+  },
+  "Compliance and Legal": {
+    "chunk_ids": [
+      "chunk-ad40c98b922dd97a4793d772fb7b8af3"
+    ],
+    "count": 1,
+    "create_time": 1762753108,
+    "update_time": 1762753108,
+    "_id": "Compliance and Legal"
+  },
+  "Market Research": {
+    "chunk_ids": [
+      "chunk-ad40c98b922dd97a4793d772fb7b8af3"
+    ],
+    "count": 1,
+    "create_time": 1762753108,
+    "update_time": 1762753108,
+    "_id": "Market Research"
+  },
+  "Client Success": {
+    "chunk_ids": [
+      "chunk-ad40c98b922dd97a4793d772fb7b8af3"
+    ],
+    "count": 1,
+    "create_time": 1762753108,
+    "update_time": 1762753108,
+    "_id": "Client Success"
+  },
+  "Operations and Admin": {
+    "chunk_ids": [
+      "chunk-ad40c98b922dd97a4793d772fb7b8af3"
+    ],
+    "count": 1,
+    "create_time": 1762753108,
+    "update_time": 1762753108,
+    "_id": "Operations and Admin"
+  },
+  "Technology and Data": {
+    "chunk_ids": [
+      "chunk-ad40c98b922dd97a4793d772fb7b8af3"
+    ],
+    "count": 1,
+    "create_time": 1762753108,
+    "update_time": 1762753108,
+    "_id": "Technology and Data"
+  },
+  "Government Liaison": {
+    "chunk_ids": [
+      "chunk-ad40c98b922dd97a4793d772fb7b8af3"
+    ],
+    "count": 1,
+    "create_time": 1762753108,
+    "update_time": 1762753108,
+    "_id": "Government Liaison"
+  },
+  "Multicultural Team": {
+    "chunk_ids": [
+      "chunk-ad40c98b922dd97a4793d772fb7b8af3"
+    ],
+    "count": 1,
+    "create_time": 1762753108,
+    "update_time": 1762753108,
+    "_id": "Multicultural Team"
+  }
+}

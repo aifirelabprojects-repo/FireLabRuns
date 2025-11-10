@@ -1,0 +1,190 @@
+{
+  "doc-ef11a4d666ecb3f86f7fc3974d2ead9b": {
+    "relation_pairs": [
+      [
+        "Analytix",
+        "ISO Certification"
+      ],
+      [
+        "Analytix",
+        "Trademark Registration"
+      ],
+      [
+        "Analytix",
+        "Local Content Certification"
+      ],
+      [
+        "Analytix",
+        "Industrial License"
+      ],
+      [
+        "Analytix",
+        "Debt Recovery"
+      ]
+    ],
+    "count": 5,
+    "create_time": 1762752654,
+    "update_time": 1762752654,
+    "_id": "doc-ef11a4d666ecb3f86f7fc3974d2ead9b"
+  },
+  "doc-0933d28082a9b7d482fd254a1cfffd8c": {
+    "relation_pairs": [
+      [
+        "Management Consultancy",
+        "Vendor Registration & Certification"
+      ],
+      [
+        "Business Setup",
+        "Premium Residency & Investor Visas"
+      ],
+      [
+        "Business Growth & Management",
+        "Management Consultancy"
+      ],
+      [
+        "Analytix",
+        "Industrial & Specialized Operations"
+      ],
+      [
+        "Business Setup",
+        "Saudi Arabia"
+      ],
+      [
+        "Analytix",
+        "Business Growth & Management"
+      ],
+      [
+        "Analytix",
+        "Saudi Arabia"
+      ]
+    ],
+    "count": 7,
+    "create_time": 1762752657,
+    "update_time": 1762752657,
+    "_id": "doc-0933d28082a9b7d482fd254a1cfffd8c"
+  },
+  "doc-e8747d8d5681e57b29954bb69d570bf3": {
+    "relation_pairs": [
+      [
+        "Analytix",
+        "Saudi Arabia"
+      ]
+    ],
+    "count": 1,
+    "create_time": 1762752730,
+    "update_time": 1762752730,
+    "_id": "doc-e8747d8d5681e57b29954bb69d570bf3"
+  },
+  "doc-3332591fde49da452fe1292f0b9f5938": {
+    "relation_pairs": [
+      [
+        "Analytix",
+        "Saudi Arabia"
+      ]
+    ],
+    "count": 1,
+    "create_time": 1762752759,
+    "update_time": 1762752759,
+    "_id": "doc-3332591fde49da452fe1292f0b9f5938"
+  },
+  "doc-6704745ef8e22dc07ffbfd6b9dc4460e": {
+    "relation_pairs": [
+      [
+        "Analytix",
+        "Saudi Arabia"
+      ]
+    ],
+    "count": 1,
+    "create_time": 1762752827,
+    "update_time": 1762752827,
+    "_id": "doc-6704745ef8e22dc07ffbfd6b9dc4460e"
+  },
+  "doc-31321d5f955edba1b7bf245c7bf4a054": {
+    "relation_pairs": [
+      [
+        "Analytix",
+        "GreenBuild International"
+      ],
+      [
+        "Analytix",
+        "TechNova FZ LLC"
+      ],
+      [
+        "Analytix",
+        "EduSmart Global"
+      ]
+    ],
+    "count": 3,
+    "create_time": 1762753070,
+    "update_time": 1762753070,
+    "_id": "doc-31321d5f955edba1b7bf245c7bf4a054"
+  },
+  "doc-fb946c67f02bbb07299b4be23a9b4190": {
+    "relation_pairs": [
+      [
+        "Analytix",
+        "Saudi Arabia"
+      ],
+      [
+        "Analytix",
+        "Riyadh"
+      ],
+      [
+        "200 Businesses",
+        "Analytix"
+      ],
+      [
+        "Analytix",
+        "Jeddah"
+      ],
+      [
+        "Analytix",
+        "Dammam"
+      ]
+    ],
+    "count": 5,
+    "create_time": 1762753091,
+    "update_time": 1762753091,
+    "_id": "doc-fb946c67f02bbb07299b4be23a9b4190"
+  },
+  "doc-ad40c98b922dd97a4793d772fb7b8af3": {
+    "relation_pairs": [
+      [
+        "Analytix",
+        "Saudi Arabia"
+      ],
+      [
+        "Analytix",
+        "Compliance and Legal"
+      ],
+      [
+        "Analytix",
+        "Government Liaison"
+      ],
+      [
+        "Analytix",
+        "Technology and Data"
+      ],
+      [
+        "Analytix",
+        "Operations and Admin"
+      ],
+      [
+        "Analytix",
+        "Market Research"
+      ],
+      [
+        "Analytix",
+        "Client Success"
+      ],
+      [
+        "Analytix",
+        "Multicultural Team"
+      ]
+    ],
+    "count": 8,
+    "create_time": 1762753114,
+    "update_time": 1762753114,
+    "_id": "doc-ad40c98b922dd97a4793d772fb7b8af3"
+  }
+}

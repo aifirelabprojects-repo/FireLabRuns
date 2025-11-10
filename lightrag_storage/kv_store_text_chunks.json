@@ -1,0 +1,142 @@
+{
+  "chunk-f1b87a1f44933dd8ae3ee066b349b85a": {
+    "tokens": 326,
+    "content": "## Main Categories\n    • Market Entry & Business Setup\n    • Strategic Growth & Management\n    • Financial Services & Compliance\n    • Industrial & Specialized Operations\n    • Legal & Business Protection\n\n## Main Category 1: Market Entry & Business Setup\n    Tailored for new entrants and entrepreneurs establishing their legal presence.\n    • Business Setup Saudi Arabia\n    • Business Setup in other GCC (UAE, Qatar, etc.)\n    • Premium Residency & Investor Visas\n    • Entrepreneur License (IT & Tech Services)\n    • Virtual Office & Business Center\n## Main Category 2: Business Growth & Management\n    For established businesses aiming to scale, optimize, and win large contracts.\n    • Management Consultancy (Business Restructuring, Market Strategy, M&A)\n    • Vendor Registration & Certification (for NEOM, Aramco, etc.)\n    • HR & Talent Solutions (Recruitment, EOR, Training)\n## Main Category 3: Financial Services & Compliance\n    Ensuring financial health, tax compliance, and operational legitimacy.\n    • Accounting & Bookkeeping\n    • Tax Consulting & Audit\n    • Bank Account & Finance Assistance\n## Main Category 4: Industrial & Specialized Operations\n    For manufacturing, industrial, and specialized sector requirements.\n    • Industrial License & Factory Setup\n    • ISO & Local Content Certification\n    • Technology & Process Automation\n\n## Legal & Business Protection\n    Safeguarding your business from legal and financial risks.\n    • Legal Advisory & Contract Drafting\n    • Debt Recovery & Dispute Resolution\n    • Trademark Registration\n\nnumber of employees : 200",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-f1b87a1f44933dd8ae3ee066b349b85a",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:2a4d9a08cd476f5ae417f4dcd11f3f5e",
+      "default:extract:64c0e49e8b65334ec08413f9351ccfc5"
+    ],
+    "create_time": 1762751806,
+    "update_time": 1762751828,
+    "_id": "chunk-f1b87a1f44933dd8ae3ee066b349b85a"
+  },
+  "chunk-0933d28082a9b7d482fd254a1cfffd8c": {
+    "tokens": 250,
+    "content": "## Main Categories\n    • Market Entry & Business Setup\n    • Strategic Growth & Management\n    • Financial Services & Compliance\n    • Industrial & Specialized Operations\n    • Legal & Business Protection\n\n## Main Category 1: Market Entry & Business Setup\n    Tailored for new entrants and entrepreneurs establishing their legal presence.\n    • Business Setup Saudi Arabia\n    • Business Setup in other GCC (UAE, Qatar, etc.)\n    • Premium Residency & Investor Visas\n    • Entrepreneur License (IT & Tech Services)\n    • Virtual Office & Business Center\n## Main Category 2: Business Growth & Management\n    For established businesses aiming to scale, optimize, and win large contracts.\n    • Management Consultancy (Business Restructuring, Market Strategy, M&A)\n    • Vendor Registration & Certification (for NEOM, Aramco, etc.)\n    • HR & Talent Solutions (Recruitment, EOR, Training)\n## Main Category 3: Financial Services & Compliance\n    Ensuring financial health, tax compliance, and operational legitimacy.\n    • Accounting & Bookkeeping\n    • Tax Consulting & Audit\n    • Bank Account & Finance Assistance\n## Main Category 4: Industrial & Specialized Operations\n    For manufacturing, industri",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-0933d28082a9b7d482fd254a1cfffd8c",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:e8b93c307e29ad6cfd744509d224e485",
+      "default:extract:f643fbfba49c0a997b147a208f39f618"
+    ],
+    "create_time": 1762752627,
+    "update_time": 1762752649,
+    "_id": "chunk-0933d28082a9b7d482fd254a1cfffd8c"
+  },
+  "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b": {
+    "tokens": 77,
+    "content": "al, and specialized sector requirements.\n    • Industrial License & Factory Setup\n    • ISO & Local Content Certification\n    • Technology & Process Automation\n\n## Legal & Business Protection\n    Safeguarding your business from legal and financial risks.\n    • Legal Advisory & Contract Drafting\n    • Debt Recovery & Dispute Resolution\n    • Trademark Registration\n\nnumber of employees : 200",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-ef11a4d666ecb3f86f7fc3974d2ead9b",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:8288bae6a8530388ad52f37f2d8d52a4",
+      "default:extract:c9b3832f5fe1644ec7d2c85ebf7a91e6"
+    ],
+    "create_time": 1762752627,
+    "update_time": 1762752648,
+    "_id": "chunk-ef11a4d666ecb3f86f7fc3974d2ead9b"
+  },
+  "chunk-e8747d8d5681e57b29954bb69d570bf3": {
+    "tokens": 7,
+    "content": "company revenue - 50laks",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-e8747d8d5681e57b29954bb69d570bf3",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:2084f9e9bc8b98add1e8f5b04e7dc194",
+      "default:extract:e36e1c30e124f840f7d40944518be134"
+    ],
+    "create_time": 1762752722,
+    "update_time": 1762752729,
+    "_id": "chunk-e8747d8d5681e57b29954bb69d570bf3"
+  },
+  "chunk-3332591fde49da452fe1292f0b9f5938": {
+    "tokens": 8,
+    "content": "company revenue - 50lakshs",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-3332591fde49da452fe1292f0b9f5938",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:69cf58f0a5ad2c69dc8bb2f05b4de018",
+      "default:extract:a6bc148444e6f1054840f50ddeb801ba"
+    ],
+    "create_time": 1762752750,
+    "update_time": 1762752757,
+    "_id": "chunk-3332591fde49da452fe1292f0b9f5938"
+  },
+  "chunk-772544c5c84dd2e0b74b9e1b357d93f2": {
+    "tokens": 7,
+    "content": "company revenue - 50lakhs",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-772544c5c84dd2e0b74b9e1b357d93f2",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:0b146bb8683cff3798bf676ee475e159",
+      "default:extract:5ba761e6832a765270292693044e6003"
+    ],
+    "create_time": 1762752813,
+    "update_time": 1762752819,
+    "_id": "chunk-772544c5c84dd2e0b74b9e1b357d93f2"
+  },
+  "chunk-6704745ef8e22dc07ffbfd6b9dc4460e": {
+    "tokens": 7,
+    "content": "company revenue is 50lakhs",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-6704745ef8e22dc07ffbfd6b9dc4460e",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:b0b9ca2fbe977777576cf73fc9667ce2",
+      "default:extract:aa1447791c4f458eebe7b00f629c0c5b"
+    ],
+    "create_time": 1762752820,
+    "update_time": 1762752825,
+    "_id": "chunk-6704745ef8e22dc07ffbfd6b9dc4460e"
+  },
+  "chunk-31321d5f955edba1b7bf245c7bf4a054": {
+    "tokens": 110,
+    "content": "Client Success Stories – Analytix\n\n1. **TechNova FZ LLC**\n   With Analytix's support, TechNova established its Saudi entity in 18 days \n   and secured its first B2G contract within 3 months.\n\n2. **GreenBuild International**\n   Analytix helped GreenBuild obtain its commercial registration, \n   factory permit, and local partner certification in record time.\n\n3. **EduSmart Global**\n   Leveraged Analytix's PRO services to deploy 50+ expatriate professionals in Saudi schools.",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-31321d5f955edba1b7bf245c7bf4a054",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:7ada5f422316024f4bd7ece36b2e8b7a",
+      "default:extract:2ddba6c383df1200f154ba80e2884b40"
+    ],
+    "create_time": 1762753054,
+    "update_time": 1762753067,
+    "_id": "chunk-31321d5f955edba1b7bf245c7bf4a054"
+  },
+  "chunk-fb946c67f02bbb07299b4be23a9b4190": {
+    "tokens": 95,
+    "content": "# Analytix Company Profile\n\nAnalytix is a government-approved partner for business expansion in Saudi Arabia.\n\nOur core mission is to simplify market entry, licensing, and compliance for new and existing businesses. \nWe’ve supported more than 200 businesses in setting up their operations across key Saudi regions — Riyadh, Jeddah, and Dammam.\n\n## Contact\nEmail: info@analytix.sa  \nPhone: +966-11-456-7890",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-fb946c67f02bbb07299b4be23a9b4190",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:a46a60797f896a361f7ef0c77a3ad8fd",
+      "default:extract:320a2e86813fc2bbc6ab7c4b32dc487c"
+    ],
+    "create_time": 1762753070,
+    "update_time": 1762753082,
+    "_id": "chunk-fb946c67f02bbb07299b4be23a9b4190"
+  },
+  "chunk-ad40c98b922dd97a4793d772fb7b8af3": {
+    "tokens": 87,
+    "content": "As of 2025, Analytix employs 200 full-time staff members.\n\nDepartments include:\n- Compliance and Legal (35 employees)\n- Market Research (40 employees)\n- Client Success (25 employees)\n- Operations and Admin (50 employees)\n- Technology and Data (30 employees)\n- Government Liaison (20 employees)\n\nOur multicultural team represents 12 nationalities, united by our shared goal of empowering businesses in Saudi Arabia.",
+    "chunk_order_index": 0,
+    "full_doc_id": "doc-ad40c98b922dd97a4793d772fb7b8af3",
+    "file_path": "unknown_source",
+    "llm_cache_list": [
+      "default:extract:2ea20ccdd70c566bf45868e5f9c8ab1e",
+      "default:extract:8c6ef5d82bc288f8d105df23deded409"
+    ],
+    "create_time": 1762753091,
+    "update_time": 1762753108,
+    "_id": "chunk-ad40c98b922dd97a4793d772fb7b8af3"
+  }
+}

@@ -8,14 +8,13 @@ import hashlib
 import time
 from typing import Dict, Any, Tuple, Optional, List
 import re
-from sqlalchemy.orm import Session
-from sqlalchemy import func  
-from database import CustomerBase, get_db  
-from ClientModel import client,MODEL_NAME
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
+from database import AsyncSessionLocal, CustomerBase
+from ClientModel import client, MODEL_NAME
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
 
 CUSTOMER_CACHE_FILE = "customer_cache.json"
 
@@ -23,18 +22,21 @@ class TTLCache:
     def __init__(self, ttl_seconds: int = 3600):  # 1 hour TTL
         self.cache: Dict[str, tuple[Optional[Dict[str, Any]] | List[Dict[str, Any]], float]] = {}
         self.ttl = ttl_seconds
+        self._lock = asyncio.Lock()  # Thread-safe for concurrent access
 
-    def get(self, key: str) -> Optional[Dict[str, Any]] | List[Dict[str, Any]]:
-        if key in self.cache:
-            value, timestamp = self.cache[key]
-            if time.time() - timestamp < self.ttl:
-                return value
-            else:
-                del self.cache[key]
-        return None
+    async def get(self, key: str) -> Optional[Dict[str, Any]] | List[Dict[str, Any]]:
+        async with self._lock:
+            if key in self.cache:
+                value, timestamp = self.cache[key]
+                if time.time() - timestamp < self.ttl:
+                    return value
+                else:
+                    del self.cache[key]
+            return None
 
-    def set(self, key: str, value: Optional[Dict[str, Any]] | List[Dict[str, Any]]):
-        self.cache[key] = (value, time.time())
+    async def set(self, key: str, value: Optional[Dict[str, Any]] | List[Dict[str, Any]]):
+        async with self._lock:
+            self.cache[key] = (value, time.time())
 
 # Load persistent cache for customer lookups
 def load_persistent_cache() -> Dict[str, Dict[str, Any]]:
@@ -47,7 +49,12 @@ def load_persistent_cache() -> Dict[str, Dict[str, Any]]:
             return {}
     return {}
 
-def save_persistent_cache(cache: Dict[str, Dict[str, Any]]):
+async def save_persistent_cache(cache: Dict[str, Dict[str, Any]]):
+    # Use a lock to prevent race conditions during concurrent writes
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, _sync_save_cache, cache)
+
+def _sync_save_cache(cache: Dict[str, Dict[str, Any]]):
     try:
         with open(CUSTOMER_CACHE_FILE, 'w') as f:
             json.dump(cache, f, indent=2)
@@ -61,24 +68,18 @@ def get_cache_key(inputs: Dict[str, str]) -> str:
     key_str = ''.join([f"{k}:{v}" for k, v in sorted(inputs.items())])
     return hashlib.md5(key_str.encode()).hexdigest()
 
-# Async DB query helper - optimized for production (uses context manager)
-def get_db_session() -> Session:
-    db = next(get_db())
-    return db
-
 async def retrieve_by_groupcode(groupcode: str) -> Optional[Dict[str, Any]]:
     """Retrieve customer details by groupcode. Assumes groupcode is unique."""
-    db = get_db_session()
-    try:
-        # Normalize input
+    async with AsyncSessionLocal() as db:
         normalized_groupcode = groupcode.lower().strip()
         print(normalized_groupcode)
-        customer = db.query(CustomerBase).filter(
-            func.lower(CustomerBase.groupcode) == normalized_groupcode  # Case-insensitive exact match
-        ).first()
+        stmt = select(CustomerBase).where(
+            func.lower(CustomerBase.groupcode) == normalized_groupcode
+        )
+        result = await db.execute(stmt)
+        customer = result.scalar_one_or_none()
         
         if customer:
-            # Convert to dict for easy serialization/caching
             customer_dict = {
                 "id": customer.id,
                 "created_at": customer.created_at.isoformat() if customer.created_at else None,
@@ -96,18 +97,18 @@ async def retrieve_by_groupcode(groupcode: str) -> Optional[Dict[str, Any]]:
             }
             return customer_dict
         return None
-    finally:
-        db.close()
 
 async def retrieve_by_company(company: str) -> List[Dict[str, Any]]:
     """Retrieve customer details by company name. Returns list as company may not be unique."""
-    db = get_db_session()
-    try:
-        # Normalize input
+    async with AsyncSessionLocal() as db:
         normalized_company = company.lower().strip()
-        customers = db.query(CustomerBase).filter(
-            CustomerBase.company.ilike(f"%{normalized_company}%")  # Fuzzy match for flexibility
-        ).all()
+        # Optimized: Add limit to prevent fetching too many results in high-scale scenarios
+        # (e.g., broad searches); adjust limit as needed based on use case
+        stmt = select(CustomerBase).where(
+            CustomerBase.company.ilike(f"%{normalized_company}%")
+        ).limit(5)  # Limit to top 5 matches for performance
+        result = await db.execute(stmt)
+        customers = result.scalars().all()
         
         customer_list = []
         for customer in customers:
@@ -129,8 +130,6 @@ async def retrieve_by_company(company: str) -> List[Dict[str, Any]]:
             customer_list.append(customer_dict)
         
         return customer_list
-    finally:
-        db.close()
 
 # Tool definitions for OpenAI function calling
 TOOLS = [
@@ -170,7 +169,6 @@ TOOLS = [
     }
 ]
 
-# Function to execute the tool calls
 async def execute_tool_call(tool_call):
     function_name = tool_call.function.name
     arguments = json.loads(tool_call.function.arguments)
@@ -186,23 +184,23 @@ async def execute_tool_call(tool_call):
     
     return None
 
-# Main async function: Find existing customer using one model call with function calling
 async def find_existing_customer(input_identifier: str) -> Tuple[Optional[Dict[str, Any]] | List[Dict[str, Any]], str]:
     inputs = {"input": input_identifier.lower().strip()}
     cache_key = get_cache_key(inputs)
 
-    # Step 1: Check caches
-    ttl_result = ttl_cache.get(cache_key)
+    ttl_result = await ttl_cache.get(cache_key)
     if ttl_result is not None:
         return ttl_result, "cached"
 
-    persistent_data = persistent_cache.get(cache_key, {})
+    # Check persistent cache (sync read is fine as it's loaded once, but for scale, we could use a shared dict with lock)
+    persistent_lock = asyncio.Lock()
+    async with persistent_lock:
+        persistent_data = persistent_cache.get(cache_key, {})
     if persistent_data:
         result = persistent_data['result']
-        ttl_cache.set(cache_key, result)
+        await ttl_cache.set(cache_key, result)
         return result, "cached"
 
-    # Step 2: Single model call with tools for classification + lookup decision
     prompt = f"""You are a customer lookup assistant. Analyze the user input and decide how to retrieve the customer details.
 
 - If the input looks like a GROUP CODE (short alphanumeric code like 'ABC123', 'GRP-456', typically 3-10 characters, no spaces or common words), call the 'lookup_by_groupcode' tool with the groupcode as the parameter.
@@ -214,53 +212,47 @@ User input: "{input_identifier}"
 Remember: Call exactly one tool if it matches, or none if it doesn't."""
 
     try:
+        # Parallelize if needed in future, but single call here; async OpenAI handles concurrency
         response = await client.chat.completions.create(
             model=MODEL_NAME,
             messages=[{"role": "user", "content": prompt}],
             tools=TOOLS,
-            tool_choice="auto",  # Let model decide
+            tool_choice="auto",
             temperature=0.0,
         )
         
-        # Step 3: Handle tool calls or no call
         result = None
-        classification = "none"  # Default for no tool call
+        classification = "none"
         
         if response.choices[0].message.tool_calls:
-            # Execute the tool call (only one expected)
             tool_call = response.choices[0].message.tool_calls[0]
+            # Execute tool call asynchronously (already async functions)
             result = await execute_tool_call(tool_call)
             if tool_call.function.name == "lookup_by_groupcode":
                 classification = "groupcode"
             else:
                 classification = "company"
         else:
-            # No tool called: input is neither, provide no response (return None)
             result = None
             classification = "none"
         
-        # Step 4: Cache and return
-        ttl_cache.set(cache_key, result)
-        persistent_cache[cache_key] = {
-            'result': result,
-            'classification': classification,
-            'timestamp': time.time()
-        }
-        save_persistent_cache(persistent_cache)
+        await ttl_cache.set(cache_key, result)
+        
+        # Update persistent cache with lock for concurrent writes
+        async with persistent_lock:
+            persistent_cache[cache_key] = {
+                'result': result,
+                'classification': classification,
+                'timestamp': time.time()
+            }
+        await save_persistent_cache(persistent_cache)
 
         return result, classification
         
     except Exception as e:
-        print(f"Model call error in find_existing_customer: {e}")
-        # Fallback to original heuristic if needed, but for now return None
+        print(f"Error in find_existing_customer: {e}")
+        import traceback
+        traceback.print_exc()
         return None, "error"
 
-# Wrapper for sync usage if needed (production: prefer async)
-def FindExistingCustomer(input_identifier: str) -> Tuple[Optional[Dict[str, Any]] | List[Dict[str, Any]], str]:
-    """Sync wrapper for async find_existing_customer."""
-    try:
-        return asyncio.run(find_existing_customer(input_identifier))
-    except Exception as e:
-        print(f"Runtime error in FindExistingCustomer: {e}")
-        return None, "error"
-      
+
