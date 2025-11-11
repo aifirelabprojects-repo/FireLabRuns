@@ -8,7 +8,7 @@ import json
 import asyncio
 import re
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Set,AsyncGenerator, Tuple,Union
+from typing import Any, Dict, List, Optional, Set,AsyncGenerator, Tuple,Union
 from fastapi import Depends, FastAPI, File, Request, Response, UploadFile, WebSocket, WebSocketDisconnect, Query, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 from sqlalchemy import func, or_, select,case,and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from BotGraph import invoke_chat_async,reload_system_prompt
+from DeepResearch import  _call_research_async
 from VerifyUser import verify_user
 from database import AsyncSessionLocal, Session as SessionModel, Message as MessageModel, get_db, init_db 
 from collections import Counter, defaultdict
@@ -829,6 +830,7 @@ def _compute_session_data(sess: SessionModel, msg_rows: List[MessageModel],
         "c_images": sess.c_images,
         "approved": sess.approved,
         "date_str": date_str,
+        "research_data":sess.research_data,
     }
 
 # --- Internal fetch + compute (keeps the same high-level behavior) ---
@@ -1388,94 +1390,108 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
         service_demand.append({"name": name, "count": count, "change": change_str})
     top_service = service_demand[0] if service_demand else {"name": "N/A", "count": 0, "change": "0%"}
 
-    # Deepest Conversations: top 7 longest sessions this week + per-user change vs last week
+    compare_to_last_week = False  
+
     subq_sessions = select(SessionModel.id).where(SessionModel.created_at >= week_start)
     stmt_durations = (
         select(
             MessageModel.session_id,
+            SessionModel.username,
+            SessionModel.q1_company,
             func.max(MessageModel.timestamp).label("max_ts"),
             func.min(MessageModel.timestamp).label("min_ts")
         )
+        .join(SessionModel, SessionModel.id == MessageModel.session_id)
         .where(MessageModel.session_id.in_(subq_sessions))
-        .group_by(MessageModel.session_id)
+        .group_by(MessageModel.session_id, SessionModel.username, SessionModel.q1_company)
         .having(func.count(MessageModel.id) > 0)
     )
     duration_result = await db.execute(stmt_durations)
     duration_rows = duration_result.fetchall()
-    duration_list = [(row[0], row[1], row[2]) for row in duration_rows]
+    duration_list = [(row[0], row[1], row[2], row[3], row[4]) for row in duration_rows]
+
+    # Compute this week's overall average duration
+    if duration_list:
+        this_week_durations_seconds = [(max_ts - min_ts).total_seconds() for _, _, _, max_ts, min_ts in duration_list if max_ts and min_ts]
+        avg_this_week_seconds = sum(this_week_durations_seconds) / len(this_week_durations_seconds)
+        avg_mins = int(avg_this_week_seconds // 60)
+        avg_secs = int(avg_this_week_seconds % 60)
+        avg_conversation_time = f"{avg_mins:02d}m {avg_secs:02d}s"
+    else:
+        avg_this_week_seconds = 0
+        avg_conversation_time = "00m 00s"
+
+    # Precompute user averages for last week if comparing to last week
+    user_avg_seconds = {}
+    if compare_to_last_week:
+        subq_last_sessions = select(SessionModel.id).where(
+            and_(SessionModel.created_at >= last_week_start, SessionModel.created_at < last_week_end)
+        )
+        stmt_last_durations = (
+            select(
+                SessionModel.username,
+                MessageModel.session_id,
+                func.max(MessageModel.timestamp).label("max_ts"),
+                func.min(MessageModel.timestamp).label("min_ts")
+            )
+            .join(MessageModel, MessageModel.session_id == SessionModel.id)
+            .where(SessionModel.id.in_(subq_last_sessions))
+            .group_by(MessageModel.session_id, SessionModel.username)
+            .having(func.count(MessageModel.id) > 0)
+        )
+        last_duration_result = await db.execute(stmt_last_durations)
+        last_duration_rows = last_duration_result.fetchall()
+
+        user_last_durations = defaultdict(list)
+        for username, sid, max_ts, min_ts in last_duration_rows:
+            if username and max_ts and min_ts:
+                td = max_ts - min_ts
+                user_last_durations[username].append(td.total_seconds())
+
+        user_avg_seconds = {
+            user: sum(durs) / len(durs) for user, durs in user_last_durations.items()
+        }
+
+    # Get top 7 durations
     top_durations = sorted(
-        [(sid, max_ts - min_ts) for sid, max_ts, min_ts in duration_list if max_ts and min_ts],
-        key=lambda x: x[1],
+        [(sid, username, company, (max_ts - min_ts)) for sid, username, company, max_ts, min_ts in duration_list if max_ts and min_ts],
+        key=lambda x: x[3],
         reverse=True
     )[:7]
 
     deepest_conversations = []
-    for session_id, duration_td in top_durations:
-        # Fetch session details
-        stmt_session = select(SessionModel).where(SessionModel.id == session_id)
-        session_result = await db.execute(stmt_session)
-        session = session_result.scalar_one()
-
-        # Format duration
+    for session_id, username, company, duration_td in top_durations:
         total_seconds = int(duration_td.total_seconds()) if duration_td else 0
         mins = total_seconds // 60
         secs = total_seconds % 60
         duration_str = f"{mins}m {secs:02d}s"
 
-        # Per-user change vs last week
-        username = session.username
+        # Determine comparison average
+        if compare_to_last_week:
+            avg_seconds = user_avg_seconds.get(username, 0)
+        else:
+            avg_seconds = avg_this_week_seconds
+
+        change_seconds = total_seconds - avg_seconds
+        abs_change = abs(change_seconds)
+        change_mins = int(abs_change // 60)
+        change_secs = int(abs_change % 60)
+        change_str = f"{change_mins}m {change_secs:02d}s"
+
         change_icon = "arrow_upward"
-        change_color = "green-600"
-        change_str = "0m 00s"
-        if username:
-            stmt_last_user_sessions = select(SessionModel.id).where(
-                and_(SessionModel.username == username, SessionModel.created_at >= last_week_start, SessionModel.created_at < last_week_end)
-            )
-            last_session_ids_result = await db.execute(stmt_last_user_sessions)
-            last_session_ids = [row[0] for row in last_session_ids_result.fetchall()]
-
-            last_durations_seconds = []
-            for last_id in last_session_ids:
-                stmt_last_dur = (
-                    select(
-                        func.max(MessageModel.timestamp),
-                        func.min(MessageModel.timestamp)
-                    ).where(MessageModel.session_id == last_id)
-                )
-                last_dur_result = await db.execute(stmt_last_dur)
-                last_dur_row = last_dur_result.fetchone()
-                if last_dur_row and last_dur_row[0] and last_dur_row[1]:
-                    last_dur = last_dur_row[0] - last_dur_row[1]
-                    last_durations_seconds.append(last_dur.total_seconds())
-
-            if last_durations_seconds:
-                avg_last_seconds = sum(last_durations_seconds) / len(last_durations_seconds)
-                change_seconds = total_seconds - avg_last_seconds
-                abs_change = abs(change_seconds)
-                change_mins = int(abs_change // 60)
-                change_secs = int(abs_change % 60)
-                change_str = f"{change_mins}m {change_secs:02d}s"
-                if change_seconds < 0:
-                    change_icon = "arrow_downward"
-                    change_color = "red-600"
+        change_color = "text-green-600"
+        if change_seconds < 0:
+            change_icon = "arrow_downward"
+            change_color = "text-red-600"
 
         deepest_conversations.append({
             "name": username or "Anonymous",
-            "company": session.q1_company or "N/A",
-            "duration": duration_str,
-            "change": change_str,
-            "change_icon": change_icon,
-            "change_color": change_color
+            "company": company or "N/A",
+            "duration": duration_str,  # this session
+            "change": change_str,  # compared to last week's avg (or this week's avg if flag=False)
+            "change_icon": change_icon,  # this session longer than avg
+            "change_color": change_color  # choose color meaning in UI
         })
-
-    # Avg Conversation Time: average duration this week
-    if duration_list:
-        avg_duration_seconds = sum((max_ts - min_ts).total_seconds() for _, max_ts, min_ts in duration_list) / len(duration_list)
-        avg_mins = int(avg_duration_seconds // 60)
-        avg_secs = int(avg_duration_seconds % 60)
-        avg_conversation_time = f"{avg_mins:02d}m {avg_secs:02d}s"
-    else:
-        avg_conversation_time = "00m 00s"
 
     # Hot Leads Radar: top 7 approved sessions, ordered by updated_at desc
     stmt_hot = select(SessionModel).where(SessionModel.approved == True).order_by(SessionModel.updated_at.desc()).limit(7)
@@ -1907,3 +1923,53 @@ async def download_file(filename: str):
         media_type=mime_type or "application/octet-stream",
         filename=filename
     )
+    
+class ResearchPayload(BaseModel):
+    id: str
+    name: str
+    email: str
+    company: str
+    email_domain: Optional[str] = None
+    additional_info: Optional[str] = None
+
+def _build_research_prompt(payload: ResearchPayload) -> str:
+    prompt_lines = [
+        "Research inputs:",
+        f"Name: {payload.name}",
+        f"Email: {payload.email}",
+        f"Company: {payload.company}",
+        f"Email domain: {payload.email_domain}",
+        f"Additional info: {payload.additional_info or ''}",
+        "",
+    ]
+    return "\n".join(prompt_lines)
+
+@app.post("/api/deep-research")
+async def deep_research(payload: ResearchPayload, db: AsyncSession = Depends(get_db)):
+    prompt = _build_research_prompt(payload)
+
+    try:
+        message_content, citations = await _call_research_async(prompt)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Research provider error: {e}")
+
+    stmt = select(SessionModel).where(SessionModel.id == payload.id)
+    db_result = await db.execute(stmt)
+    db_session = db_result.scalar_one_or_none()
+
+    if not db_session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    db_session.research_data = json.dumps(message_content)
+    db_session.research_sources = json.dumps(citations)
+
+    await db.commit()
+    await db.refresh(db_session)
+
+    return {
+        "status": "success",
+        "message": "Deep research completed and saved to session",
+        "result": json.dumps(message_content),
+        "citations": json.dumps(citations),
+        "session_id": db_session.id,
+    }

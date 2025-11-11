@@ -59,6 +59,7 @@ class Session(Base):
     c_images: Mapped[str | None] = mapped_column(String, nullable=True)
     v_sources: Mapped[str | None] = mapped_column(String, nullable=True)
     research_data: Mapped[str | None] = mapped_column(String, nullable=True)
+    research_sources: Mapped[str | None] = mapped_column(String, nullable=True)
 
     approved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 

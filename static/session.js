@@ -153,7 +153,6 @@ async function loadSessions(page = currentPage) {
     listDiv.innerHTML = tableHtml;
     updatePaginationUI();
     } catch (err) {
-    console.error('Failed to load sessions', err);
     document.getElementById('sessionsList').innerHTML = '<div class="p-6 text-red-600">Failed to load sessions</div>';
     document.getElementById('paginationControls').style.display = 'none';
     }
@@ -216,16 +215,56 @@ async function approveSession(id) {
         btn.classList.add("opacity-60", "cursor-not-allowed");
       }
     } catch (err) {
-      console.error("Error approving session:", err);
       alert("Could not approve session. Check console for details.");
     }
   }
   
+  function downloadResearchAsTxt() {
+    // Get the modal content element
+    const contentElement = document.getElementById('researchModalContent');
+    
+    // Check if element exists
+    if (!contentElement) {
+        console.error('Modal content element not found!');
+        return;
+    }
+    
+    // Extract the text content (strips HTML, keeps only plain text)
+    const textContent = contentElement.innerText || contentElement.textContent;
+    
+    // Create a Blob with the text content
+    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    
+    // Create a temporary URL for the Blob
+    const url = URL.createObjectURL(blob);
+    
+    // Create a temporary anchor element to trigger download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `research-results-${new Date().toISOString().split('T')[0]}.txt`; // e.g., research-results-2025-11-11.txt
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    // Clean up the URL
+    URL.revokeObjectURL(url);
+    
+    console.log('Download started!');
+}
+
+// Example: Attach to the "Download Report" button in the modal
+document.addEventListener('DOMContentLoaded', function() {
+    const downloadBtn = document.querySelector('#researchModal .bg-indigo-600'); // Target the indigo button
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', downloadResearchAsTxt);
+    }
+});
 
   function renderUserDetails() {
     const { name, email, phone, company, mood, verified, confidence, evidence, sources, interest,
             lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, id, c_sources, c_images, c_info, c_data,research_data,approved } = currentUserData;
 
+    window.currentResearchData = research_data;        
     const verifyButtonHtml = verified === "true"
     ? `<button id="verifyBtn" title="Verified" class="text-sm font-medium text-white flex items-center gap-1 rounded-md px-2 py-1 " disabled aria-disabled="true">
             <svg class="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.5924 3.20027C9.34888 3.4078 9.22711 3.51158 9.09706 3.59874C8.79896 3.79854 8.46417 3.93721 8.1121 4.00672C7.95851 4.03705 7.79903 4.04977 7.48008 4.07522C6.6787 4.13918 6.278 4.17115 5.94371 4.28923C5.17051 4.56233 4.56233 5.17051 4.28923 5.94371C4.17115 6.278 4.13918 6.6787 4.07522 7.48008C4.04977 7.79903 4.03705 7.95851 4.00672 8.1121C3.93721 8.46417 3.79854 8.79896 3.59874 9.09706C3.51158 9.22711 3.40781 9.34887 3.20027 9.5924C2.67883 10.2043 2.4181 10.5102 2.26522 10.8301C1.91159 11.57 1.91159 12.43 2.26522 13.1699C2.41811 13.4898 2.67883 13.7957 3.20027 14.4076C3.40778 14.6511 3.51158 14.7729 3.59874 14.9029C3.79854 15.201 3.93721 15.5358 4.00672 15.8879C4.03705 16.0415 4.04977 16.201 4.07522 16.5199C4.13918 17.3213 4.17115 17.722 4.28923 18.0563C4.56233 18.8295 5.17051 19.4377 5.94371 19.7108C6.278 19.8288 6.6787 19.8608 7.48008 19.9248C7.79903 19.9502 7.95851 19.963 8.1121 19.9933C8.46417 20.0628 8.79896 20.2015 9.09706 20.4013C9.22711 20.4884 9.34887 20.5922 9.5924 20.7997C10.2043 21.3212 10.5102 21.5819 10.8301 21.7348C11.57 22.0884 12.43 22.0884 13.1699 21.7348C13.4898 21.5819 13.7957 21.3212 14.4076 20.7997C14.6511 20.5922 14.7729 20.4884 14.9029 20.4013C15.201 20.2015 15.5358 20.0628 15.8879 19.9933C16.0415 19.963 16.201 19.9502 16.5199 19.9248C17.3213 19.8608 17.722 19.8288 18.0563 19.7108C18.8295 19.4377 19.4377 18.8295 19.7108 18.0563C19.8288 17.722 19.8608 17.3213 19.9248 16.5199C19.9502 16.201 19.963 16.0415 19.9933 15.8879C20.0628 15.5358 20.2015 15.201 20.4013 14.9029C20.4884 14.7729 20.5922 14.6511 20.7997 14.4076C21.3212 13.7957 21.5819 13.4898 21.7348 13.1699C22.0884 12.43 22.0884 11.57 21.7348 10.8301C21.5819 10.5102 21.3212 10.2043 20.7997 9.5924C20.5922 9.34887 20.4884 9.22711 20.4013 9.09706C20.2015 8.79896 20.0628 8.46417 19.9933 8.1121C19.963 7.95851 19.9502 7.79903 19.9248 7.48008C19.8608 6.6787 19.8288 6.278 19.7108 5.94371C19.4377 5.17051 18.8295 4.56233 18.0563 4.28923C17.722 4.17115 17.3213 4.13918 16.5199 4.07522C16.201 4.04977 16.0415 4.03705 15.8879 4.00672C15.5358 3.93721 15.201 3.79854 14.9029 3.59874C14.7729 3.51158 14.6511 3.40781 14.4076 3.20027C13.7957 2.67883 13.4898 2.41811 13.1699 2.26522C12.43 1.91159 11.57 1.91159 10.8301 2.26522C10.5102 2.4181 10.2043 2.67883 9.5924 3.20027ZM16.3735 9.86314C16.6913 9.5453 16.6913 9.03 16.3735 8.71216C16.0557 8.39433 15.5403 8.39433 15.2225 8.71216L10.3723 13.5624L8.77746 11.9676C8.45963 11.6498 7.94432 11.6498 7.62649 11.9676C7.30866 12.2854 7.30866 12.8007 7.62649 13.1186L9.79678 15.2889C10.1146 15.6067 10.6299 15.6067 10.9478 15.2889L16.3735 9.86314Z" fill="currentColor"/></svg>
@@ -270,16 +309,19 @@ async function approveSession(id) {
     if (research_data && research_data.trim()) {
         const teaserText = getTeaser(research_data);
         ResearchInfoHtml = `
-        <div class="research-teaser mt-3 p-3 bg-gray-50/80 rounded-md border border-gray-200/50 cursor-pointer hover:bg-gray-100 transition-colors">
-            <h6 class="text-sm font-semibold text-gray-900 mb-1.5 flex items-center">
-                Company Overview
-                <svg class="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
+        <div class="research-teaser mt-3 p-4 bg-slate-50/90  rounded-xl border border-slate-200/60 shadow-sm cursor-pointer group  transition-all duration-300 ease-out overflow-hidden">
+            <h6 class="text-sm font-bold text-slate-800 mb-2 flex items-center group-hover:text-blue-700 transition-colors duration-200">
+            <svg class="w-5 h-5 mr-2 text-slate-500 group-hover:text-blue-500 transition-colors duration-200" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.2429 6.18353L8.55917 8.27415C7.72801 8.74586 7.31243 8.98172 7.20411 9.38603C7.09579 9.79034 7.33779 10.2024 7.82179 11.0264L8.41749 12.0407C8.88853 12.8427 9.12405 13.2437 9.51996 13.3497C9.91586 13.4558 10.3203 13.2263 11.1292 12.7672L14.8646 10.6472M7.05634 9.72257L3.4236 11.7843C2.56736 12.2702 2.13923 12.5132 2.02681 12.9256C1.91438 13.3381 2.16156 13.7589 2.65591 14.6006C3.15026 15.4423 3.39744 15.8631 3.81702 15.9736C4.2366 16.0842 4.66472 15.8412 5.52096 15.3552L9.1537 13.2935M21.3441 5.18488L20.2954 3.39939C19.8011 2.55771 19.5539 2.13687 19.1343 2.02635C18.7147 1.91584 18.2866 2.15881 17.4304 2.64476L13.7467 4.73538C12.9155 5.20709 12.4999 5.44294 12.3916 5.84725C12.2833 6.25157 12.5253 6.6636 13.0093 7.48766L14.1293 9.39465C14.6004 10.1966 14.8359 10.5976 15.2318 10.7037C15.6277 10.8098 16.0322 10.5802 16.841 10.1212L20.5764 8.00122C21.4326 7.51527 21.8608 7.2723 21.9732 6.85985C22.0856 6.44741 21.8384 6.02657 21.3441 5.18488Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M12 12.5L16 22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M12 12.5L8 22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>    
+            Deep Research Result
             </h6>
-            <div class="relative overflow-hidden max-h-20">
-                <p class="text-sm text-gray-700 leading-tight">${teaserText}</p>
-                <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+            <div class="relative overflow-hidden max-h-24 transition-all duration-500 ease-out">
+                <p class="text-sm text-slate-600 leading-tight transition-all duration-300">${teaserText}</p>
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-50 to-transparent pointer-events-none opacity-70 h-4 transition-all duration-500 ease-out"></div>
+                <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-slate-50/30 via-slate-50/70 to-transparent pointer-events-none opacity-100 transition-all duration-500 ease-out delay-200"></div>
             </div>
         </div>
         `;
@@ -296,7 +338,7 @@ async function approveSession(id) {
             </div>
             </div>
             <div class="flex-1 min-w-0">
-            <div class="text-base font-semibold text-gray-900 flex items-center gap-2 mb-1 leading-tight">
+            <div class="text-base font-semibold text-gray-900 flex items-center mb-1 leading-tight">
                 ${name || '<span class="text-gray-500">Not provided</span>'}
                 ${verifyButtonHtml}
             </div>
@@ -396,7 +438,7 @@ async function approveSession(id) {
             `;
         }
         } catch (e) {
-        console.warn('Invalid c_data JSON', e);
+        console.warn('Invalid c_data JSON');
         }
     }
 
@@ -526,7 +568,7 @@ async function approveSession(id) {
                     </div>
                 `;
             } catch (e) {
-                console.warn('Invalid sources JSON', e);
+                console.warn('Invalid sources JSON');
             }
         }
         let ComsrcHtml = '';
@@ -554,7 +596,7 @@ async function approveSession(id) {
                     </div>
                 `;
             } catch (e) {
-                console.warn('Invalid images JSON', e);
+                console.warn('Invalid images JSON');
             }
         }
         let cSourcesHtml = '';
@@ -593,7 +635,7 @@ async function approveSession(id) {
             </style>
             `;
         } catch (e) {
-            console.warn('Invalid c_sources JSON', e);
+            console.warn('Invalid c_sources JSON');
         }
         }
 
@@ -656,25 +698,57 @@ async function approveSession(id) {
         if (document.getElementById('researchModal')) return;
         
         const modalHtml = `
-        <div id="researchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-xl max-w-[40%] max-h-[90vh] overflow-y-auto m-4 relative max-w-[90vw]">
-                <div id="researchModalContent" class=" text-[16px] prose prose-sm max-w-none mt-6">
-                    
+        <div id="researchModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/50 backdrop-blur-sm transition-opacity duration-300 ease-out">
+    <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-6 lg:p-8">
+        <div class="relative w-full max-w-4xl max-h-[90vh] transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all duration-300 ease-out sm:w-full sm:max-w-5xl">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50/50 px-6 py-4 backdrop-blur-sm">
+                <div class="flex items-center space-x-3">
+                    <div class="h-8 w-8 rounded-lg bg-gray-800 shadow-md flex items-center justify-center">
+                        <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12.2429 6.18353L8.55917 8.27415C7.72801 8.74586 7.31243 8.98172 7.20411 9.38603C7.09579 9.79034 7.33779 10.2024 7.82179 11.0264L8.41749 12.0407C8.88853 12.8427 9.12405 13.2437 9.51996 13.3497C9.91586 13.4558 10.3203 13.2263 11.1292 12.7672L14.8646 10.6472M7.05634 9.72257L3.4236 11.7843C2.56736 12.2702 2.13923 12.5132 2.02681 12.9256C1.91438 13.3381 2.16156 13.7589 2.65591 14.6006C3.15026 15.4423 3.39744 15.8631 3.81702 15.9736C4.2366 16.0842 4.66472 15.8412 5.52096 15.3552L9.1537 13.2935M21.3441 5.18488L20.2954 3.39939C19.8011 2.55771 19.5539 2.13687 19.1343 2.02635C18.7147 1.91584 18.2866 2.15881 17.4304 2.64476L13.7467 4.73538C12.9155 5.20709 12.4999 5.44294 12.3916 5.84725C12.2833 6.25157 12.5253 6.6636 13.0093 7.48766L14.1293 9.39465C14.6004 10.1966 14.8359 10.5976 15.2318 10.7037C15.6277 10.8098 16.0322 10.5802 16.841 10.1212L20.5764 8.00122C21.4326 7.51527 21.8608 7.2723 21.9732 6.85985C22.0856 6.44741 21.8384 6.02657 21.3441 5.18488Z" stroke-linejoin="round"/>
+                            <path d="M12 12.5L16 22M12 12.5L8 22" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">Deep Research Results</h2>
+                </div>
+                <button onclick="document.getElementById('researchModal').classList.add('hidden')" class="group flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 focus:outline-none ">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="relative max-h-[calc(90vh-8rem)] overflow-y-auto px-6 py-6 lg:px-8">
+                <div id="researchModalContent" class="prose prose-slate max-w-none text-[15px] leading-relaxed">
+                    <!-- Dynamic research content loads here -->
                 </div>
             </div>
+
+            <!-- Footer (optional: add actions if needed) -->
+            <div class="flex justify-end space-x-3 border-t border-slate-200 bg-slate-50/50 px-6 py-4 backdrop-blur-sm">
+                <button onclick="document.getElementById('researchModal').classList.add('hidden')" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 focus:outline-none">
+                    Close
+                </button>
+                <button class="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-gray-700 focus:outline-none " onclick="downloadResearchAsTxt()" >
+                    Download Report
+                </button>
+            </div>
         </div>
+    </div>
+</div>
         `;
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         
-        // Event listener for the teaser (using event delegation on userDetailsSection)
+
         const userDetailsSection = document.getElementById('userDetailsSection');
         if (userDetailsSection) {
             userDetailsSection.addEventListener('click', (event) => {
                 if (event.target.closest('.research-teaser')) {
-                    // Inject content
                     const contentDiv = document.getElementById('researchModalContent');
                     if (contentDiv) {
-                        contentDiv.innerHTML = markdownToHtml(research_data);
+                        contentDiv.innerHTML = markdownToHtml(window.currentResearchData || '');
                     }
                     
                     // Show modal
@@ -753,8 +827,8 @@ function openDeepResearchModal() {
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center space-x-3">
-                        <div class="p-2 bg-blue-50 rounded-lg">
-                            <svg class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <div class="p-2 bg-gray-800 rounded-lg">
+                            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.2429 6.18353L8.55917 8.27415C7.72801 8.74586 7.31243 8.98172 7.20411 9.38603C7.09579 9.79034 7.33779 10.2024 7.82179 11.0264L8.41749 12.0407C8.88853 12.8427 9.12405 13.2437 9.51996 13.3497C9.91586 13.4558 10.3203 13.2263 11.1292 12.7672L14.8646 10.6472M7.05634 9.72257L3.4236 11.7843C2.56736 12.2702 2.13923 12.5132 2.02681 12.9256C1.91438 13.3381 2.16156 13.7589 2.65591 14.6006C3.15026 15.4423 3.39744 15.8631 3.81702 15.9736C4.2366 16.0842 4.66472 15.8412 5.52096 15.3552L9.1537 13.2935M21.3441 5.18488L20.2954 3.39939C19.8011 2.55771 19.5539 2.13687 19.1343 2.02635C18.7147 1.91584 18.2866 2.15881 17.4304 2.64476L13.7467 4.73538C12.9155 5.20709 12.4999 5.44294 12.3916 5.84725C12.2833 6.25157 12.5253 6.6636 13.0093 7.48766L14.1293 9.39465C14.6004 10.1966 14.8359 10.5976 15.2318 10.7037C15.6277 10.8098 16.0322 10.5802 16.841 10.1212L20.5764 8.00122C21.4326 7.51527 21.8608 7.2723 21.9732 6.85985C22.0856 6.44741 21.8384 6.02657 21.3441 5.18488Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
                                 <path d="M12 12.5L16 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                                 <path d="M12 12.5L8 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -768,6 +842,7 @@ function openDeepResearchModal() {
                 </div>
                 <form id="deepResearchForm">
                     <div class="space-y-5 mb-6">
+                            <input type="hidden" name="id" value="${currentUserData.id || ''}">
                         <div>
                             <label for="researchName" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
                             <input type="text" id="researchName" name="name" value="${currentUserData.name || ''}" class="w-full px-3 py-2.5 border border-gray-200 rounded-[.7rem] focus:outline-none   transition-all" required>
@@ -792,10 +867,7 @@ function openDeepResearchModal() {
                             <textarea id="researchAdditionalInfo" name="additional_info" rows="3" class="w-full px-3 py-2.5 border border-gray-200 rounded-[.7rem] focus:outline-none   transition-all resize-none" placeholder="Any extra details or context for the research..."></textarea>
                         </div>
                     </div>
-                    <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <p class="text-xs font-medium text-amber-800">Deep research may take 5+ minutes.</p>
-                    </div>
-                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <div class="flex justify-end gap-3 pt-4">
                         <button type="button" id="cancelDeepResearch" class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">Cancel</button>
                         <button type="submit" class="px-4 py-2.5 text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 rounded-full transition-colors focus:outline-none ">Confirm & Research</button>
                     </div>
@@ -824,6 +896,7 @@ function openDeepResearchModal() {
         e.preventDefault();
         const formData = new FormData(form);
         const researchData = {
+            id: formData.get('id'),
             name: formData.get('name'),
             email: formData.get('email'),
             company: formData.get('company'),
@@ -831,30 +904,68 @@ function openDeepResearchModal() {
             additional_info: formData.get('additional_info')
         };
 
-        // For now, log the data (replace with actual endpoint call when ready)
-        console.log('Deep Research Data:', researchData);
 
-        // Placeholder for endpoint call (uncomment and adjust when endpoint is ready)
-        /*
         try {
             const response = await fetch('/api/deep-research', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(researchData)
+                body: JSON.stringify({
+                    id: researchData.id, // <-- supply session id (match DB)
+                    name: researchData.name,
+                    email: researchData.email,
+                    company: researchData.company,
+                    email_domain: researchData.email_domain,
+                    additional_info: researchData.additional_info
+                })
             });
-            if (response.ok) {
-                const result = await response.json();
-                console.log('Research Result:', result);
-                // Handle success: e.g., show toast or update UI
-                alert('Deep research initiated! Check console for results.');
-            } else {
-                throw new Error('Failed to initiate research');
+        
+            if (!response.ok) {
+                const text = await response.text();
+                console.error('Deep research error');
+                alert('Failed to initiate deep research. See console for details');
+                closeDeepResearchModal();
+                return;
             }
+        
+            const data = await response.json();
+        
+            // Show browser notification (request permission if needed)
+            function showNotification(title, body) {
+                if (!("Notification" in window)) {
+                    // Browser doesn't support notifications
+                    alert(`${title}\n\n${body}`);
+                    return;
+                }
+        
+                if (Notification.permission === "granted") {
+                    new Notification(title, { body });
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification(title, { body });
+                        } else {
+                            alert(`${title}\n\n${body}`);
+                        }
+                    });
+                } else {
+                    // permission denied
+                    alert(`${title}\n\n${body}`);
+                }
+            }
+        
+            // Use a short summary or fallback to raw
+            const summary = (data.result && (data.result.summary || data.result.raw || 'Research complete')) || 'Research complete';
+            showNotification('Deep Research Complete', summary);
+        
+            // You can update the UI with data.result if you want
+            // e.g., show result in a modal or results area
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error');
             alert('Failed to initiate deep research. Please try again.');
+        } finally {
+            // Close modal after submission
+            closeDeepResearchModal();
         }
-        */
 
         // Close modal after submission
         closeDeepResearchModal();
@@ -920,7 +1031,7 @@ async function handleVerification() {
         verifyBtn.innerHTML = '<span class="verify-text">Retry</span>';
         verifyBtn.className = 'ml-3 inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 focus:outline-none transition';
         }, 1400);
-        console.error('Verification failed:', errMsg);
+        console.error('Verification failed');
     }
     } catch (err) {
     if (err.message === 'cancelled') {
@@ -947,7 +1058,6 @@ async function openSession(id, mode, name, email, phone, company, mood, verified
     currentSessionId = id;
     currentMode = mode;
     currentUserData = { id, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget,c_sources,c_images,c_info,c_data,research_data,approved };
-    console.log(approved);
     const isApproved = approved === true || approved === "true";
 
     const approveButtonHtml = isApproved
@@ -1028,10 +1138,10 @@ function connectWebSocket() {
         }
     };
     currentWs.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('WebSocket error:');
     };
     } catch (err) {
-    console.error('Failed to create WebSocket', err);
+    console.error('Failed to create WebSocket');
     }
 }
 function renderMessages(messages) {
@@ -1075,18 +1185,10 @@ function renderMessageHtml(msg) {
     }
 
     if (role === 'bot') {
-    return `
-        <div class="msg-animate in flex justify-end">
-        <div class="max-w-[80%]">
-            <div class="flex items-center justify-end gap-2 mb-1">
-            <span class="text-xs font-medium text-gray-900">AI</span>
-            <span class="text-xs text-gray-400">${ts}</span>
-            </div>
-            <div class="p-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm max-w-md">
-            ${escapeHtml(msg.content)}
-            </div>
-            ${msg.mood || msg.interest ? `
-            <div class="flex flex-wrap gap-2 mt-2 text-xs text-gray-500">
+    let html = '';
+    if (msg.mood || msg.interest) {
+        html += `
+            <div class="flex flex-wrap gap-2 text-xs text-gray-500">
                 ${msg.mood ? `<span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full" title="detected mood of user from previous message">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm-3-7a1 1 0 112 0h2a1 1 0 112 0 4 4 0 01-6 0zM7 8a1 1 0 110-2 1 1 0 010 2zm6 0a1 1 0 110-2 1 1 0 010 2z" />
@@ -1100,10 +1202,22 @@ function renderMessageHtml(msg) {
                 ${msg.interest}
                 </span>` : ''}
             </div>
-            ` : ''}
+        `;
+    }
+    html += `
+        <div class="msg-animate in flex justify-end">
+        <div class="max-w-[80%]">
+            <div class="flex items-center justify-end gap-2 mb-1">
+            <span class="text-xs font-medium text-gray-900">AI</span>
+            <span class="text-xs text-gray-400">${ts}</span>
+            </div>
+            <div class="p-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm max-w-md">
+            ${escapeHtml(msg.content)}
+            </div>
         </div>
         </div>
     `;
+    return html;
     }
 
     if (role === 'admin') {

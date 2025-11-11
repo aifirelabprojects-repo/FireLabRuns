@@ -341,9 +341,9 @@ async def fetch_images(company_low: str, display_username: str) -> List[str]:
     if not display_username:
         return []
     query = f"{company_low} linkedin {display_username.lower()}".strip()
-    api_key = os.getenv("SEARCH_API_KEY4")
+    api_key = os.getenv("SEARCH_API_KEY")
     if not api_key:
-        print("No SEARCH_API_KEY4")
+        print("No SEARCH_API_KEY")
         return []
     url = "https://www.searchapi.io/api/v1/search"
     params = {
