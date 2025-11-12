@@ -1,3 +1,7 @@
 .env
 env.back
 __pycache__/
+per.py
+conn.py
+fet.py
+prompt.py
