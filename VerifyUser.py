@@ -15,8 +15,46 @@ load_dotenv()
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-# Simple async rate limiter using Semaphore for concurrency control
-# Configurable via env vars: RATE_LIMIT_CONCURRENT (default: 5), RATE_LIMIT_RPM (requests per minute, default: 60)
+
+json_schema = {
+    "name": "verification_response",
+    "strict": True, 
+    "schema": {
+        "type": "object",
+        "properties": {
+            "verified": {
+                "type": "boolean",
+                "description": "Whether the user is verified in the role at the company."
+            },
+            "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Confidence score as an integer between 0 and 100."
+            },
+            "details": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "role": {"type": "string"},
+                    "username": {"type": "string"},
+                    "email": {"type": "string"},
+                    "company": {"type": "string"},
+                    "evidence": {
+                        "type": "string",
+                        "description": "Brief 1-sentence summary of key evidence (or 'Insufficient evidence found')."
+                    }
+                },
+                "required": ["name", "role", "username", "email", "company", "evidence"],
+                "additionalProperties": False  # No extra fields allowed
+            }
+        },
+        "required": ["verified", "confidence", "details"],
+        "additionalProperties": False
+    }
+}
+
+
 class AsyncRateLimiter:
     def __init__(self, concurrent_limit: int = 5, rpm: int = 60):
         self.semaphore = asyncio.Semaphore(concurrent_limit)
@@ -199,18 +237,23 @@ async def verify_user(company: str, role: str, username: str, email: str) -> Tup
                         messages=[
                             {
                                 "role": "system",
-                                "content": "You are a helpful assistant that always responds with valid, complete JSON matching the exact schema in the user message. Include search-based evidence in the 'evidence' field. Never add extra text."
+                                "content": "You are a helpful assistant that responds with valid JSON matching the provided schema. Include search-based evidence in the 'evidence' field."
                             },
                             {
                                 "role": "user",
-                                "content": user_prompt
+                                "content": user_prompt  
                             }
                         ],
-                        temperature=0.1,  # From ref: Lower for factual/cited responses
-                        max_tokens=500,   # Increased from ref for fuller JSON
+                        temperature=0.1,
+                        max_tokens=500,
+                        response_format={
+                            "type": "json_schema",
+                            "json_schema": json_schema
+                        },
                     ),
                     timeout=30.0
                 )
+
 
             response = await retry_on_failure(api_coro, max_retries=3, base_delay=1.0, max_delay=10.0)
             llm_output = response.choices[0].message.content.strip()
@@ -257,3 +300,4 @@ async def verify_user(company: str, role: str, username: str, email: str) -> Tup
     # Step 3: Cache in TTL
     ttl_cache.set(cache_key, (llm_output, sources, images))
     return llm_output, sources, images
+

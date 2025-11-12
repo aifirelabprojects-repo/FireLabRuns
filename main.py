@@ -53,8 +53,6 @@ session_cache = TTLCache(maxsize=1000, ttl=300)
 
 
 os.makedirs("data", exist_ok=True)
-os.makedirs("vectorstore", exist_ok=True)
-
 app = FastAPI(title="Business Chatbot API")
 
 @app.api_route("/health", methods=["GET", "HEAD"])
