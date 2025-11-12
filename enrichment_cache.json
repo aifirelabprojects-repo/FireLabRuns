@@ -1,76 +1,24 @@
 {
   "ce1401a09c32db579aea7e24b742ef90": {
     "result": {
-      "summary": "Aifirelab is a Saudi Arabian company founded in 2025 that specializes in delivering customized automated workflows for enterprises, large companies, and medium businesses using artificial intelligence. Their solutions automate tasks traditionally performed by humans, including those requiring reasoning, through custom AI models built with technologies like Langraph, Langchain, and Python. The company offers a user-friendly dashboard allowing clients to monitor and customize AI workflows without technical assistance. Aifirelab develops AI agents that handle business functions such as follow-ups, hiring, sales, and operations, aiming to improve efficiency and reduce the need for additional staff. Their AI-powered chatbots integrate with existing software to automate appointments, customer interactions, and routine processes across industries including healthcare and real estate. The company was co-founded by Nisham Sajjad, who has experience in project management and has led multiple major projects. Aifirelab is headquartered in Riyadh, Saudi Arabia.",
+      "summary": "Aifirelab is a Saudi Arabian company founded in 2025 that specializes in delivering customized automated workflows for enterprises, large companies, and medium businesses using artificial intelligence. Their technology automates human tasks within systems, including those requiring reasoning, by leveraging custom AI models built with Langraph, Langchain, and Python. The platform offers a user-friendly dashboard allowing clients to monitor and customize AI-driven workflows without technical assistance. The company is headquartered in Riyadh and was co-founded by Nisham Sajjad, who has experience in project management and has completed multiple major projects. Aifirelab aims to enhance operational efficiency by automating complex workflows and providing real-time control and monitoring capabilities to users.",
       "details": {
         "founded": "2025",
         "employees": null,
         "founders": "Nisham Sajjad, Asbah Riyas, Mohammed Ek",
         "location": "Riyadh, Saudi Arabia",
         "revenue": null,
-        "industry": "Artificial Intelligence, Automation, AI-powered Chatbots"
+        "industry": "Artificial Intelligence, Workflow Automation",
+        "confidence": 95
       },
       "sources": [
         "https://www.f6s.com/company/aifirelab",
-        "https://www.aifirelabs.ai/about/",
-        "https://aifirelab.com",
-        "https://www.aifirelabs.ai",
-        "https://prezi.com/p/ptp9jot2n7ne/aifirelab/"
-      ],
-      "images": [
-        "https://aifirelab.com/logo.png",
-        "https://www.f6s.com/company/aifirelab/logo"
+        "https://www.enrichlabs.ai",
+        "https://www.aifalabs.com",
+        "https://app.biopharmiq.com/companies/18444",
+        "https://www.aifirelabs.ai/about/"
       ]
     },
-    "timestamp": 1762578583.3204596
-  },
-  "0d9fc1a84983d10d305902f22800fdc6": {
-    "result": {
-      "summary": "Cybrosys Technologies Pvt Ltd is a private limited software and IT services company founded in 2008, headquartered in Kerala, India, with additional offices in Kochi and Bangalore. It specializes in Odoo ERP implementation, customization, and support, serving over 3000 clients globally across India, the USA, the UK, the Middle East, and Europe. The company has more than 300 employees and generates approximately $12.3 million in annual revenue. Cybrosys is an ISO-certified Odoo Gold Partner with strategic partnerships with major technology firms such as Microsoft, IBM, Intel, HP, and NASSCOM. Their offerings include ERP solutions for MSMEs, anti-money laundering software for banks, web and desktop applications, and employee outsourcing services. Cybrosys also invests in research and development and provides training in software development tools as part of its corporate social responsibility.",
-      "details": {
-        "founded": "2008",
-        "employees": "300+",
-        "founders": null,
-        "location": "Kerala, India",
-        "revenue": "$12.3 million",
-        "industry": "Software, IT Services, IT Consulting"
-      },
-      "sources": [
-        "https://rocketreach.co/cybrosys-technologies-pvt-ltd-profile_b448f334fce56b7d",
-        "https://apps.odoo.com/apps/modules/16.0/master_search",
-        "https://techreviewer.co/companies/cybrosys-technologies-pvt-ltd",
-        "https://www.cybrosys.com/odoo/odoo-books/v17-ce/website/",
-        "https://www.topdevelopers.co/profile/cybrosys"
-      ],
-      "images": [
-        "https://www.cybrosys.com/static/description/cybrosys-logo.png",
-        "https://rocketreach.co/images/company/cybrosys-technologies-pvt-ltd-logo.png"
-      ]
-    },
-    "timestamp": 1762579572.580257
-  },
-  "dbd97b526109d954cd5e198411dc9e24": {
-    "result": {
-      "summary": "AIRLAB, founded in 2017, is an artificial intelligence company owned by the founders of the Ubisoft group. The team consists of global specialists in AI and cutting-edge technologies with extensive experience in machine learning and deep learning applications. AIRLAB focuses on deploying AI techniques in advertising, user acquisition, automated quality assurance, and automated customer care to support mobile app developers. The company is led by Michel Guillemot, a veteran in the video game industry and founder of Ubisoft and Gameloft. AIRLAB emphasizes continuous research and development to stay at the forefront of emerging AI technologies. The company is known for integrating AI to boost business performance in mobile applications.",
-      "details": {
-        "founded": "2017",
-        "employees": null,
-        "founders": "Founders of the Ubisoft group, including Michel Guillemot",
-        "location": null,
-        "revenue": null,
-        "industry": "Artificial Intelligence, Machine Learning, Mobile App Development"
-      },
-      "sources": [
-        "https://www.airlab.ai/about/",
-        "https://dot.la/fitlab-raise-2656430769.html",
-        "https://airlab.global/more-about-us/",
-        "https://www.fitlab.com",
-        "https://app.dealroom.co/companies/airlab_1"
-      ],
-      "images": [
-        "https://www.airlab.ai/wp-content/uploads/2020/10/airlab-logo.png"
-      ]
-    },
-    "timestamp": 1762611569.8197942
+    "timestamp": 1762959420.10512
   }
 }

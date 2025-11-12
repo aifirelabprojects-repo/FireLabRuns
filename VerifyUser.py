@@ -176,7 +176,7 @@ async def verify_user(company: str, role: str, username: str, email: str) -> Tup
             Output EXACTLY one strict JSON object—no extra text, markdown, or explanations. Use this schema:
             {{
                 "verified": true/false,
-                "confidence": "high" | "medium" | "low" | "none",
+                "confidence": <number between 0 and 100>,
                 "details": {{
                     "name": "{display_username}",
                     "role": "{role}",

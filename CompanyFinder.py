@@ -11,14 +11,40 @@ from sqlalchemy import or_, update
 from sqlalchemy.orm import object_session
 import asyncio
 import re
+from dotenv import load_dotenv
 
+load_dotenv()
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 CACHE_FILE = "enrichment_cache.json"
 
-# Simple async rate limiter using Semaphore for concurrency control
-# Configurable via env vars: RATE_LIMIT_CONCURRENT (default: 5), RATE_LIMIT_RPM (requests per minute, default: 60)
+json_schema = {
+    "name": "company_enrichment",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "summary": {"type": "string", "description": "Detailed 5-8 sentence summary"},
+            "details": {
+                "type": "object",
+                "properties": {
+                    "founded": {"type": ["string", "null"]},
+                    "employees": {"type": ["string", "null"]},
+                    "founders": {"type": ["string", "null"]},
+                    "location": {"type": ["string", "null"]},
+                    "revenue": {"type": ["string", "null"]},
+                    "industry": {"type": ["string", "null"]},
+                    "confidence": {"type": "number", "minimum": 0, "maximum": 100}
+                },
+                "required": [],  
+                "additionalProperties": False
+            }
+        },
+        "required": ["summary", "details"],
+        "additionalProperties": False
+    }
+}
+
 class AsyncRateLimiter:
     def __init__(self, concurrent_limit: int = 5, rpm: int = 60):
         self.semaphore = asyncio.Semaphore(concurrent_limit)
@@ -142,7 +168,8 @@ async def simulate_company_enrichment(company: str, question: str = "") -> Dict[
             '    "founders": "Names of founders or null",\n'
             '    "location": "Headquarters location or null",\n'
             '    "revenue": "Annual revenue or null",\n'
-            '    "industry": "Industry or sector or null"\n'
+            '    "industry": "Industry or sector or null",\n'  # <-- Added comma here
+            '    "confidence": <number between 0 and 100>\n'  # <-- Now valid
             '  },\n'
             "}\n"
             "Base everything strictly on the provided search results. If information is not clearly stated, use null. Do not speculate or infer beyond the text.\n"
@@ -164,7 +191,10 @@ async def simulate_company_enrichment(company: str, question: str = "") -> Dict[
                     ],
                     temperature=0.1,  # Low for consistent JSON
                     max_tokens=800,
-                    # response_format=response_format  # Uncomment for strict schema
+                    response_format={
+                    "type": "json_schema",
+                    "json_schema": json_schema
+                },
                 ),
                 timeout=30.0
             )
@@ -172,9 +202,7 @@ async def simulate_company_enrichment(company: str, question: str = "") -> Dict[
         response = await retry_on_failure(api_coro, max_retries=3, base_delay=1.0, max_delay=10.0)
 
         content = response.choices[0].message.content.strip()
-        
-        # Debug log (remove in prod)
-        # print(f"Debug: Raw LLM Output for '{company}': {repr(content[:200])}...")
+
 
         if not content:
             raise ValueError("Empty response content from API")
@@ -295,6 +323,10 @@ async def FindTheComp(question: str, session_id: str) -> None:
     details = details or {}
     sources = sources or []
 
+
+    if not summary or "error" in summary.lower() or "parse" in summary.lower():
+        
+        return  
     c_data_val = json.dumps(details)
     c_sources_val = json.dumps(sources)
     empty_c_data = '{}'
@@ -321,3 +353,5 @@ async def FindTheComp(question: str, session_id: str) -> None:
         except Exception:
             await sess.rollback()
             raise
+        
+        

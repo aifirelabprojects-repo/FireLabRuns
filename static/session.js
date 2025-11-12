@@ -983,7 +983,7 @@ async function handleVerification() {
     const { name, email, lead_role, company, id } = currentUserData;
     verifyBtn.disabled = true;
     verifyBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-    verifyBtn.classList.add('bg-gray-100', 'text-black', 'border', 'border-gray-200', 'cursor-not-allowed');
+    verifyBtn.classList.add('bg-gray-100', 'text-white', 'border', 'border-gray-200', 'cursor-not-allowed');
     verifyBtn.innerHTML = `
     <svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1036,7 +1036,7 @@ async function handleVerification() {
     } catch (err) {
     if (err.message === 'cancelled') {
         verifyBtn.innerHTML = `<span class="verify-text">Verify</span>`;
-        verifyBtn.classList.remove('bg-gray-100', 'text-gray-700', 'border', 'cursor-not-allowed');
+        verifyBtn.classList.remove('bg-gray-100', 'text-white', 'border', 'cursor-not-allowed');
         verifyBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
         verifyBtn.disabled = false;
         return;
