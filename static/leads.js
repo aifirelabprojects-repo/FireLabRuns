@@ -222,5 +222,3 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchLeads(1);
 });
 
-// If tab is shown dynamically, call fetchLeads() in your tab switch logic, e.g.:
-// document.getElementById('leads-tab').addEventListener('transitionend', () => { if (!document.getElementById('leads-tab').classList.contains('hidden')) fetchLeads(currentLeadPage, currentQuery, currentInterest); });

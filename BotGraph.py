@@ -5,21 +5,14 @@ import asyncio
 from typing import Annotated, TypedDict, AsyncGenerator
 import operator
 from collections import OrderedDict
-from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver  
 from tenacity import retry, stop_after_attempt, wait_exponential
+from ClientModel import OPENAI_API_KEY,MODEL_NAME
 from KnowledgeBase import cfg
-
-load_dotenv()
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-MODEL_NAME = "gpt-4o-mini"
-
-
 
 checkpointer = MemorySaver()
 

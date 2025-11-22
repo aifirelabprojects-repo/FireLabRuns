@@ -41,3 +41,4 @@ numpy
 scipy
 lightrag-hku
 docx
+greenlet

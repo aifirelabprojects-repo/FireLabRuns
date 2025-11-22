@@ -6,9 +6,9 @@ import hashlib
 from typing import Dict, Any, List, Optional, Tuple
 import time
 from openai import AsyncOpenAI
-from database import AsyncSessionLocal, Session as SessionModel, AsyncSession
-from sqlalchemy import or_, update
-from sqlalchemy.orm import object_session
+from database import AsyncSessionLocal, CompanyDetails, Session as SessionModel, AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 import asyncio
 import re
 from dotenv import load_dotenv
@@ -323,33 +323,63 @@ async def FindTheComp(question: str, session_id: str) -> None:
     details = details or {}
     sources = sources or []
 
-
     if not summary or "error" in summary.lower() or "parse" in summary.lower():
-        
-        return  
+        return
+
     c_data_val = json.dumps(details)
     c_sources_val = json.dumps(sources)
-    empty_c_data = '{}'
-
-    stmt = (
-        update(SessionModel)
-        .where(SessionModel.id == session_id)
-        .where(or_(SessionModel.c_data.is_(None), SessionModel.c_data == empty_c_data))
-        .values(
-            c_info=summary,
-            c_data=c_data_val,
-            c_sources=c_sources_val,
-        )
-        .execution_options(synchronize_session=False)
-    )
+    empty_c_data = '{}'  # used in original logic
 
     async with AsyncSessionLocal() as sess:
         try:
+            # load session and its company_details relation
+            stmt = (
+                select(SessionModel)
+                .options(selectinload(SessionModel.company_details))
+                .where(SessionModel.id == session_id)
+            )
             res = await sess.execute(stmt)
-            if res.rowcount:
-                await sess.commit()
-            else:
+            session_obj = res.scalar_one_or_none()
+            if session_obj is None:
+                # session not found — nothing to do
+                return
+
+            # If company_details child exists, update it only when c_data is empty
+            cd = getattr(session_obj, "company_details", None)
+            if cd is not None:
+                # cd.c_data might be None or '{}' or something else
+                if cd.c_data is None or cd.c_data == empty_c_data:
+                    cd.c_info = summary
+                    cd.c_data = c_data_val
+                    cd.c_sources = c_sources_val
+                    # commit update
+                    await sess.commit()
+                else:
+                    # already has data — do nothing
+                    await sess.rollback()
+                return
+
+            session_has_cdata = hasattr(SessionModel, "c_data") 
+            current_cdata = getattr(session_obj, "c_data", None) if session_has_cdata else None
+
+            if session_has_cdata and (current_cdata is not None and current_cdata != empty_c_data):
+                # sessions table already has non-empty c_data -> respect existing value, do nothing
                 await sess.rollback()
+                return
+
+            # Create and attach a new CompanyDetails instance, pointing to this session
+            new_cd = CompanyDetails(
+                session_id=session_obj.id,
+                c_info=summary,
+                c_data=c_data_val,
+                c_sources=c_sources_val,
+                c_images=None
+            )
+            # attach to session_obj and add to session so it gets persisted
+            session_obj.company_details = new_cd
+            sess.add(new_cd)
+            await sess.commit()
+            return
         except Exception:
             await sess.rollback()
             raise

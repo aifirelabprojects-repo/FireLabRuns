@@ -20,6 +20,33 @@ const svgIcons = {
 };
 
 
+function showPopup(message, type = 'info', duration = 3000) {
+    let popup = document.getElementById('dynamicNotification');
+
+    if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'dynamicNotification';
+        popup.classList.add('dynamic-popup-container');
+        document.body.appendChild(popup);
+    }
+    popup.className = 'dynamic-popup-container';
+    popup.classList.add(type);
+    popup.textContent = message;
+    requestAnimationFrame(() => {
+        popup.classList.add('show');
+    });
+
+    setTimeout(() => {
+
+        popup.classList.remove('show');
+        setTimeout(() => {
+            if (popup && !popup.classList.contains('show')) {
+                popup.remove();
+            }
+        }, 400); 
+
+    }, duration);
+}
 
 async function loadSessions(page = currentPage) {
     currentPage = page;
@@ -154,6 +181,7 @@ async function loadSessions(page = currentPage) {
     updatePaginationUI();
     } catch (err) {
     document.getElementById('sessionsList').innerHTML = '<div class="p-6 text-red-600">Failed to load sessions</div>';
+
     document.getElementById('paginationControls').style.display = 'none';
     }
 }
@@ -205,7 +233,7 @@ async function approveSession(id) {
       if (!res.ok) throw new Error("Failed to approve session");
   
       const data = await res.json();
-      alert(data.message || "Session approved!");
+      showPopup(data.message || "Session approved!");
       
       // Optional: update UI
       const btn = document.getElementById("approveBtn");
@@ -215,7 +243,8 @@ async function approveSession(id) {
         btn.classList.add("opacity-60", "cursor-not-allowed");
       }
     } catch (err) {
-      alert("Could not approve session. Check console for details.");
+      showPopup("Could not approve session");
+
     }
   }
   
@@ -225,7 +254,7 @@ async function approveSession(id) {
     
     // Check if element exists
     if (!contentElement) {
-        console.error('Modal content element not found!');
+
         return;
     }
     
@@ -249,7 +278,6 @@ async function approveSession(id) {
     // Clean up the URL
     URL.revokeObjectURL(url);
     
-    console.log('Download started!');
 }
 
 // Example: Attach to the "Download Report" button in the modal
@@ -327,6 +355,33 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
+    let ConsultationHtml = `
+    <div class="consultations-wrapper mt-3 p-4 bg-slate-50/90 rounded-xl border border-slate-200/60 shadow-sm">
+        <h6 class="text-sm font-bold text-slate-800 mb-3 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-slate-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 20H6C3.79086 20 2 18.2091 2 16V7C2 4.79086 3.79086 3 6 3H17C19.2091 3 21 4.79086 21 7V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 2V4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M15 2V4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 8H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M18.5 15.6429L17 17.1429" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="17" cy="17" r="5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>   
+            Scheduled Consultations
+        </h6>
+        
+        <div id="consultation-list-${id}" class="min-h-[60px]">
+            <div class="animate-pulse flex space-x-4 p-2">
+                <div class="flex-1 space-y-2 py-1">
+                    <div class="h-2 bg-slate-200 rounded"></div>
+                    <div class="h-2 bg-slate-200 rounded w-5/6"></div>
+                </div>
+            </div>
+        </div>
+
+        <img src="" onerror="window.loadSessionConsultations('${id}')" style="display:none;" />
+    </div>
+    `;
+
     const contactSection = `
     <div class="bg-white rounded-lg  overflow-hidden">
 
@@ -396,6 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
         </div>
         ${ResearchInfoHtml}
+        ${ConsultationHtml}
         </div>
     </div>
     `;
@@ -818,6 +874,111 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }
 
+
+
+// 1. Make the status colors object global
+const statusColors = {
+    'pending': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'in_progress': 'bg-blue-100 text-blue-800 border-blue-200',
+    'completed': 'bg-green-100 text-green-800 border-green-200',
+    'cancelled': 'bg-red-100 text-red-800 border-red-200',
+    'default': 'bg-slate-100 text-slate-800 border-slate-200'
+};
+
+// 2. Make the update function GLOBAL so the injected HTML can find it
+window.updateConsultationStatus = async function(consultationId, selectElement) {
+    const newStatus = selectElement.value;
+    const originalColorClass = selectElement.className; 
+    
+    // Optimistic UI Update: Change color immediately
+    const statusKey = newStatus.toLowerCase().replace(' ', '_');
+    const newColorClass = `text-xs font-medium py-1 px-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer transition-colors ${statusColors[statusKey] || statusColors['default']}`;
+    
+    selectElement.className = newColorClass;
+    selectElement.disabled = true; // Prevent double clicks
+
+    try {
+        const response = await fetch(`/consultation/${consultationId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_status: newStatus })
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Server responded: ${errText}`);
+        }
+        showPopup(`Status Updated to ${newStatus}`);
+        const result = await response.json();
+    } catch (error) {
+        console.error("Update failed:", error);
+        alert("Failed to update status. Check console for details.");
+        // Revert UI on error
+        selectElement.className = originalColorClass; 
+    } finally {
+        selectElement.disabled = false;
+    }
+};
+
+// 3. The Load function (Make sure this is also accessible or called correctly)
+window.loadSessionConsultations = async function(sessionId) {
+    const container = document.getElementById(`consultation-list-${sessionId}`);
+    if (!container) return;
+
+    try {
+        container.innerHTML = '<div class="text-slate-500 text-sm p-4 animate-pulse">Loading schedule...</div>';
+        
+        const response = await fetch(`/session/${sessionId}/consultations`);
+        if (!response.ok) throw new Error('Failed to load');
+        
+        const consultations = await response.json();
+
+        if (!consultations || consultations.length === 0) {
+            container.innerHTML = '<div class="text-slate-400 text-sm p-4 italic">No consultations scheduled.</div>';
+            return;
+        }
+
+        let html = '<div class="space-y-3">';
+        
+        consultations.forEach(consultation => {
+            const dateObj = new Date(consultation.schedule_time);
+            const dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            const timeStr = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+            const currentStatus = consultation.status.toLowerCase().replace(' ', '_');
+
+            html += `
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-white rounded-lg border border-slate-200/60 hover:border-blue-300 transition-colors duration-200">
+                <div class="mb-2 sm:mb-0">
+                    <div class="flex items-center gap-2 text-slate-800 font-medium">
+                        <span>${dateStr} <span class="text-slate-400 text-xs font-normal">|</span> ${timeStr}</span>
+                    </div>
+                    <div class="text-xs text-slate-500 ml-6 mt-0.5">
+                        With: <span class="font-semibold text-slate-600">${consultation.consultant}</span>
+                    </div>
+                </div>
+                <div class="relative">
+                     <select 
+                        onchange="window.updateConsultationStatus('${consultation.consultation_id}', this)"
+                        class="text-xs font-medium py-1 px-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer transition-colors ${statusColors[currentStatus] || statusColors['default']}"
+                    >
+                        <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="in_progress" ${currentStatus === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                        <option value="completed" ${currentStatus === 'completed' ? 'selected' : ''}>Completed</option>
+                        <option value="cancelled" ${currentStatus === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                </div>
+            </div>`;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = '<div class="text-red-400 text-sm p-4">Error loading consultations.</div>';
+    }
+};
+
 // New function to open Deep Research modal
 function openDeepResearchModal() {
     // Create modal HTML with pre-filled form
@@ -869,7 +1030,7 @@ function openDeepResearchModal() {
                     </div>
                     <div class="flex justify-end gap-3 pt-4">
                         <button type="button" id="cancelDeepResearch" class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">Cancel</button>
-                        <button type="submit" class="px-4 py-2.5 text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 rounded-full transition-colors focus:outline-none ">Confirm & Research</button>
+                        <button type="submit" id="confirmDeepResearch" class="px-4 py-2.5 text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 rounded-full transition-colors focus:outline-none ">Confirm & Research</button>
                     </div>
                 </form>
             </div>
@@ -883,6 +1044,7 @@ function openDeepResearchModal() {
     // Attach event listeners
     const closeModalBtn = document.getElementById('closeDeepResearchModal');
     const cancelBtn = document.getElementById('cancelDeepResearch');
+    const confBtn = document.getElementById('confirmDeepResearch');
     const form = document.getElementById('deepResearchForm');
     const modal = document.getElementById('deepResearchModal');
 
@@ -903,8 +1065,8 @@ function openDeepResearchModal() {
             email_domain: formData.get('email_domain'),
             additional_info: formData.get('additional_info')
         };
-
-
+        closeDeepResearchModal();
+        showPopup('You will be notified upon research completion');
         try {
             const response = await fetch('/api/deep-research', {
                 method: 'POST',
@@ -921,19 +1083,15 @@ function openDeepResearchModal() {
         
             if (!response.ok) {
                 const text = await response.text();
-                console.error('Deep research error');
-                alert('Failed to initiate deep research. See console for details');
+                showPopup('Failed to initiate deep research');
                 closeDeepResearchModal();
                 return;
             }
         
             const data = await response.json();
-        
-            // Show browser notification (request permission if needed)
             function showNotification(title, body) {
                 if (!("Notification" in window)) {
-                    // Browser doesn't support notifications
-                    alert(`${title}\n\n${body}`);
+                    showPopup("This browser does not support desktop notification");
                     return;
                 }
         
@@ -944,24 +1102,23 @@ function openDeepResearchModal() {
                         if (permission === "granted") {
                             new Notification(title, { body });
                         } else {
-                            alert(`${title}\n\n${body}`);
+                            showPopup("An error occured while sending notification");
                         }
                     });
                 } else {
-                    // permission denied
-                    alert(`${title}\n\n${body}`);
+                    showPopup("An error occured while sending notification.");
                 }
             }
         
             // Use a short summary or fallback to raw
-            const summary = (data.result && (data.result.summary || data.result.raw || 'Research complete')) || 'Research complete';
-            showNotification('Deep Research Complete', summary);
+            const summary = data.result;
+            showPopup('The requested research report is ready');
+            showNotification('Research analysis is complete.', summary);
         
             // You can update the UI with data.result if you want
             // e.g., show result in a modal or results area
         } catch (error) {
-            console.error('Error');
-            alert('Failed to initiate deep research. Please try again.');
+            showPopup('Failed to initiate deep research. Please try again.');
         } finally {
             // Close modal after submission
             closeDeepResearchModal();
@@ -979,6 +1136,7 @@ function closeDeepResearchModal() {
     }
 }
 async function handleVerification() {
+    showPopup('This Lead is being verified');
     const verifyBtn = document.getElementById('verifyBtn');
     const { name, email, lead_role, company, id } = currentUserData;
     verifyBtn.disabled = true;
@@ -1015,6 +1173,7 @@ async function handleVerification() {
     let respJson = null;
     try { respJson = await resp.clone().json(); } catch (err) { }
     if (resp.ok) {
+        showPopup('Verification is complete. Lead data updated');
         currentUserData.verified = respJson.updated_data.verified;
         currentUserData.confidence = respJson.updated_data.confidence;
         currentUserData.evidence = respJson.updated_data.evidence;
@@ -1050,49 +1209,417 @@ async function handleVerification() {
     }, 1400);
     }
 }
-async function openSession(id, mode, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget,c_sources,c_images,c_info,c_data,research_data,approved) {
+// --- Global Variables for Project Modal ---
+let availableTemplates = [];
+let currentCustomTasks = [];
+
+async function openSession(id, mode, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, c_sources, c_images, c_info, c_data, research_data, approved) {
     if (currentWs) {
-    reconnectAttempts = maxReconnectAttempts;
-    currentWs.close();
+        reconnectAttempts = maxReconnectAttempts;
+        currentWs.close();
     }
     currentSessionId = id;
     currentMode = mode;
-    currentUserData = { id, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget,c_sources,c_images,c_info,c_data,research_data,approved };
+    // Store data globally so modal can access it
+    currentUserData = { id, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, c_sources, c_images, c_info, c_data, research_data, approved };
+    
     const isApproved = approved === true || approved === "true";
 
+    // Approve/Lead Button
     const approveButtonHtml = isApproved
-    ? `<button id="approveBtn"
-        class="bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 
-                px-4 py-1.5 rounded-full text-sm font-medium shadow-sm transition cursor-not-allowed opacity-55" disabled>
-        Lead
-        </button>`
-    : `
-        <button id="approveBtn"
-        class="bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 
-                px-4 py-1.5 rounded-full text-sm font-medium shadow-sm transition"
-        onclick="approveSession('${id}')">
-        Export to Leads
-        </button>
-    `;
+        ? `<button id="approveBtn"
+            class="bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 px-4 py-1.5 rounded-full text-sm font-medium shadow-sm transition cursor-not-allowed opacity-55" disabled>
+            Lead Approved
+           </button>`
+        : `<button id="approveBtn"
+            class="bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 px-4 py-1.5 rounded-full text-sm font-medium shadow-sm transition"
+            onclick="approveSession('${id}')">
+            Approve Lead
+           </button>`;
 
-    
-    const DeepRes=`<button title="Run a deep verification on this customer" id="deepResearchBtn" class="bg-white flex items-center mr-1 gap-1 text-gray-700 border border-gray-300 hover:bg-gray-100 px-4 py-1.5 rounded-full text-sm font-medium shadow-sm transition">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12.2429 6.18353L8.55917 8.27415C7.72801 8.74586 7.31243 8.98172 7.20411 9.38603C7.09579 9.79034 7.33779 10.2024 7.82179 11.0264L8.41749 12.0407C8.88853 12.8427 9.12405 13.2437 9.51996 13.3497C9.91586 13.4558 10.3203 13.2263 11.1292 12.7672L14.8646 10.6472M7.05634 9.72257L3.4236 11.7843C2.56736 12.2702 2.13923 12.5132 2.02681 12.9256C1.91438 13.3381 2.16156 13.7589 2.65591 14.6006C3.15026 15.4423 3.39744 15.8631 3.81702 15.9736C4.2366 16.0842 4.66472 15.8412 5.52096 15.3552L9.1537 13.2935M21.3441 5.18488L20.2954 3.39939C19.8011 2.55771 19.5539 2.13687 19.1343 2.02635C18.7147 1.91584 18.2866 2.15881 17.4304 2.64476L13.7467 4.73538C12.9155 5.20709 12.4999 5.44294 12.3916 5.84725C12.2833 6.25157 12.5253 6.6636 13.0093 7.48766L14.1293 9.39465C14.6004 10.1966 14.8359 10.5976 15.2318 10.7037C15.6277 10.8098 16.0322 10.5802 16.841 10.1212L20.5764 8.00122C21.4326 7.51527 21.8608 7.2723 21.9732 6.85985C22.0856 6.44741 21.8384 6.02657 21.3441 5.18488Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-        <path d="M12 12.5L16 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M12 12.5L8 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg> Deep Research
+    // Deep Research Button (SVG omitted for brevity, use yours)
+    const DeepRes = `<button title="Run a deep verification" id="deepResearchBtn" onclick="/* your deep research logic */" class="bg-white flex items-center mr-1 gap-1 text-gray-700 border border-gray-300 hover:bg-gray-100 px-4 py-1.5 rounded-full text-sm font-medium shadow-sm transition">
+       Deep Research
     </button>`;
-    document.getElementById('chatTitle').innerHTML = `<button id="ModeTrack" class="${mode === 'control' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'} mr-1 text-gray-700 border border-gray-300 hover:bg-gray-100 px-4 py-1.5 rounded-full text-sm font-medium shadow-sm transition cursor-not-allowed opacity-55" disabled>${mode === 'control' ? 'Control Mode' : 'View Mode'}</button>${DeepRes}${approveButtonHtml}`;
+
+    // --- NEW: Export to Project Button ---
+    // Only shows if Approved/Lead (optional logic) or always show
+    const exportProjectHtml = 
+    isApproved
+        ? `<button id="exportProjectBtn" onclick="openExportProjectModal()"
+        class="bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 
+            px-4 py-1.5 rounded-full text-sm font-medium shadow-sm transition flex items-center gap-1 ml-1">
+            <svg class="w-4 h-4" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><title>project</title>
+            <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+            <g id="Combined-Shape" fill="currentColor" transform="translate(64.000000, 34.346667)">
+            <path d="M192,7.10542736e-15 L384,110.851252 L384,332.553755 L192,443.405007 L1.42108547e-14,332.553755 L1.42108547e-14,110.851252 L192,7.10542736e-15 Z M42.666,157.654 L42.6666667,307.920144 L170.666,381.82 L170.666,231.555 L42.666,157.654 Z M341.333,157.655 L213.333,231.555 L213.333,381.82 L341.333333,307.920144 L341.333,157.655 Z M192,49.267223 L66.1333333,121.936377 L192,194.605531 L317.866667,121.936377 L192,49.267223 Z">
+            </path></g></g></svg>
+            Export to Project
+            </button>`
+        : ``;
+
+
+    const scheduleConsultationHtml = isApproved
+        ? `<button title="Schedule a consultation" id="scheduleConsultationBtn" onclick="openScheduleConsultationModal()" 
+            class="bg-indigo-50 mr-1 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 
+                   px-4 py-1.5 rounded-full text-sm font-medium shadow-sm transition flex items-center gap-1 ml-1">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 20H6C3.79086 20 2 18.2091 2 16V7C2 4.79086 3.79086 3 6 3H17C19.2091 3 21 4.79086 21 7V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 2V4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M15 2V4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 8H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M18.5 15.6429L17 17.1429" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="17" cy="17" r="5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+        Schedule Consultation
+    </button>`
+        : ``;
+
+
+    document.getElementById('chatTitle').innerHTML = `
+        <div class="flex items-center overflow-x-auto no-scrollbar">
+            <button id="ModeTrack" class="${mode === 'control' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'} mr-2 text-gray-700 border border-gray-300 px-4 py-1.5 rounded-full text-sm font-medium opacity-55" disabled>
+                ${mode === 'control' ? 'Control Mode' : 'View Mode'}
+            </button>
+            ${DeepRes}
+            ${approveButtonHtml}
+            ${scheduleConsultationHtml} 
+            ${exportProjectHtml} 
+        </div>
+    `;
 
     document.getElementById('inputArea').style.display = mode === 'control' ? 'block' : 'none';
     document.getElementById('handoverBtn').style.display = mode === 'control' ? 'flex' : 'none';
+    
     const modal = document.getElementById('chatModal');
     modal.classList.remove('hidden');
-    renderUserDetails();
+    renderUserDetails(); // Ensure this is defined elsewhere in your code
     currentWsUrl = `/ws/${mode === 'control' ? 'control' : 'view'}/${id}`;
     document.getElementById('messagesContainer').innerHTML = '';
     connectWebSocket();
+}
+
+function openScheduleConsultationModal() {
+
+    if (!currentSessionId) {
+        showPopup("Please open a session first.");
+        return;
+    }
+    loadConsultants();
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000; 
+    const localIsoString = (new Date(now - offset)).toISOString().slice(0, 16);
+    document.getElementById('scheduleTime').value = localIsoString;
+    document.getElementById('scheduleConsultationModal').classList.remove('hidden');
+    document.getElementById('submitScheduleBtn').onclick = submitConsultationSchedule;
+}
+
+// Function to close the modal
+function closeScheduleConsultationModal() {
+    document.getElementById('scheduleConsultationModal').classList.add('hidden');
+}
+
+// Function to fetch and populate the consultant dropdown
+async function loadConsultants() {
+    const selectElement = document.getElementById('consultantSelect');
+    selectElement.innerHTML = '<option value="" disabled selected>Loading...</option>'; // Reset/Loading state
+
+    try {
+        const response = await fetch("/consultants"); 
+        if (!response.ok) {
+            throw new Error(`Failed to load consultants: ${response.status}`);
+        }
+        
+        const consultants = await response.json(); 
+        
+        selectElement.innerHTML = ''; 
+
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = '--- Select a Consultant ---';
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        selectElement.appendChild(defaultOption);
+
+        consultants.forEach(consultant => {
+            const option = document.createElement('option');
+            option.value = consultant.id;
+            const display_name = `${consultant.name} (${consultant.tier})`;
+            option.textContent = display_name;
+            option.setAttribute('data-consultant-name', display_name);
+            selectElement.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Error loading consultants:", error);
+        selectElement.innerHTML = '<option value="" disabled selected>Failed to load consultants</option>';
+    }
+}
+
+async function submitConsultationSchedule() {
+    const consultantId = document.getElementById('consultantSelect').value; 
+    const scheduleTime = document.getElementById('scheduleTime').value;
+    const selectElement = document.getElementById('consultantSelect');
+
+    document.getElementById('submitScheduleBtn').innerText = "Sending";
+
+    if (!consultantId || !scheduleTime) {
+        showPopup("Please select a consultant and provide the schedule time.");
+        document.getElementById('submitScheduleBtn').innerText = "Confirm Schedule";
+        return;
+    }
+
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const consultantDisplayName = selectedOption.getAttribute('data-consultant-name');
+    
+    const utcTime = new Date(scheduleTime).toISOString(); 
+    
+    const payload = {
+        session_id: currentSessionId,
+        schedule_time: utcTime,
+        consultant_id: consultantId, 
+        consultant_name_display: consultantDisplayName
+    };
+
+    try {
+        const response = await fetch("/schedule_consultant", { 
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        showPopup(`Consultation scheduled with ${data.consultant_name} for ${data.schedule_time}.`); 
+
+    } catch (error) {
+        console.error("Error scheduling consultation:", error);
+        showPopup(`Failed to schedule consultation`);
+    } finally {
+        document.getElementById('submitScheduleBtn').innerText = "Confirm Schedule";
+        closeScheduleConsultationModal();
+    }
+}
+
+async function openExportProjectModal() {
+    const modal = document.getElementById('projectModal');
+    const spinner = document.getElementById('templateSpinner');
+    const select = document.getElementById('templateSelect');
+
+    // A. Populate Inputs (Editable)
+    const companyName = currentUserData.company || currentUserData.name || "";
+    document.getElementById('edit_company').value = companyName;
+    document.getElementById('edit_email').value = currentUserData.email || "";
+    document.getElementById('edit_phone').value = currentUserData.mobile || currentUserData.phone || "";
+    
+    // B. Auto-set Project Name
+    document.getElementById('edit_project_name').value = companyName ? `${companyName}'s Project` : "New Project";
+
+    // C. Reset Fields
+    document.getElementById('edit_notes').value = "";
+    document.getElementById('newCustomTask').value = "";
+    currentCustomTasks = [];
+    renderCustomTasks();
+    document.getElementById('templateTasksContainer').innerHTML = '<p class="text-gray-400 text-sm italic text-center mt-10">Loading templates...</p>';
+
+    modal.classList.remove('hidden');
+    spinner.classList.remove('hidden');
+
+    // D. Fetch Templates from Backend
+    try {
+        const response = await fetch('/api/service-templates');
+        if (!response.ok) throw new Error('Failed to load templates');
+        availableTemplates = await response.json();
+
+        // Populate Select Dropdown
+        select.innerHTML = '<option value="">-- Select Service Template --</option>';
+        availableTemplates.forEach(tpl => {
+            const option = document.createElement('option');
+            option.value = tpl.id;
+            option.text = tpl.name;
+            select.appendChild(option);
+        });
+
+        document.getElementById('templateTasksContainer').innerHTML = '<p class="text-gray-400 text-sm italic text-center mt-10">Please select a template.</p>';
+
+    } catch (error) {
+        document.getElementById('templateTasksContainer').innerHTML = '<p class="text-red-500 text-sm text-center">Error loading templates.</p>';
+    } finally {
+        spinner.classList.add('hidden');
+    }
+}
+
+function closeProjectModal() {
+    document.getElementById('projectModal').classList.add('hidden');
+}
+
+// --- 2. Logic to Update Project Name Automatically ---
+function autoUpdateProjectName() {
+    const comp = document.getElementById('edit_company').value;
+    const projInput = document.getElementById('edit_project_name');
+    // Simple logic: Update only if the user hasn't completely custom-written something unrelated
+    // For now, we just overwrite it for convenience
+    if(comp) {
+        projInput.value = `${comp}'s Project`;
+    }
+}
+
+// --- 3. Handle Template Change (FIX FOR TASKS NOT SHOWING) ---
+function handleTemplateChange() {
+    const select = document.getElementById('templateSelect');
+    const container = document.getElementById('templateTasksContainer');
+    
+    // Parse ID as integer because Select value is string, but JSON ID is int
+    const templateId = parseInt(select.value);
+
+    if (!templateId) {
+        container.innerHTML = '<p class="text-gray-400 text-sm italic text-center mt-10">Please select a template.</p>';
+        return;
+    }
+
+    // Find the template object
+    const template = availableTemplates.find(t => t.id === templateId);
+    
+
+
+
+    if (template && template.default_tasks && template.default_tasks.length > 0) {
+        // Sort tasks by sequence number
+        const tasks = template.default_tasks.sort((a, b) => (a.sequence_number || 0) - (b.sequence_number || 0));
+
+        // Calculate the midpoint to split tasks into two rows
+        const midpoint = Math.ceil(tasks.length / 2);
+        const row1Tasks = tasks.slice(0, midpoint);
+        const row2Tasks = tasks.slice(midpoint);
+
+        // Function to generate the HTML for a row of tasks
+        const renderTasks = (taskList) => {
+            return taskList.map(task => `
+                <label class="flex-shrink-0 w-64 p-3 border border-gray-200 rounded-xl cursor-pointer transition 
+                            hover:bg-gray-50 hover:border-gray-300">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input type="checkbox" name="template_task" value="${task.id}" checked 
+                                class="h-4 w-4 accent-gray-800 text-gray-800 focus:ring-gray-800 border-gray-300 rounded-md">
+                        </div>
+                        
+                        <div class="ml-3 text-sm">
+                            <span class="font-semibold text-gray-800">${task.title}</span>
+                            ${task.description ? `<p class="text-gray-500 text-xs mt-0.5">${task.description}</p>` : ''}
+                        </div>
+                    </div>
+                </label>
+            `).join('');
+        };
+
+        // Render Tasks in a two-row structure. Both rows are horizontally flexible.
+        container.innerHTML = `
+            <div class="space-y-4 pb-1"> <div class="flex space-x-4"> 
+                    ${renderTasks(row1Tasks)}
+                </div>
+
+                ${row2Tasks.length > 0 ? `
+                    <div class="flex space-x-4">
+                        ${renderTasks(row2Tasks)}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    } else {
+        container.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">No default tasks defined for this template.</p>';
+    }
+}
+
+// --- 4. Custom Task Logic ---
+function addCustomTask() {
+    const input = document.getElementById('newCustomTask');
+    const val = input.value.trim();
+    if (val) {
+        currentCustomTasks.push(val);
+        input.value = '';
+        renderCustomTasks();
+    }
+}
+
+function renderCustomTasks() {
+    const list = document.getElementById('customTasksList');
+    list.innerHTML = currentCustomTasks.map((t, i) => `
+        <li class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-xs flex items-center gap-2">
+            ${t}
+            <button onclick="removeCustomTask(${i})" class="hover:text-red-600 font-bold">&times;</button>
+        </li>
+    `).join('');
+}
+
+function removeCustomTask(i) {
+    currentCustomTasks.splice(i, 1);
+    renderCustomTasks();
+}
+
+// --- 5. Submit (Export) Logic ---
+async function submitProjectCreation() {
+    const btn = document.getElementById('submitProjectBtn');
+    
+    // Validation
+    const company = document.getElementById('edit_company').value.trim();
+    const projectName = document.getElementById('edit_project_name').value.trim();
+    
+    if (!company || !projectName) {
+        showPopup("Company Name and Project Name are required.");
+        return;
+    }
+
+    btn.innerText = "Processing...";
+    btn.disabled = true;
+
+    try {
+        // Collect Checkbox IDs
+        const checkedBoxes = document.querySelectorAll('input[name="template_task"]:checked');
+        const taskIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+
+        // Prepare Payload
+        const payload = {
+            // Client Info (Updates Session/Phase)
+            company_name: company,
+            email: document.getElementById('edit_email').value.trim(),
+            phone: document.getElementById('edit_phone').value.trim(),
+            
+            // Project Info
+            project_name: projectName,
+            notes: document.getElementById('edit_notes').value,
+            template_id: document.getElementById('templateSelect').value ? parseInt(document.getElementById('templateSelect').value) : null,
+            selected_task_ids: taskIds,
+            custom_tasks: currentCustomTasks
+        };
+
+        const response = await fetch(`/api/sessions/${currentSessionId}/project`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showPopup("Project Created Successfully!");
+            closeProjectModal();
+        } else {
+            showPopup("Error Creating Project");
+        }
+
+    } catch (error) {
+        showPopup("Network Error");
+    } finally {
+        btn.innerText = "Create Project & Save Changes";
+        btn.disabled = false;
+    }
 }
 function closeChat() {
     reconnectAttempts = maxReconnectAttempts;

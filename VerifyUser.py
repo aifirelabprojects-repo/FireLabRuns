@@ -9,12 +9,21 @@ import re
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 import aiohttp
+from functools import lru_cache
 
 load_dotenv()
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+DEFAULT_CONCURRENT_LIMIT = 5
+DEFAULT_RPM = 60
+CACHE_TTL_SECONDS = 86400
+API_TIMEOUT = 30.0
+MAX_RETRIES = 3
+BASE_DELAY = 1.0
+MAX_DELAY = 10.0
+SEARCH_IMAGE_LIMIT = 3
 
 json_schema = {
     "name": "verification_response",
@@ -46,7 +55,7 @@ json_schema = {
                     }
                 },
                 "required": ["name", "role", "username", "email", "company", "evidence"],
-                "additionalProperties": False  # No extra fields allowed
+                "additionalProperties": False
             }
         },
         "required": ["verified", "confidence", "details"],
@@ -56,7 +65,7 @@ json_schema = {
 
 
 class AsyncRateLimiter:
-    def __init__(self, concurrent_limit: int = 5, rpm: int = 60):
+    def __init__(self, concurrent_limit: int = DEFAULT_CONCURRENT_LIMIT, rpm: int = DEFAULT_RPM):
         self.semaphore = asyncio.Semaphore(concurrent_limit)
         self.rpm = rpm
         self.tokens = rpm
@@ -71,233 +80,242 @@ class AsyncRateLimiter:
 
     async def acquire(self):
         async with self.semaphore:
-            # Refill tokens periodically (simple token bucket approximation)
             async with self.lock:
                 now = time.time()
                 elapsed = now - self.last_refill
                 self.tokens = min(self.rpm, self.tokens + (elapsed / 60) * self.rpm)
                 self.last_refill = now
+                
                 while self.tokens < 1:
-                    await asyncio.sleep(60 / self.rpm)  # Wait for next token
+                    await asyncio.sleep(60 / self.rpm)
                     now = time.time()
                     elapsed = now - self.last_refill
                     self.tokens = min(self.rpm, self.tokens + (elapsed / 60) * self.rpm)
                     self.last_refill = now
+                
                 self.tokens -= 1
 
-# Global rate limiter instance (lazy init)
-_rate_limiter = None
 
+@lru_cache(maxsize=1)
 def get_rate_limiter() -> AsyncRateLimiter:
-    global _rate_limiter
-    if _rate_limiter is None:
-        concurrent = int(os.getenv("RATE_LIMIT_CONCURRENT", "5"))
-        rpm = int(os.getenv("RATE_LIMIT_RPM", "60"))
-        _rate_limiter = AsyncRateLimiter(concurrent, rpm)
-    return _rate_limiter
+    """Lazy initialization with caching."""
+    concurrent = int(os.getenv("RATE_LIMIT_CONCURRENT", DEFAULT_CONCURRENT_LIMIT))
+    rpm = int(os.getenv("RATE_LIMIT_RPM", DEFAULT_RPM))
+    return AsyncRateLimiter(concurrent, rpm)
+
 
 class TTLCache:
-    def __init__(self, ttl_seconds: int = 86400):
-        self.cache: Dict[str, tuple[str, List[str], List[str]]] = {}
+    def __init__(self, ttl_seconds: int = CACHE_TTL_SECONDS):
+        self.cache: Dict[str, Tuple[Any, float]] = {}
         self.ttl = ttl_seconds
 
-    def get(self, key: str) -> Tuple[str, List[str], List[str]] | None:
-        if key in self.cache:
-            value, timestamp = self.cache[key]
-            if time.time() - timestamp < self.ttl:
-                return value
-            else:
-                del self.cache[key]
+    def get(self, key: str) -> Any | None:
+        if key not in self.cache:
+            return None
+        
+        value, timestamp = self.cache[key]
+        if time.time() - timestamp < self.ttl:
+            return value
+        
+        del self.cache[key]
         return None
 
-    def set(self, key: str, value: Tuple[str, List[str], List[str]]):
+    def set(self, key: str, value: Any) -> None:
         self.cache[key] = (value, time.time())
 
-ttl_cache = TTLCache()
 
+# Global instances
+ttl_cache = TTLCache()
 perplexity_client = AsyncOpenAI(
     api_key=os.getenv("PERPLEXITY_API_KEY"),
     base_url="https://api.perplexity.ai"
 )
 
+
 def get_cache_key(inputs: Dict[str, str]) -> str:
-    key_str = ''.join([f"{k}:{v}" for k, v in sorted(inputs.items())])
-    return hashlib.md5(key_str.encode()).hexdigest()  # Note: import hashlib if not already
+    """Generate MD5 hash from sorted input dict."""
+    key_str = ''.join(f"{k}:{v}" for k, v in sorted(inputs.items()))
+    return hashlib.md5(key_str.encode()).hexdigest()
 
-# Regex to extract name from email (before @)
+
 def extract_name_from_email(email: str) -> str:
+    """Extract and format name from email address."""
     match = re.match(r'^(.+)@', email.strip().lower())
-    if match:
-        name = match.group(1).replace('.', ' ').replace('_', ' ').title()
-        # Simple cleanup: split and capitalize words
-        return ' '.join(word.capitalize() for word in name.split() if word)
-    return ''
+    if not match:
+        return ''
+    
+    name = match.group(1).replace('.', ' ').replace('_', ' ')
+    return ' '.join(word.capitalize() for word in name.split() if word)
 
-async def retry_on_failure(coro, max_retries: int = 3, base_delay: float = 1.0, max_delay: float = 10.0):
 
-    last_exception = None
-    for attempt in range(max_retries + 1):
-        try:
-            return await coro()  # Call the function to get the coroutine, then await it
-        except Exception as e:
-            last_exception = e
-            if attempt == max_retries:
-                raise  # Re-raise on final failure
-            # Exponential backoff with jitter
-            delay = min(base_delay * (2 ** attempt) + (time.time() % 1.0), max_delay)
-            await asyncio.sleep(delay)
-    raise last_exception  # Fallback (shouldn't reach here)
-
-async def fetch_images(company_low: str, display_username: str) -> List[str]:
-    if not display_username:
-        return []
-    query = f"{company_low} linkedin {display_username.lower()}".strip()
-    api_key = os.getenv("SEARCH_API_KEY")
-    if not api_key:
-        print("No SEARCH_API_KEY")
-        return []
-    url = "https://www.searchapi.io/api/v1/search"
-    params = {
-        "engine": "google_images",
-        "q": query,
-        "api_key": api_key,
-        "num": 3,
-    }
-    limiter = get_rate_limiter()
-    await limiter.acquire()
-    async def api_coro():
-        connector = aiohttp.TCPConnector(limit=10)  # Scalability: limit connections
-        timeout = aiohttp.ClientTimeout(total=30)
-        async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
-            async with session.get(url, params=params) as resp:
-                resp.raise_for_status()
-                data = await resp.json(content_type=None)
-                if 'images' not in data:
-                    return []
-                images_list = data['images'][:3]
-                urls = []
-                for img in images_list:
-                    if isinstance(img, dict) and 'original' in img and isinstance(img['original'], dict) and 'link' in img['original']:
-                        urls.append(img['original']['link'])
-                return urls
-    try:
-        return await retry_on_failure(api_coro, max_retries=3)
-    except Exception as e:
-        print(f"Image fetch error: {str(e)}")
-        return []
-
-# Async user verification with Perplexity API (search + LLM in one call) and TTL caching
-async def verify_user(company: str, role: str, username: str, email: str) -> Tuple[str, List[str], List[str]]:
-    inputs = {
+def normalize_inputs(company: str, role: str, username: str, email: str) -> Dict[str, str]:
+    """Normalize and validate user inputs."""
+    return {
         "company": company.lower().strip(),
         "role": role.lower().strip(),
         "username": username.lower().strip() if username else "",
         "email": email.lower().strip()
     }
-    cache_key = get_cache_key(inputs)
-    # Step 1: Check TTL cache
-    ttl_result = ttl_cache.get(cache_key)
-    if ttl_result:
-        return ttl_result
-    company_low = inputs["company"]
-    role_low = inputs["role"]
-    username_low = inputs["username"]
-    email_low = inputs["email"]
-    # Extract name from email if username is insufficient
-    display_username = username
-    if not username or len(username.strip()) < 2:
-        display_username = extract_name_from_email(inputs["email"])
 
-    async def get_verification() -> Tuple[str, List[str]]:
-        user_prompt = f"""Verify if the user (name: "{display_username}", role: "{role}" is a employee in the given role at "{company}".
-            Search reliable sources like LinkedIn profiles, company websites, directories, or official pages for evidence matching the name, role, company.
-            Output EXACTLY one strict JSON object—no extra text, markdown, or explanations. Use this schema:
-            {{
-                "verified": true/false,
-                "confidence": <number between 0 and 100>,
-                "details": {{
-                    "name": "{display_username}",
-                    "role": "{role}",
-                    "username": "{username}",
-                    "email": "{email}",
-                    "company": "{company}",
-                    "evidence": "Brief 1-sentence summary of key evidence (or 'Insufficient evidence found')"
-                }}
-            }}"""
+
+async def retry_on_failure(coro_func, max_retries: int = MAX_RETRIES, 
+                          base_delay: float = BASE_DELAY, max_delay: float = MAX_DELAY):
+    """Retry async operation with exponential backoff."""
+    last_exception = None
+    
+    for attempt in range(max_retries + 1):
         try:
-            # Apply rate limiting before API call
-            limiter = get_rate_limiter()
-            await limiter.acquire()
-
-            # Wrap API call with retries
-            async def api_coro():
-                return await asyncio.wait_for(
-                    perplexity_client.chat.completions.create(
-                        model="sonar",
-                        messages=[
-                            {
-                                "role": "system",
-                                "content": "You are a helpful assistant that responds with valid JSON matching the provided schema. Include search-based evidence in the 'evidence' field."
-                            },
-                            {
-                                "role": "user",
-                                "content": user_prompt  
-                            }
-                        ],
-                        temperature=0.1,
-                        max_tokens=500,
-                        response_format={
-                            "type": "json_schema",
-                            "json_schema": json_schema
-                        },
-                    ),
-                    timeout=30.0
-                )
+            return await coro_func()
+        except Exception as e:
+            last_exception = e
+            if attempt == max_retries:
+                raise
+            
+            delay = min(base_delay * (2 ** attempt) + (time.time() % 1.0), max_delay)
+            await asyncio.sleep(delay)
+    
+    raise last_exception
 
 
-            response = await retry_on_failure(api_coro, max_retries=3, base_delay=1.0, max_delay=10.0)
-            llm_output = response.choices[0].message.content.strip()
-            
-            # Log raw output for debugging (remove in prod)
-            print(f"Raw LLM Output: {repr(llm_output[:200])}...")  # Or use logging
-            
-            if not llm_output:
-                raise ValueError("Empty response content from API")
-            
-            # Extract citations (match ref: direct access, str() for each)
-            citations = response.citations or []
-            sources: List[str] = [str(cit).strip() for cit in citations if str(cit).strip()]
-            
-            # Validate and parse JSON
-            parsed = json.loads(llm_output)
-            if not all(key in parsed for key in ["verified", "confidence", "details"]):
-                raise ValueError("Missing required JSON fields")
-        except asyncio.TimeoutError:
-            raise Exception("API call timed out after retries")
-        except (json.JSONDecodeError, ValueError, Exception) as e:
-            print(f"Verification error: {str(e)}")  # Debug log
-            llm_output = json.dumps({
-                "verified": False,
-                "confidence": "none",
-                "details": {
-                    "name": display_username,
-                    "role": role_low,
-                    "username": username_low,
-                    "email": email_low,
-                    "company": company_low,
-                    "evidence": f"Verification failed: {str(e)}"
-                }
-            })
-            sources = []
+def extract_image_urls(data: Dict[str, Any]) -> List[str]:
+    """Extract image URLs from API response."""
+    images = data.get('images', [])
+    urls = []
+    
+    for img in images[:SEARCH_IMAGE_LIMIT]:
+        if isinstance(img, dict) and 'original' in img:
+            original = img['original']
+            if isinstance(original, dict) and 'link' in original:
+                urls.append(original['link'])
+    
+    return urls
+
+
+async def fetch_images(company: str, username: str) -> List[str]:
+    """Fetch LinkedIn profile images from search API."""
+    if not username:
+        return []
+    
+    api_key = os.getenv("SEARCH_API_KEY")
+    if not api_key:
+        print("No SEARCH_API_KEY configured")
+        return []
+    
+    query = f"{company} linkedin {username}".strip().lower()
+    params = {
+        "engine": "google_images",
+        "q": query,
+        "api_key": api_key,
+        "num": SEARCH_IMAGE_LIMIT,
+    }
+    
+    limiter = get_rate_limiter()
+    await limiter.acquire()
+    
+    async def fetch_coro():
+        connector = aiohttp.TCPConnector(limit=10)
+        timeout = aiohttp.ClientTimeout(total=API_TIMEOUT)
+        
+        async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
+            async with session.get("https://www.searchapi.io/api/v1/search", params=params) as resp:
+                resp.raise_for_status()
+                data = await resp.json(content_type=None)
+                return extract_image_urls(data)
+    
+    try:
+        return await retry_on_failure(fetch_coro, max_retries=MAX_RETRIES)
+    except Exception as e:
+        print(f"Image fetch error: {str(e)}")
+        return []
+
+
+async def get_verification(company: str, role: str, username: str, email: str, 
+                          display_username: str) -> Tuple[str, List[str]]:
+    """Call Perplexity API for user verification."""
+    user_prompt = f"""Verify if the user (name: "{display_username}", role: "{role}") is an employee in the given role at "{company}".
+Search reliable sources like LinkedIn profiles, company websites, directories, or official pages for evidence matching the name, role, company.
+Output EXACTLY one strict JSON object—no extra text, markdown, or explanations."""
+
+    limiter = get_rate_limiter()
+    await limiter.acquire()
+    
+    async def api_coro():
+        return await asyncio.wait_for(
+            perplexity_client.chat.completions.create(
+                model="sonar",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant that responds with valid JSON matching the provided schema. Include search-based evidence in the 'evidence' field."
+                    },
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.1,
+                max_tokens=500,
+                response_format={"type": "json_schema", "json_schema": json_schema},
+            ),
+            timeout=API_TIMEOUT
+        )
+    
+    try:
+        response = await retry_on_failure(api_coro, max_retries=MAX_RETRIES)
+        llm_output = response.choices[0].message.content.strip()
+        
+        if not llm_output:
+            raise ValueError("Empty response from API")
+        
+        # Validate JSON structure
+        json.loads(llm_output)
+        
+        sources = [str(cit).strip() for cit in (response.citations or []) if str(cit).strip()]
         return llm_output, sources
+        
+    except (asyncio.TimeoutError, json.JSONDecodeError, ValueError, Exception) as e:
+        print(f"Verification error: {str(e)}")
+        
+        fallback_response = {
+            "verified": False,
+            "confidence": 0,
+            "details": {
+                "name": display_username,
+                "role": role,
+                "username": username,
+                "email": email,
+                "company": company,
+                "evidence": f"Verification failed: {str(e)}"
+            }
+        }
+        return json.dumps(fallback_response), []
 
+
+async def verify_user(company: str, role: str, username: str, email: str) -> Tuple[str, List[str], List[str]]:
+    """Main verification function with caching and parallel operations."""
+    inputs = normalize_inputs(company, role, username, email)
+    cache_key = get_cache_key(inputs)
+    
+    # Check cache first
+    cached_result = ttl_cache.get(cache_key)
+    if cached_result:
+        return cached_result
+    
+    # Determine display name
+    display_username = inputs["username"]
+    if not inputs["username"] or len(inputs["username"]) < 2:
+        display_username = extract_name_from_email(inputs["email"])
+    
     # Run verification and image fetch in parallel
-    verif_task = asyncio.create_task(get_verification())
-    imgs_task = asyncio.create_task(fetch_images(company_low, display_username))
-    llm_output, sources = await verif_task
-    images = await imgs_task
-
-    # Step 3: Cache in TTL
-    ttl_cache.set(cache_key, (llm_output, sources, images))
-    return llm_output, sources, images
+    verification_task = asyncio.create_task(
+        get_verification(inputs["company"], inputs["role"], inputs["username"], 
+                        inputs["email"], display_username)
+    )
+    images_task = asyncio.create_task(fetch_images(inputs["company"], display_username))
+    
+    llm_output, sources = await verification_task
+    images = await images_task
+    
+    # Cache result
+    result = (llm_output, sources, images)
+    ttl_cache.set(cache_key, result)
+    
+    return result
 

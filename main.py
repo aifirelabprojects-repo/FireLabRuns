@@ -3,37 +3,43 @@ import math
 import mimetypes
 import os
 from pathlib import Path
+import shutil
 import uuid
 import json
 import asyncio
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Set,AsyncGenerator, Tuple,Union
-from fastapi import Depends, FastAPI, File, Request, Response, UploadFile, WebSocket, WebSocketDisconnect, Query, HTTPException
+from fastapi import Depends, FastAPI, File, Request, Response, UploadFile, WebSocket, WebSocketDisconnect, Query, HTTPException,status, Form
+from sqlalchemy.orm import selectinload,joinedload
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from openai import OpenAI, APIError, AuthenticationError, RateLimitError
 from dotenv import load_dotenv
-from sqlalchemy import func, or_, select,case,and_
+from sqlalchemy import delete, func, or_, select,case,and_,outerjoin
 from sqlalchemy.ext.asyncio import AsyncSession
 from BotGraph import invoke_chat_async,reload_system_prompt
 from DeepResearch import  _call_research_async
+from SessionUtils import get_field, set_field
 from VerifyUser import verify_user
-from database import AsyncSessionLocal, Session as SessionModel, Message as MessageModel, get_db, init_db 
+from database import AsyncSessionLocal, CompanyDetails, Consultant, Consultation, Project, ProjectTask, ResearchDetails, ServiceTemplate, Session as SessionModel, Message as MessageModel, SessionPhase, TaskFile, TemplateTask, VerificationDetails, get_db, init_db 
 from collections import Counter, defaultdict
 from CompanyFinder import FindTheComp
 from FindUser import find_existing_customer
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import csv
 from fastapi.responses import FileResponse, StreamingResponse
-from functools import lru_cache
+from functools import lru_cache,partial
 from cachetools import TTLCache  
 from dateutil.relativedelta import relativedelta
-from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 from sqlalchemy.sql import Select
 from KnowledgeBase import cfg
 from dataclasses import dataclass
+
 
 
 load_dotenv()
@@ -44,6 +50,9 @@ _TIMELINE_OPTIONS = cfg.get("timeline_options", "")
 _BUDGET_OPTIONS = cfg.get("budget_options", "")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASS = os.getenv("EMAIL_PASS")
+
 MODEL_NAME = "gpt-4o-mini"
 SITE_NAME = "Business Chatbot"
 INACTIVITY_THRESHOLD = timedelta(minutes=5)  
@@ -61,6 +70,11 @@ async def health_check():
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
 
 
 @app.on_event("startup")
@@ -133,7 +147,6 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-  
 
 MAIN_CATEGORIES = []  
 SUB_SERVICES = {}  
@@ -141,84 +154,94 @@ TIMELINE_OPTIONS = []
 BUDGET_RANGES = ""  
 
 
-async def get_bot_response_async(question: str, session_obj: SessionModel, session_id: str = "transient") -> Dict[str, Any]:
-    phase = session_obj.phase if session_obj.phase else "initial"
-    haveRole = session_obj.q2_role if session_obj.q2_role else None
-    routing = session_obj.routing
+async def get_bot_response_async(question: str, session_obj, session_id: str = "transient") -> Dict[str, Any]:
+    
+    phase = get_field(session_obj, "phase") or "initial"
+    haveRole = get_field(session_obj, "q2_role") or None
+    routing = get_field(session_obj, "routing") or None
+
     customer_enrichment = None
     fetch_trigger_phases = ["existing_fetch", "snip_q0"]
-    if phase in fetch_trigger_phases and session_obj.q1_company is None:
-        customer_enrichment, kind = await find_existing_customer(question)  # Now await instead of asyncio.run
+
+    if phase in fetch_trigger_phases and get_field(session_obj, "q1_company") is None:
+        customer_enrichment, kind = await find_existing_customer(question)  # await instead of asyncio.run
         print(customer_enrichment)
         if customer_enrichment:
-            session_obj.q1_email = customer_enrichment["email"]
-            session_obj.q1_company = customer_enrichment["company"]
-            session_obj.q2_role = customer_enrichment["role"]
-            session_obj.q3_categories = customer_enrichment["categories"]
-            session_obj.q4_services = customer_enrichment["services"]
-            session_obj.q5_activity = customer_enrichment["activity"]
-            session_obj.q6_timeline = customer_enrichment["timeline"]
-            session_obj.q7_budget = customer_enrichment["budget"]
-            session_obj.username = customer_enrichment["username"]
-            session_obj.mobile = customer_enrichment["mobile"]
-            session_obj.routing = "cre"
-            session_obj.phase = "routing"
+            # set enriched fields (will set on child relation if available, else on session_obj)
+            set_field(session_obj, "q1_email", customer_enrichment.get("email"))
+            set_field(session_obj, "q1_company", customer_enrichment.get("company"))
+            set_field(session_obj, "q2_role", customer_enrichment.get("role"))
+            set_field(session_obj, "q3_categories", customer_enrichment.get("categories"))
+            set_field(session_obj, "q4_services", customer_enrichment.get("services"))
+            set_field(session_obj, "q5_activity", customer_enrichment.get("activity"))
+            set_field(session_obj, "q6_timeline", customer_enrichment.get("timeline"))
+            set_field(session_obj, "q7_budget", customer_enrichment.get("budget"))
+            set_field(session_obj, "username", customer_enrichment.get("username"))
+            set_field(session_obj, "mobile", customer_enrichment.get("mobile"))
+            set_field(session_obj, "routing", "cre")
+            set_field(session_obj, "phase", "routing")
             routing = "cre"
         else:
             if phase == "initial":
                 phase = "existing_fetch"
-                session_obj.phase = "existing_fetch"
+                set_field(session_obj, "phase", "existing_fetch")
 
     enrichment = None
     company_det_used = False
-    company_det = session_obj.c_info
+    company_det = get_field(session_obj, "c_info")
     if company_det is None and phase in ("snip_q1", "snip_q2", "snip_q2a"):
-        asyncio.create_task(FindTheComp(question, session_obj.id))
+        # keep creating the background task as before
+        asyncio.create_task(FindTheComp(question, get_field(session_obj, "id") or getattr(session_obj, "id", None)))
+
     lead_data = json.dumps({
-        "name": session_obj.username,
-        "phone": session_obj.mobile,
-        "phase": session_obj.phase,
-        "routing": session_obj.routing,
-        "lead_company": session_obj.q1_company,
-        "lead_email": session_obj.q1_email,
-        "lead_email_domain": session_obj.q1_email_domain,
-        "lead_role": session_obj.q2_role,
-        "lead_categories": session_obj.q3_categories,
-        "lead_services": session_obj.q4_services,
-        "lead_activity": session_obj.q5_activity,
-        "lead_timeline": session_obj.q6_timeline,
-        "lead_budget": session_obj.q7_budget
+        "name": get_field(session_obj, "username"),
+        "phone": get_field(session_obj, "mobile"),
+        "phase": get_field(session_obj, "phase"),
+        "routing": get_field(session_obj, "routing"),
+        "lead_company": get_field(session_obj, "q1_company"),
+        "lead_email": get_field(session_obj, "q1_email"),
+        "lead_email_domain": get_field(session_obj, "q1_email_domain"),
+        "lead_role": get_field(session_obj, "q2_role"),
+        "lead_categories": get_field(session_obj, "q3_categories"),
+        "lead_services": get_field(session_obj, "q4_services"),
+        "lead_activity": get_field(session_obj, "q5_activity"),
+        "lead_timeline": get_field(session_obj, "q6_timeline"),
+        "lead_budget": get_field(session_obj, "q7_budget")
     })
 
     options = []
     context_parts = []
-    
-    print(f"q3_categories: {session_obj.q3_categories}, type: {type(session_obj.q3_categories)}")
-    print(f"Condition result: {(phase == 'snip_q3' or phase == 'snip_q2') and not session_obj.q3_categories}")
+
+    print(f"q3_categories: {get_field(session_obj, 'q3_categories')}, type: {type(get_field(session_obj, 'q3_categories'))}")
+    print(f"Condition result: {(phase == 'snip_q3' or phase == 'snip_q2') and not get_field(session_obj, 'q3_categories')}")
 
     try:
-        if phase == "snip_q2a" and not session_obj.q2_role:
+        if phase == "snip_q2a" and not get_field(session_obj, "q2_role"):
             cat_context = "Customer Business role is not provided yet, ask it and set phase to snip_q3"
             context_parts.append(cat_context)
-        elif (phase == "snip_q2" or phase == "snip_q2a") and (session_obj.q3_categories is None or session_obj.q3_categories == []):
-            print(f"Listing Main: {session_obj.q3_categories}")
+        elif (phase == "snip_q2" or phase == "snip_q2a") and (get_field(session_obj, "q3_categories") is None or get_field(session_obj, "q3_categories") == []):
+            print(f"Listing Main: {get_field(session_obj, 'q3_categories')}")
             cat_context = f"Use This as Options for Main Categories: {str(_MAIN_CATEGORIES)}"
-            session_obj.phase = "snip_q4"
+            set_field(session_obj, "phase", "snip_q4")
             context_parts.append(cat_context)
-        elif (phase == "snip_q3") and not session_obj.q4_services:
-            print(f"Listing Sub Serv: {session_obj.q3_categories}")
+        elif (phase == "snip_q3") and not get_field(session_obj, "q4_services"):
+            print(f"Listing Sub Serv: {get_field(session_obj, 'q3_categories')}")
             main_cats = f"Use This as Options for SUB SERVICES based on the Main category user selected: {str(_SUB_SERVICES)}"
             context_parts.append(main_cats)
-        elif session_obj.q3_categories and (phase == "snip_q5" or phase == "snip_q6"):
+        elif get_field(session_obj, "q3_categories") and (phase == "snip_q5" or phase == "snip_q6"):
             print("Listing Time and Budget")
             context_parts.append(f"Timeline info: str(_TIMELINE_OPTIONS)")
             context_parts.append(f"Budget info: {_BUDGET_OPTIONS}")
 
     except Exception:
         pass
+
     context = "\n".join(context_parts)
     print("\n\nphase:", phase, "\n")
-    EnrData = f"Existing Customer Data (if applicable):Welcome the user with thier data {json.dumps(lead_data)} if the user is exisitng set phase='routing' and routing='cre' " if routing == "cre" else " "
+    EnrData = (
+        f"Existing Customer Data (if applicable):Welcome the user with thier data {json.dumps(lead_data)} "
+        f"if the user is exisitng set phase='routing' and routing='cre' "
+    ) if routing == "cre" else " "
     input_text = f"""Current state from session: Phase='{phase}'
                     Context (from vectorstore—use for services, benefits, company data): {context}
                     {EnrData}
@@ -263,7 +286,6 @@ async def get_bot_response_async(question: str, session_obj: SessionModel, sessi
                 "analysis": {
                     "interest": "unknown",
                     "mood": "unknown",
-
                 }
             }
     except Exception as lc_err:
@@ -301,11 +323,7 @@ async def get_bot_response_async(question: str, session_obj: SessionModel, sessi
                         "phase": phase,
                         "lead_data": lead_data,
                         "routing": "none",
-                        "analysis": {
-                            "interest": "unknown",
-                            "mood": "unknown",
-
-                        }
+                        "analysis": {"interest": "unknown", "mood": "confused", "details": {}}
                     }
         except AuthenticationError as e:
             print(f"Authentication Error: {e}")
@@ -347,7 +365,7 @@ async def get_bot_response_async(question: str, session_obj: SessionModel, sessi
                 "routing": "none",
                 "analysis": {"interest": "unknown", "mood": "confused", "details": {}}
             }
-            
+         
             
 async def insert_user_message_async(session_id: str, content: str) -> Tuple[str, str]:
     async with AsyncSessionLocal() as db:  
@@ -386,31 +404,45 @@ async def insert_user_message_async(session_id: str, content: str) -> Tuple[str,
 async def handle_bot_response_async(session_id: str, question: str) -> Dict[str, Any]:
     async with AsyncSessionLocal() as db:  # Context manager
         try:
-            session_obj = await db.get(SessionModel, session_id)
+            # Eager-load ALL relationships to block lazy loads
+            session_obj = await db.get(
+                SessionModel,
+                session_id,
+                options=[
+                    selectinload(SessionModel.phase_info),
+                    selectinload(SessionModel.company_details),
+                    selectinload(SessionModel.verification_details),
+                    selectinload(SessionModel.research_details),
+                ]
+            )
             if not session_obj:
                 raise ValueError(f"Session {session_id} not found")
+            
+            if session_obj.phase_info is None:
+                session_obj.phase_info = SessionPhase(session_id=session_id)
+            
+            if session_obj.company_details is None:
+                session_obj.company_details = CompanyDetails(session_id=session_id)
 
-            current_details = {
-                "phase": "initial",
-                "lead_data": {},
-                "details": {}
-            }
+            if session_obj.verification_details is None:
+                session_obj.verification_details = VerificationDetails(session_id=session_id)
+                
+            if session_obj.research_details is None:
+                session_obj.research_details = ResearchDetails(session_id=session_id)
+                
 
             # Use async bot response
             response_data = await get_bot_response_async(question, session_obj, session_id)
-
             # Extract main response components
             answer = response_data.get("answer", "")
             options = response_data.get("options", [])
-            next_phase = response_data.get("phase", session_obj.phase)
+            next_phase = response_data.get("phase", get_field(session_obj, "phase"))
             lead_data = response_data.get("lead_data", {}) or {}
-            routing = response_data.get("routing", session_obj.routing)
-
+            routing = response_data.get("routing", get_field(session_obj, "routing"))
             # Extract analysis safely
             analysis = response_data.get("analysis") or {}
             interest = analysis.get("interest", "medium")
             mood = analysis.get("mood", "neutral")
-
             # Create a bot message
             bot_message = MessageModel(
                 session_id=session_id,
@@ -421,7 +453,6 @@ async def handle_bot_response_async(session_id: str, question: str) -> Dict[str,
                 mood=mood
             )
             db.add(bot_message)
-
             # --- Clean and save lead_data safely ---
             lead_fields = [
                 "q1_company",
@@ -436,40 +467,31 @@ async def handle_bot_response_async(session_id: str, question: str) -> Dict[str,
                 "username",
                 "mobile"
             ]
-
             for field in lead_fields:
                 if field in lead_data:
                     val = lead_data.get(field)
-
-                    # Convert list → comma-separated string
+                    # convert list -> comma-separated string
                     if isinstance(val, list):
                         val = ", ".join(str(v).strip() for v in val if str(v).strip())
-
-                    # Skip None or empty/whitespace values
+                    # skip None or empty/whitespace values
                     if val is None or (isinstance(val, str) and val.strip() == ""):
                         continue
-
-                    # Set cleaned value if the model has this attribute
-                    if hasattr(session_obj, field):
-                        try:
-                            setattr(session_obj, field, str(val).strip())
-                        except Exception:
-                            pass  
+                    try:
+                        set_field(session_obj, field, str(val).strip())
+                    except Exception:
+                        pass
 
             session_obj.interest = interest
             session_obj.mood = mood
-            session_obj.phase = next_phase
-            if routing != None :
-                session_obj.routing = routing
+            set_field(session_obj, "phase", next_phase)
+            if routing is not None:
+                set_field(session_obj, "routing", routing)
             session_obj.updated_at = datetime.utcnow()
             session_obj.status = "active"
-
             db.add(session_obj)
-            await db.commit()  
-
+            await db.commit()
             # Response payload
             bot_ts = bot_message.timestamp.isoformat() if getattr(bot_message, "timestamp", None) else datetime.utcnow().isoformat()
-
             return {
                 "answer": answer,
                 "options": options,
@@ -479,15 +501,11 @@ async def handle_bot_response_async(session_id: str, question: str) -> Dict[str,
                 "analysis": analysis,
                 "bot_ts": bot_ts
             }
-
         except Exception:
-            await db.rollback()  
+            await db.rollback()
             raise
         finally:
-            await db.close()  
-
-
-
+            await db.close()
 
 async def update_inactive_sessions():  # Make async
     async with AsyncSessionLocal() as db:
@@ -511,18 +529,18 @@ async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/api/sessions/")
-async def create_session(db: AsyncSession = Depends(get_db)):  
-    session_id = str(uuid.uuid4())
-    new_session = SessionModel(
-        id=session_id,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
-    )
-    db.add(new_session)
-    await db.commit()  
-    await db.refresh(new_session)
-    return {"session_id": session_id}
-
+async def create_session():
+    async with AsyncSessionLocal() as db: 
+        session_id = str(uuid.uuid4())
+        new_session = SessionModel(
+            id=session_id,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(new_session)
+        await db.commit()
+        await db.refresh(new_session)
+        return {"session_id": session_id}
 
 interest_score = {"low": 0.0, "medium": 1.0, "high": 2.0}
 score_to_interest = lambda s: "low" if s < 0.5 else ("medium" if s < 1.5 else "high")
@@ -536,13 +554,20 @@ async def get_sessions(
 ) -> Dict[str, Any]:
     try:
         await update_inactive_sessions()
-        
-        # Build base query for sessions
-        base_query = select(SessionModel)
+
+        # Base select with eager loads to prevent lazy async IO
+        base_query = select(SessionModel).options(
+            selectinload(SessionModel.phase_info),
+            selectinload(SessionModel.company_details),
+            selectinload(SessionModel.verification_details),
+            selectinload(SessionModel.research_details),
+            # DO NOT selectinload messages here because you load them in a batch below
+        )
+
         if active:
             base_query = base_query.filter(SessionModel.status == "active")
-        
-        # Get total count for pagination
+
+        # Count total
         total_stmt = select(func.count(SessionModel.id))
         if active:
             total_stmt = total_stmt.filter(SessionModel.status == "active")
@@ -552,21 +577,20 @@ async def get_sessions(
         if total == 0:
             return {
                 "sessions": [],
-                "pagination": {
-                    "page": page,
-                    "per_page": per_page,
-                    "total": 0,
-                    "pages": 0
-                }
+                "pagination": {"page": page, "per_page": per_page, "total": 0, "pages": 0}
             }
 
-        # Paginated query
         offset = (page - 1) * per_page
         session_stmt = base_query.order_by(SessionModel.created_at.desc()).offset(offset).limit(per_page)
         session_result = await db.execute(session_stmt)
         sessions = session_result.scalars().all()
 
-        # Batch messages (as before, but ensure async)
+        # If there are no sessions, early return
+        if not sessions:
+            pages = math.ceil(total / per_page)
+            return {"sessions": [], "pagination": {"page": page, "per_page": per_page, "total": total, "pages": pages}}
+
+        # Batch-load messages for those sessions (already async)
         session_ids = [s.id for s in sessions]
         msg_stmt = (
             select(MessageModel)
@@ -576,37 +600,29 @@ async def get_sessions(
         msg_result = await db.execute(msg_stmt)
         msg_rows_all = msg_result.scalars().all()
 
-        # Group messages by session_id
-        messages_by_session: Dict[int, List[MessageModel]] = defaultdict(list)
-        for msg in msg_rows_all:
-            messages_by_session[msg.session_id].append(msg)
+        # Group messages by session_id (no further DB I/O)
+        messages_by_session: Dict[str, List[MessageModel]] = defaultdict(list)
+        for m in msg_rows_all:
+            messages_by_session[m.session_id].append(m)
 
-        # Precompute half-life constants (shared across sessions)
+        # Precompute half-life constants
         half_life_seconds = 3 * 24 * 3600
         ln2 = math.log(2)
 
         sessions_list = []
         for sess in sessions:
-            # Parse details once
-            try:
-                details_json = json.loads(sess.details) if sess.details else {}
-            except Exception:
-                details_json = {}
-
-            # Get messages for this session from grouped data
+            # All related attributes (phase_info, verification_details, etc.) are eager-loaded,
+            # so accessing them will not trigger DB IO.
             msg_rows = messages_by_session.get(sess.id, [])
 
-            # Compute last message from the grouped messages (no extra query)
             last_msg_obj = msg_rows[-1] if msg_rows else None
-            last_msg = (
-                (last_msg_obj.content[:50] + "...")
-                if last_msg_obj and len(last_msg_obj.content) > 50
-                else (last_msg_obj.content if last_msg_obj else "")
-            )
+            last_msg = ""
+            if last_msg_obj:
+                content = last_msg_obj.content or ""
+                last_msg = (content[:50] + "...") if len(content) > 50 else content
 
-            # Compute interest and mood
-            overall_interest_label = sess.interest
-            overall_mood_label = sess.mood
+            overall_interest_label = sess.interest or "low"
+            overall_mood_label = sess.mood or "neutral"
 
             if msg_rows:
                 parsed = []
@@ -614,7 +630,7 @@ async def get_sessions(
                     ts_dt = msg.timestamp or datetime.utcnow()
                     parsed.append(
                         (
-                            msg.role.lower() if msg.role else "",
+                            (msg.role or "").lower(),
                             (msg.interest or "").lower(),
                             (msg.mood or "").lower(),
                             ts_dt,
@@ -627,7 +643,6 @@ async def get_sessions(
                 weight_total = 0.0
                 mood_weights = {}
 
-                # Track user interests for dominance logic
                 user_interest_counts = {"low": 0, "medium": 0, "high": 0}
                 user_msg_count = 0
                 last_user_interest = None
@@ -642,31 +657,28 @@ async def get_sessions(
                         weighted_sum += s * weight
                         weight_total += weight
 
+                    # you had role == "bot" in original; likely you want user messages counted,
+                    # fix if needed — keep same behavior:
                     if role == "bot":
-                        # Count user interest distribution
                         if interest_val in user_interest_counts:
                             user_interest_counts[interest_val] += 1
                         user_msg_count += 1
 
-                        # Track last (most recent) user message
                         if not last_user_ts or ts_dt > last_user_ts:
                             last_user_ts = ts_dt
                             last_user_interest = interest_val
 
-                        # Mood weighting from user only
                         if mood_val:
                             mood_weights[mood_val] = mood_weights.get(mood_val, 0.0) + weight
 
-                # Rule-based interest override
                 forced_label = None
                 if user_msg_count > 0:
                     low_prop = user_interest_counts.get("low", 0) / user_msg_count
                     high_prop = user_interest_counts.get("high", 0) / user_msg_count
 
-                    LOW_DOMINANCE_THRESHOLD = 0.5   # 50% of user msgs low → low
-                    HIGH_DOMINANCE_THRESHOLD = 0.66 # 66% of user msgs high → high
+                    LOW_DOMINANCE_THRESHOLD = 0.5
+                    HIGH_DOMINANCE_THRESHOLD = 0.66
 
-                    # 👇 Strong rule: if user's last message has low interest → overall low
                     if last_user_interest == "low":
                         forced_label = "low"
                     elif low_prop >= LOW_DOMINANCE_THRESHOLD:
@@ -683,35 +695,42 @@ async def get_sessions(
                 if mood_weights:
                     overall_mood_label = max(mood_weights.items(), key=lambda kv: kv[1])[0]
 
+            # Helper to safely pull values from eager-loaded related objects
+            def rel_get(obj, attr_name, fallback=None):
+                try:
+                    return getattr(obj, attr_name) if obj is not None else fallback
+                except Exception:
+                    return fallback
+
             sessions_list.append({
                 "id": sess.id,
                 "created_at": sess.created_at,
                 "status": sess.status,
-                "verified": sess.verified,
-                "confidence": sess.confidence,
-                "evidence": sess.evidence,
-                "sources": sess.v_sources,
-                "research_data":sess.research_data,
+                "verified": rel_get(sess.verification_details, "verified", None),
+                "confidence": rel_get(sess.verification_details, "confidence", None),
+                "evidence": rel_get(sess.verification_details, "evidence", None),
+                "sources": rel_get(sess.verification_details, "v_sources", None),
+                "research_data": rel_get(sess.research_details, "research_data", None),
                 "interest": overall_interest_label,
                 "mood": overall_mood_label,
                 "name": sess.username,
                 "usr_phone": sess.mobile,
-                "phase": sess.phase,
-                "routing": sess.routing,
+                "phase": rel_get(sess.phase_info, "phase", None),
+                "routing": rel_get(sess.phase_info, "routing", None),
                 "last_message": last_msg,
-                "lead_company": sess.q1_company,
-                "lead_email": sess.q1_email,
-                "lead_email_domain": sess.q1_email_domain,
-                "lead_role": sess.q2_role,
-                "lead_categories": sess.q3_categories,
-                "lead_services": sess.q4_services,
-                "lead_activity": sess.q5_activity,
-                "lead_timeline": sess.q6_timeline,
-                "lead_budget": sess.q7_budget,
-                "c_sources": sess.c_sources,
-                "c_info": sess.c_info,
-                "c_data": sess.c_data,
-                "c_images": sess.c_images,
+                "lead_company": rel_get(sess.phase_info, "q1_company", None),
+                "lead_email": rel_get(sess.phase_info, "q1_email", None),
+                "lead_email_domain": rel_get(sess.phase_info, "q1_email_domain", None),
+                "lead_role": rel_get(sess.phase_info, "q2_role", None),
+                "lead_categories": rel_get(sess.phase_info, "q3_categories", None),
+                "lead_services": rel_get(sess.phase_info, "q4_services", None),
+                "lead_activity": rel_get(sess.phase_info, "q5_activity", None),
+                "lead_timeline": rel_get(sess.phase_info, "q6_timeline", None),
+                "lead_budget": rel_get(sess.phase_info, "q7_budget", None),
+                "c_sources": rel_get(sess.company_details, "c_sources", None),
+                "c_info": rel_get(sess.company_details, "c_info", None),
+                "c_data": rel_get(sess.company_details, "c_data", None),
+                "c_images": rel_get(sess.company_details, "c_images", None),
                 "approved": sess.approved,
             })
 
@@ -719,25 +738,16 @@ async def get_sessions(
 
         return {
             "sessions": sessions_list,
-            "pagination": {
-                "page": page,
-                "per_page": per_page,
-                "total": total,
-                "pages": pages
-            }
+            "pagination": {"page": page, "per_page": per_page, "total": total, "pages": pages}
         }
 
     except Exception as e:
         print("Error in get_sessions:", e)
         return {
             "sessions": [],
-            "pagination": {
-                "page": page,
-                "per_page": per_page,
-                "total": 0,
-                "pages": 0
-            }
+            "pagination": {"page": page, "per_page": per_page, "total": 0, "pages": 0}
         }
+
 
 
 
@@ -802,34 +812,40 @@ def _compute_session_data(sess: SessionModel, msg_rows: List[MessageModel],
         "id": sess.id,
         "created_at": sess.created_at,
         "status": sess.status,
-        "verified": sess.verified,
-        "confidence": sess.confidence,
-        "evidence": sess.evidence,
-        "sources": sess.v_sources,
+
+        "verified": get_field(sess, "verified"),
+        "confidence": get_field(sess, "confidence"),
+        "evidence": get_field(sess, "evidence"),
+        "sources": get_field(sess, "v_sources"),
+
         "interest": overall_interest_label,
         "mood": overall_mood_label,
-        "name": sess.username,
-        "usr_phone": sess.mobile,
-        "phase": sess.phase,
-        "routing": sess.routing,
+
+        "name": get_field(sess, "username"),
+        "usr_phone": get_field(sess, "mobile"),
+        "phase": get_field(sess, "phase"),
+        "routing": get_field(sess, "routing"),
+
         "last_message": last_msg,
-        "lead_company": sess.q1_company or "-",
-        "lead_email": sess.q1_email,
-        "lead_email_domain": sess.q1_email_domain,
-        "lead_role": sess.q2_role,
-        "lead_categories": sess.q3_categories,
-        "lead_services": sess.q4_services or "-",
-        "lead_activity": sess.q5_activity,
-        "lead_timeline": sess.q6_timeline,
-        "lead_budget": sess.q7_budget,
-        "c_sources": sess.c_sources,
-        "c_info": sess.c_info,
-        "c_data": sess.c_data,
-        "c_images": sess.c_images,
+        "lead_company": get_field(sess, "q1_company") or "-",
+        "lead_email": get_field(sess, "q1_email"),
+        "lead_email_domain": get_field(sess, "q1_email_domain"),
+        "lead_role": get_field(sess, "q2_role"),
+        "lead_categories": get_field(sess, "q3_categories"),
+        "lead_services": get_field(sess, "q4_services") or "-",
+        "lead_activity": get_field(sess, "q5_activity"),
+        "lead_timeline": get_field(sess, "q6_timeline"),
+        "lead_budget": get_field(sess, "q7_budget"),
+        "c_sources": get_field(sess, "c_sources"),
+        "c_info": get_field(sess, "c_info"),
+        "c_data": get_field(sess, "c_data"),
+        "c_images": get_field(sess, "c_images"),
+
         "approved": sess.approved,
         "date_str": date_str,
-        "research_data":sess.research_data,
+        "research_data": get_field(sess, "research_data"),
     }
+
 
 # --- Internal fetch + compute (keeps the same high-level behavior) ---
 async def _fetch_and_compute_sessions(db: AsyncSession, base_query: Select, page: int, per_page: int) -> Tuple[List[Dict[str, Any]], int, int]:
@@ -905,7 +921,7 @@ async def _generate_csv_stream_minimal(db: AsyncSession, query: Select) -> Async
         output.seek(0)
         output.truncate(0)
 
-# --- Main endpoint (optimized) ---
+
 @app.get("/api/leads/", response_model=None)
 async def get_leads(
     q: str = Query(None),
@@ -919,7 +935,7 @@ async def get_leads(
     db: AsyncSession = Depends(get_db)
 ) -> Union[Dict[str, Any], Response]:
     try:
-        if interest in [None, "", "all","neutral"]:
+        if interest in [None, "", "all", "neutral"]:
             interest = None
 
         # Simple cache key
@@ -932,39 +948,51 @@ async def get_leads(
 
         await update_inactive_sessions()
 
-        # Build base query
-        base_query = select(SessionModel)
+        base_stmt = (
+            select(SessionModel)
+            .options(
+                selectinload(SessionModel.phase_info),
+                selectinload(SessionModel.company_details),
+                selectinload(SessionModel.verification_details),
+                selectinload(SessionModel.research_details),
+            )
+        )
+
         if active:
-            base_query = base_query.where(SessionModel.status == "active")
+            base_stmt = base_stmt.where(SessionModel.status == "active")
         if approved:
-            base_query = base_query.where(SessionModel.approved.is_(True))
+            base_stmt = base_stmt.where(SessionModel.approved.is_(True))
 
         if q:
             search_term = f"%{q}%"
-            base_query = base_query.where(
+            phase_join = outerjoin(SessionModel, SessionPhase, SessionPhase.session_id == SessionModel.id)
+            base_stmt = base_stmt.select_from(phase_join).where(
                 or_(
                     SessionModel.username.ilike(search_term),
-                    SessionModel.q1_email.ilike(search_term),
-                    SessionModel.q1_company.ilike(search_term)
+                    SessionPhase.q1_email.ilike(search_term),
+                    SessionPhase.q1_company.ilike(search_term),
                 )
             )
 
         if interest:
-            base_query = base_query.where(SessionModel.interest == interest.lower())
+            base_stmt = base_stmt.where(SessionModel.interest == interest.lower())
 
-        # Full export: stream minimal columns directly from DB (no heavy compute)
+        # stream minimal columns directly from DB (no heavy compute)
         if export_all and format == "csv":
-            # cap export size for safety
-            export_stmt = select(
-                SessionModel.username,
-                SessionModel.q1_email,
-                SessionModel.q1_company,
-                SessionModel.q4_services,
-                SessionModel.interest,
-                SessionModel.created_at
-            ).order_by(SessionModel.created_at.desc()).limit(10000)
-            # apply same filters by joining with base_query's where clause if any
-            # (we rebuilt base_query above so filters already applied)
+            # select minimal columns including phase fields (q1_email, q1_company, q4_services)
+            export_stmt = (
+                select(
+                    SessionModel.username,
+                    SessionPhase.q1_email,
+                    SessionPhase.q1_company,
+                    SessionPhase.q4_services,
+                    SessionModel.interest,
+                    SessionModel.created_at
+                )
+                .select_from(outerjoin(SessionModel, SessionPhase, SessionPhase.session_id == SessionModel.id))
+                .order_by(SessionModel.created_at.desc())
+                .limit(10000)
+            )
             return StreamingResponse(
                 _generate_csv_stream_minimal(db, export_stmt),
                 media_type="text/csv",
@@ -972,7 +1000,8 @@ async def get_leads(
             )
 
         # Paginated compute & response
-        sessions_list, total, pages = await _fetch_and_compute_sessions(db, base_query, page, per_page)
+        # _fetch_and_compute_sessions should accept a select() statement and handle pagination.
+        sessions_list, total, pages = await _fetch_and_compute_sessions(db, base_stmt, page, per_page)
         response = {
             "sessions": sessions_list,
             "pagination": {"page": page, "per_page": per_page, "total": total, "pages": pages}
@@ -992,7 +1021,7 @@ async def get_leads(
                     "Email": s["lead_email"],
                     "Company": s["lead_company"],
                     "Service": s["lead_services"],
-                    "Score": s["interest"].capitalize(),
+                    "Score": s["interest"].capitalize() if s.get("interest") else "",
                     "Date": s.get("date_str", "")
                 })
             return Response(
@@ -1011,7 +1040,6 @@ async def get_leads(
             "sessions": [],
             "pagination": {"page": page, "per_page": per_page, "total": 0, "pages": 0}
         }
-
 
 templates = Jinja2Templates(directory="templates")
 
@@ -1098,10 +1126,6 @@ async def websocket_view(websocket: WebSocket, session_id: str):
         pass
     finally:
         manager.disconnect(websocket, session_id)
-
-
-
-from sqlalchemy.orm.exc import NoResultFound
 
 
 @app.websocket("/ws/control/{session_id}")
@@ -1250,32 +1274,60 @@ async def main_verify_user(payload: VerifyPayload, db: AsyncSession = Depends(ge
         result = json.loads(result_str)
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail=f"Invalid JSON returned : {result_str}")
-
-    stmt = select(SessionModel).where(SessionModel.id == payload.id)
+    stmt = (
+        select(SessionModel)
+        .options(
+            selectinload(SessionModel.phase_info),
+            selectinload(SessionModel.company_details),
+            selectinload(SessionModel.verification_details),
+            selectinload(SessionModel.research_details),
+        )
+        .where(SessionModel.id == payload.id)
+    )
     db_result = await db.execute(stmt)
     db_session = db_result.scalar_one_or_none()
     if not db_session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    db_session.verified = "true" if result.get("verified") else "false"
-    if result.get("verified") and not db_session.username:
-        db_session.username = result.get("details", {}).get("name", "")
-    db_session.confidence = result.get("confidence")
-    db_session.evidence = result.get("details", {}).get("evidence", "")
-    db_session.v_sources = json.dumps(sources)
-    db_session.c_images= json.dumps(images)
+    if getattr(db_session, "verification_details", None) is None:
+        vd = VerificationDetails(session_id=db_session.id)
+        db_session.verification_details = vd
 
+    if getattr(db_session, "company_details", None) is None:
+        cd = CompanyDetails(session_id=db_session.id)
+        db_session.company_details = cd
+
+    set_field(db_session, "verified", "true" if result.get("verified") else "false")
+
+    existing_username = get_field(db_session, "username")
+    if result.get("verified") and not existing_username:
+        set_field(db_session, "username", result.get("details", {}).get("name", ""))
+
+    set_field(db_session, "confidence", result.get("confidence"))
+    set_field(db_session, "evidence", result.get("details", {}).get("evidence", ""))
+
+    set_field(db_session, "v_sources", json.dumps(sources))
+
+    set_field(db_session, "c_images", json.dumps(images))
+
+    # persist
     await db.commit()
     await db.refresh(db_session)
+
+    # read values back using get_field (works for old or new layout)
+    updated_verified = get_field(db_session, "verified")
+    updated_confidence = get_field(db_session, "confidence")
+    updated_evidence = get_field(db_session, "evidence")
+    updated_sources = get_field(db_session, "v_sources")
 
     return {
         "status": "success",
         "message": "User verification details updated in session",
         "updated_data": {
-            "verified": db_session.verified,
-            "confidence": db_session.confidence,
-            "evidence": db_session.evidence,
-            "sources": db_session.v_sources
+            "verified": updated_verified,
+            "confidence": updated_confidence,
+            "evidence": updated_evidence,
+            "sources": updated_sources,
         }
     }
     
@@ -1319,41 +1371,66 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
     last_week_start = week_start - timedelta(days=7)
     last_week_end = week_start
 
-    # Total Leads: sessions created this week
+    # total Leads: sessions created this week
     stmt_total = select(func.count(SessionModel.id)).where(SessionModel.created_at >= week_start)
-    total_leads = (await db.execute(stmt_total)).scalar()
+    total_leads = (await db.execute(stmt_total)).scalar() or 0
 
-    # High Engagement: sessions with interest == "high" this week
-    stmt_high = select(func.count(SessionModel.id)).where(and_(SessionModel.created_at >= week_start, SessionModel.interest == "high"))
-    high_engagement = (await db.execute(stmt_high)).scalar()
+    # high Engagement: sessions with interest == "high" this week
+    stmt_high = select(func.count(SessionModel.id)).where(
+        and_(SessionModel.created_at >= week_start, SessionModel.interest == "high")
+    )
+    high_engagement = (await db.execute(stmt_high)).scalar() or 0
 
-    # Active Chats: currently active sessions (no time filter)
     stmt_active = select(func.count(SessionModel.id)).where(SessionModel.status == "active")
-    active_chats = (await db.execute(stmt_active)).scalar()
+    active_chats = (await db.execute(stmt_active)).scalar() or 0
 
-    # Requested Services: sessions with q4_services not null this week + % change
-    stmt_req = select(func.count(SessionModel.id)).where(and_(SessionModel.created_at >= week_start, SessionModel.q4_services.isnot(None)))
-    requested_services = (await db.execute(stmt_req)).scalar()
-    stmt_last_req = select(func.count(SessionModel.id)).where(and_(SessionModel.created_at >= last_week_start, SessionModel.created_at < last_week_end, SessionModel.q4_services.isnot(None)))
-    last_requested = (await db.execute(stmt_last_req)).scalar()
+    # requested Services: sessions with q4_services not null this week + % change
+
+    stmt_req = (
+        select(func.count(SessionModel.id))
+        .join(SessionPhase, SessionPhase.session_id == SessionModel.id)
+        .where(and_(SessionModel.created_at >= week_start, SessionPhase.q4_services.isnot(None)))
+    )
+    requested_services = (await db.execute(stmt_req)).scalar() or 0
+
+    stmt_last_req = (
+        select(func.count(SessionModel.id))
+        .join(SessionPhase, SessionPhase.session_id == SessionModel.id)
+        .where(
+            and_(
+                SessionModel.created_at >= last_week_start,
+                SessionModel.created_at < last_week_end,
+                SessionPhase.q4_services.isnot(None),
+            )
+        )
+    )
+    last_requested = (await db.execute(stmt_last_req)).scalar() or 0
+
     req_change_pct = ((requested_services - last_requested) / last_requested * 100) if last_requested > 0 else 100
     requested_change = f"{math.floor(req_change_pct)}%" if req_change_pct >= 0 else f"{math.floor(req_change_pct)}%"
 
-    # Avg Bot Response Time: average time from user message to assistant reply this week
-    stmt_msgs = select(MessageModel).join(SessionModel).where(SessionModel.created_at >= week_start).order_by(MessageModel.session_id, MessageModel.timestamp)
+    # avg Bot Response Time: average time from user message to assistant reply this week
+    stmt_msgs = (
+        select(MessageModel)
+        .join(SessionModel, SessionModel.id == MessageModel.session_id)
+        .where(SessionModel.created_at >= week_start)
+        .order_by(MessageModel.session_id, MessageModel.timestamp)
+    )
     result_msgs = await db.execute(stmt_msgs)
     all_messages = result_msgs.scalars().all()
     session_messages = defaultdict(list)
     for msg in all_messages:
         session_messages[msg.session_id].append(msg)
+
     response_times = []
     for messages in session_messages.values():
         if len(messages) < 2:
             continue
         for i in range(1, len(messages)):
-            if messages[i-1].role == "user" and messages[i].role == "bot":
-                diff_seconds = (messages[i].timestamp - messages[i-1].timestamp).total_seconds()
+            if messages[i - 1].role == "user" and messages[i].role == "bot":
+                diff_seconds = (messages[i].timestamp - messages[i - 1].timestamp).total_seconds()
                 response_times.append(diff_seconds)
+
     avg_response_seconds = sum(response_times) / len(response_times) if response_times else 0
     if avg_response_seconds < 60:
         avg_response = f"{int(avg_response_seconds)}s"
@@ -1362,8 +1439,12 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
         secs = int(avg_response_seconds % 60)
         avg_response = f"{mins}m {secs}s"
 
-    # Service Demand Pulse: top 6 services this week + % changes
-    stmt_services = select(SessionModel.q4_services).where(and_(SessionModel.created_at >= week_start, SessionModel.q4_services.isnot(None)))
+    # top 6 services this week + % changes
+    stmt_services = (
+        select(SessionPhase.q4_services)
+        .join(SessionModel, SessionModel.id == SessionPhase.session_id)
+        .where(and_(SessionModel.created_at >= week_start, SessionPhase.q4_services.isnot(None)))
+    )
     this_week_services = [(row[0] or "") for row in (await db.execute(stmt_services)).fetchall()]
     service_counts = defaultdict(int)
     for serv_str in this_week_services:
@@ -1372,7 +1453,17 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
             service_counts[s] += 1
     sorted_services = sorted(service_counts.items(), key=lambda x: x[1], reverse=True)[:6]
 
-    stmt_last_services = select(SessionModel.q4_services).where(and_(SessionModel.created_at >= last_week_start, SessionModel.created_at < last_week_end, SessionModel.q4_services.isnot(None)))
+    stmt_last_services = (
+        select(SessionPhase.q4_services)
+        .join(SessionModel, SessionModel.id == SessionPhase.session_id)
+        .where(
+            and_(
+                SessionModel.created_at >= last_week_start,
+                SessionModel.created_at < last_week_end,
+                SessionPhase.q4_services.isnot(None),
+            )
+        )
+    )
     last_week_services = [(row[0] or "") for row in (await db.execute(stmt_last_services)).fetchall()]
     last_service_counts = defaultdict(int)
     for serv_str in last_week_services:
@@ -1388,20 +1479,20 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
         service_demand.append({"name": name, "count": count, "change": change_str})
     top_service = service_demand[0] if service_demand else {"name": "N/A", "count": 0, "change": "0%"}
 
-    compare_to_last_week = False  
 
     subq_sessions = select(SessionModel.id).where(SessionModel.created_at >= week_start)
     stmt_durations = (
         select(
             MessageModel.session_id,
             SessionModel.username,
-            SessionModel.q1_company,
+            SessionPhase.q1_company,
             func.max(MessageModel.timestamp).label("max_ts"),
-            func.min(MessageModel.timestamp).label("min_ts")
+            func.min(MessageModel.timestamp).label("min_ts"),
         )
         .join(SessionModel, SessionModel.id == MessageModel.session_id)
+        .join(SessionPhase, SessionPhase.session_id == SessionModel.id, isouter=True)
         .where(MessageModel.session_id.in_(subq_sessions))
-        .group_by(MessageModel.session_id, SessionModel.username, SessionModel.q1_company)
+        .group_by(MessageModel.session_id, SessionModel.username, SessionPhase.q1_company)
         .having(func.count(MessageModel.id) > 0)
     )
     duration_result = await db.execute(stmt_durations)
@@ -1410,7 +1501,9 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
 
     # Compute this week's overall average duration
     if duration_list:
-        this_week_durations_seconds = [(max_ts - min_ts).total_seconds() for _, _, _, max_ts, min_ts in duration_list if max_ts and min_ts]
+        this_week_durations_seconds = [
+            (max_ts - min_ts).total_seconds() for _, _, _, max_ts, min_ts in duration_list if max_ts and min_ts
+        ]
         avg_this_week_seconds = sum(this_week_durations_seconds) / len(this_week_durations_seconds)
         avg_mins = int(avg_this_week_seconds // 60)
         avg_secs = int(avg_this_week_seconds % 60)
@@ -1419,7 +1512,8 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
         avg_this_week_seconds = 0
         avg_conversation_time = "00m 00s"
 
-    # Precompute user averages for last week if comparing to last week
+    # Prepare last-week user averages only if needed
+    compare_to_last_week = False
     user_avg_seconds = {}
     if compare_to_last_week:
         subq_last_sessions = select(SessionModel.id).where(
@@ -1430,7 +1524,7 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
                 SessionModel.username,
                 MessageModel.session_id,
                 func.max(MessageModel.timestamp).label("max_ts"),
-                func.min(MessageModel.timestamp).label("min_ts")
+                func.min(MessageModel.timestamp).label("min_ts"),
             )
             .join(MessageModel, MessageModel.session_id == SessionModel.id)
             .where(SessionModel.id.in_(subq_last_sessions))
@@ -1446,15 +1540,17 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
                 td = max_ts - min_ts
                 user_last_durations[username].append(td.total_seconds())
 
-        user_avg_seconds = {
-            user: sum(durs) / len(durs) for user, durs in user_last_durations.items()
-        }
+        user_avg_seconds = {user: sum(durs) / len(durs) for user, durs in user_last_durations.items()}
 
-    # Get top 7 durations
+    # top 7 durations
     top_durations = sorted(
-        [(sid, username, company, (max_ts - min_ts)) for sid, username, company, max_ts, min_ts in duration_list if max_ts and min_ts],
+        [
+            (sid, username, company, (max_ts - min_ts))
+            for sid, username, company, max_ts, min_ts in duration_list
+            if max_ts and min_ts
+        ],
         key=lambda x: x[3],
-        reverse=True
+        reverse=True,
     )[:7]
 
     deepest_conversations = []
@@ -1482,43 +1578,62 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
             change_icon = "arrow_downward"
             change_color = "text-red-600"
 
-        deepest_conversations.append({
-            "name": username or "Anonymous",
-            "company": company or "N/A",
-            "duration": duration_str,  # this session
-            "change": change_str,  # compared to last week's avg (or this week's avg if flag=False)
-            "change_icon": change_icon,  # this session longer than avg
-            "change_color": change_color  # choose color meaning in UI
-        })
+        deepest_conversations.append(
+            {
+                "name": username or "Anonymous",
+                "company": company or "N/A",
+                "duration": duration_str,
+                "change": change_str,
+                "change_icon": change_icon,
+                "change_color": change_color,
+            }
+        )
 
-    # Hot Leads Radar: top 7 approved sessions, ordered by updated_at desc
-    stmt_hot = select(SessionModel).where(SessionModel.approved == True).order_by(SessionModel.updated_at.desc()).limit(7)
+    stmt_hot = (
+        select(SessionModel)
+        .where(SessionModel.approved == True)
+        .options(
+            selectinload(SessionModel.phase_info),
+            selectinload(SessionModel.company_details),
+            selectinload(SessionModel.verification_details),
+            selectinload(SessionModel.research_details),
+        )
+        .order_by(SessionModel.updated_at.desc())
+        .limit(7)
+    )
     hot_results = await db.execute(stmt_hot)
     hot_sessions = hot_results.scalars().all()
     hot_leads_count = len(hot_sessions)
     hot_leads = []
     for ses in hot_sessions:
-        priority = "High" if ses.interest == "high" else "Medium"
-        delta = now - ses.updated_at
-        if delta.days >= 2:
-            time_ago = f"{delta.days} days ago"
-        elif delta.days == 1:
-            time_ago = "Yesterday"
-        elif delta.seconds >= 3600:
-            hours = delta.seconds // 3600
-            time_ago = f"{hours}h ago"
+        priority = "High" if (get_field(ses, "interest") == "high") else "Medium"
+        delta = now - get_field(ses, "updated_at") if get_field(ses, "updated_at") else timedelta(0)
+        if isinstance(delta, timedelta):
+            if delta.days >= 2:
+                time_ago = f"{delta.days} days ago"
+            elif delta.days == 1:
+                time_ago = "Yesterday"
+            elif delta.seconds >= 3600:
+                hours = delta.seconds // 3600
+                time_ago = f"{hours}h ago"
+            else:
+                minutes = delta.seconds // 60
+                time_ago = f"{minutes}m ago" if minutes > 0 else "Just now"
         else:
-            minutes = delta.seconds // 60
-            time_ago = f"{minutes}m ago" if minutes > 0 else "Just now"
-        service = (ses.q4_services.split(",")[0].strip() if ses.q4_services else "N/A")
-        name = ses.username or ses.q1_email or "Unknown"
-        hot_leads.append({
-            "name": name,
-            "priority": priority,
-            "time": time_ago,
-            "company": ses.q1_company or "N/A",
-            "service": service
-        })
+            time_ago = "Unknown"
+
+        q4 = get_field(ses, "q4_services")
+        service = (q4.split(",")[0].strip() if q4 else "N/A")
+        name = get_field(ses, "username") or get_field(ses, "q1_email") or "Unknown"
+        hot_leads.append(
+            {
+                "name": name,
+                "priority": priority,
+                "time": time_ago,
+                "company": get_field(ses, "q1_company") or "N/A",
+                "service": service,
+            }
+        )
 
     return {
         "total_leads": total_leads,
@@ -1532,9 +1647,9 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
         "deepest_conversations": deepest_conversations,
         "avg_conversation_time": avg_conversation_time,
         "hot_leads": hot_leads,
-        "hot_leads_count": hot_leads_count
+        "hot_leads_count": hot_leads_count,
     }
-    
+   
 
 @app.get("/analytics", response_model=Dict[str, Any])
 async def get_analytics_optimized(
@@ -1560,7 +1675,6 @@ async def get_analytics_optimized(
         prev_start_date = start_date - prev_delta
         prev_end_date = start_date
 
-    # --- Build message aggregation subquery: one row per session_id with msg_count, min_ts, max_ts ---
     msg_agg = (
         select(
             MessageModel.session_id.label("sid"),
@@ -1573,15 +1687,12 @@ async def get_analytics_optimized(
     )
 
     # helper to detect dialect for timestamp diff approach
-    bind = db.get_bind()  # AsyncSession.get_bind() returns the engine/connection
+    bind = db.get_bind()  
     dialect_name = getattr(getattr(bind, "dialect", None), "name", "") or ""
 
-    # avg duration expression differs per dialect (Postgres vs SQLite)
     if "postgres" in dialect_name or "psycopg" in dialect_name:
-        # avg seconds from interval: AVG(EXTRACT(EPOCH FROM (max_ts - min_ts)))
         duration_expr = func.avg(func.extract("epoch", msg_agg.c.max_ts - msg_agg.c.min_ts)).label("avg_sec")
     else:
-        # SQLite: use julianday difference * 86400 (seconds)
         duration_expr = func.avg(
             (func.julianday(msg_agg.c.max_ts) - func.julianday(msg_agg.c.min_ts)) * 86400
         ).label("avg_sec")
@@ -1589,26 +1700,25 @@ async def get_analytics_optimized(
     coalesce_msg_count = func.coalesce(msg_agg.c.msg_count, 0)
 
     # --- single aggregated query for the main period: many metrics computed by conditional SUM/CASE ---
+    # --- single aggregated query for the main period ---
     agg_stmt = (
         select(
             # totals
             func.count(SessionModel.id).label("total_sessions"),
-
-            # flags / totals
             func.sum(case((SessionModel.approved == True, 1), else_=0)).label("hot_leads"),
-            func.sum(case((SessionModel.c_info != None, 1), else_=0)).label("enriched_leads"),
-            func.sum(case((and_(SessionModel.q1_email != None, SessionModel.mobile != None), 1), else_=0)).label("key_contacts"),
+            func.sum(case((CompanyDetails.c_info != None, 1), else_=0)).label("enriched_leads"),
 
-            # we approximate "company_insights" by presence of c_data (for Postgres you can test jsonb keys instead)
-            func.sum(case((SessionModel.c_data != None, 1), else_=0)).label("company_insights"),
+            func.sum(case((and_(SessionPhase.q1_email != None, SessionModel.mobile != None), 1), else_=0)).label("key_contacts"),
 
-            # engagement buckets
+            func.sum(case((CompanyDetails.c_data != None, 1), else_=0)).label("company_insights"),
+
+            # engagement buckets (uses msg_agg subquery)
             func.sum(case((coalesce_msg_count >= 10, 1), else_=0)).label("highly_engaged"),
             func.sum(case((and_(coalesce_msg_count >= 5, coalesce_msg_count < 10), 1), else_=0)).label("engaged"),
             func.sum(case((and_(coalesce_msg_count >= 2, coalesce_msg_count < 5), 1), else_=0)).label("neutral"),
             func.sum(case((coalesce_msg_count < 2, 1), else_=0)).label("disengaged"),
 
-            # moods (conditional counts)
+            # moods (conditional counts on SessionModel)
             func.sum(case((SessionModel.mood == "excited", 1), else_=0)).label("m_excited"),
             func.sum(case((SessionModel.mood == "positive", 1), else_=0)).label("m_positive"),
             func.sum(case((SessionModel.mood == "neutral", 1), else_=0)).label("m_neutral"),
@@ -1619,19 +1729,20 @@ async def get_analytics_optimized(
             func.sum(case((SessionModel.interest == "high", 1), else_=0)).label("interest_high"),
             func.sum(case((SessionModel.interest == "medium", 1), else_=0)).label("interest_medium"),
 
-            # buying signals: either interest high or approved
+            # buying signals
             func.sum(case((or_(SessionModel.interest == "high", SessionModel.approved == True), 1), else_=0)).label(
                 "buying_signals"
             ),
 
-            # avg duration seconds (from message min/max)
+            # avg duration seconds
             duration_expr,
         )
         .select_from(SessionModel)
         .outerjoin(msg_agg, SessionModel.id == msg_agg.c.sid)
+        .outerjoin(CompanyDetails, SessionModel.id == CompanyDetails.session_id)
+        .outerjoin(SessionPhase, SessionModel.id == SessionPhase.session_id)
         .where(SessionModel.created_at >= start_date)
     )
-
     main_row = (await db.execute(agg_stmt)).one_or_none()
     if main_row is None:
         # return defaults if no data
@@ -1913,8 +2024,7 @@ async def download_file(filename: str):
     filepath = DEFAULT_DATA_FOLDER / filename
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="File not found.")
-    
-    # Set content-type
+
     mime_type, _ = mimetypes.guess_type(filepath)
     return FileResponse(
         path=filepath,
@@ -1947,19 +2057,31 @@ async def deep_research(payload: ResearchPayload, db: AsyncSession = Depends(get
     prompt = _build_research_prompt(payload)
 
     try:
-        message_content, citations = await _call_research_async(prompt)
+        # Assuming this is the research API call
+        message_content, citations = await _call_research_async(prompt) 
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Research provider error: {e}")
 
-    stmt = select(SessionModel).where(SessionModel.id == payload.id)
+    # --- Start of Database Correction ---
+    stmt = (
+        select(SessionModel)
+        .options(joinedload(SessionModel.research_details)) 
+        .where(SessionModel.id == payload.id)
+    )
     db_result = await db.execute(stmt)
     db_session = db_result.scalar_one_or_none()
 
     if not db_session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    db_session.research_data = json.dumps(message_content)
-    db_session.research_sources = json.dumps(citations)
+    rel = getattr(db_session, "research_details", None) 
+
+    if rel is None:
+        rel = ResearchDetails(session_id=db_session.id)
+        db_session.research_details = rel
+        db.add(rel)
+    rel.research_data = json.dumps(message_content)
+    rel.research_sources = json.dumps(citations)
 
     await db.commit()
     await db.refresh(db_session)
@@ -1971,3 +2093,750 @@ async def deep_research(payload: ResearchPayload, db: AsyncSession = Depends(get
         "citations": json.dumps(citations),
         "session_id": db_session.id,
     }
+
+
+
+
+async def send_whatsapp_notification(mobile: str, details: dict):
+    """Simulates sending a WhatsApp notification."""
+    print(f"--- WA Notification Sent to {mobile} ---")
+    print(f"Details: {details}")
+    return {"status": "success", "platform": "whatsapp"}
+
+class ConsultantResponse(BaseModel):
+    id: str
+    name: str
+    tier: str
+    phone: Optional[str] = None # Optional for security/display purposes
+
+    class Config:
+        from_attributes = True # Allows Pydantic to read from SQLAlchemy ORM objects
+
+
+@app.get("/consultants", response_model=List[ConsultantResponse])
+async def get_consultants(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Consultant).order_by(Consultant.tier.desc(), Consultant.name)
+    )
+    consultants = result.scalars().all()
+    
+    return consultants
+
+class ConsultationScheduleRequest(BaseModel):
+    session_id: str 
+    schedule_time: datetime 
+    consultant_id: str 
+    consultant_name_display: str 
+
+
+@app.post("/schedule_consultant", status_code=status.HTTP_201_CREATED)
+async def schedule_consultant(request: ConsultationScheduleRequest, db: AsyncSession = Depends(get_db)):
+    session_id = request.session_id
+    
+    # 🌟 NEW: Get both the ID and the display name from the request
+    consultant_id = request.consultant_id 
+    consultant_display_name = request.consultant_name_display
+    
+    try:
+        # 1. Fetch Session and Phase Info (required for contact details)
+        session_result = await db.execute(
+            select(SessionModel)
+            .where(SessionModel.id == session_id)
+            .options(joinedload(SessionModel.phase_info))
+        )
+        session = session_result.scalars().first()
+        
+        if not session:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Session with ID '{session_id}' not found.") 
+        
+        phase: SessionPhase = session.phase_info
+        if not session.mobile or not (phase and phase.q1_email):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Session is missing mandatory contact details (mobile/email) or phase information.")
+
+        # 2. Skip Consultant lookup (relying on frontend data for notifications)
+        # Note: You might still want to do a quick validation check if needed,
+        # but for a high-traffic flow, this is faster.
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Database error during fetch: {e}") 
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error retrieving session data.")
+
+    # 3. Create New Consultation using consultant_id
+    new_consultation = Consultation(
+        schedule_time=request.schedule_time,
+        status="Pending",
+        # Store the ID
+        consultant_id=consultant_id, 
+        session_id=session_id
+        # NOTE: If you still need the raw name/tier for archival/search reasons in Consultation,
+        # you may add those columns back, but consultant_id is the normalized way.
+    )
+    
+    db.add(new_consultation)
+    await db.commit()
+    await db.refresh(new_consultation)
+    
+    # 4. Use the display name directly for notifications
+    client_email = phase.q1_email 
+    client_mobile = session.mobile
+    company_name = phase.q1_company or "N/A"
+    services_chosen = phase.q4_services or "Not specified"
+    schedule_time_str = request.schedule_time.strftime("%A, %B %d, %Y at %I:%M %p %Z") 
+    
+    # Use the display name received from the request
+    whatsapp_details = {
+        "time": schedule_time_str,
+        "consultant": consultant_display_name, 
+        "company": company_name
+    }
+
+    # await send_whatsapp_notification(client_mobile, whatsapp_details)
+
+    email_subject = f"Consultation Confirmed: {company_name} - {schedule_time_str}"
+    
+    # --- Professional HTML Email Body ---
+    email_body = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+            <h2 style="color: #1a73e8;">Consultation Confirmation</h2>
+            <p>Dear Client,</p>
+
+            <p>We are pleased to confirm your scheduled consultation with our team. Please review the details below:</p>
+
+            <div style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <p><strong>Company:</strong> {company_name}</p>
+                <p><strong>Services of Interest:</strong> {services_chosen}</p>
+                <p><strong>Date & Time:</strong> <strong style="color: #008000;">{schedule_time_str}</strong></p>
+                <p><strong>Consultant:</strong> {consultant_display_name or 'A member of our team'}</p>
+            </div>
+            
+            <p>We look forward to a productive discussion to help you achieve your goals.</p>
+            <p>If you have any questions or need to reschedule, please contact us immediately.</p>
+            
+            <p style="margin-top: 30px;">Best regards,<br>
+            <strong>The Team</strong></p>
+        </div>
+    </body>
+    </html>
+    """
+    await send_email_notification(client_email, email_subject, email_body)
+    
+    return {
+        "message": "Consultation scheduled successfully",
+        "consultation_id": new_consultation.id,
+        "schedule_time": schedule_time_str,
+        "consultant_name": consultant_display_name 
+    }
+    
+@app.get("/session/{session_id}/consultations", status_code=status.HTTP_200_OK)
+async def list_consultations_by_session(session_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Consultation)
+        .where(Consultation.session_id == session_id)
+        .order_by(Consultation.schedule_time.desc()) 
+        .options(
+            selectinload(Consultation.session).selectinload(SessionModel.phase_info),
+            joinedload(Consultation.consultant_info) 
+        )
+    )
+    consultations = result.scalars().all()
+
+    if not consultations:
+        return []
+
+    response_list = []
+    
+    for consultation in consultations:
+        consultant_name = consultation.consultant_info.name if consultation.consultant_info else "Unknown"
+
+        entry = {
+            "consultation_id": consultation.id,
+            "schedule_time": consultation.schedule_time.isoformat(),
+            "status": consultation.status,
+            "consultant": consultant_name, 
+            "created_at": consultation.created_at.isoformat(),
+        }
+        response_list.append(entry)
+
+    return response_list
+
+class ConsultationStatusUpdate(BaseModel):
+    new_status: str 
+
+@app.put("/consultation/{consultation_id}/status", status_code=status.HTTP_200_OK)
+async def update_consultation_status(consultation_id: str,update_data: ConsultationStatusUpdate,db: AsyncSession = Depends(get_db)):
+
+    result = await db.execute(
+        select(Consultation)
+        .where(Consultation.id == consultation_id)
+    )
+    consultation = result.scalars().first()
+
+    if not consultation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"Consultation with ID '{consultation_id}' not found."
+        )
+
+    old_status = consultation.status
+    consultation.status = update_data.new_status
+
+    try:
+        await db.commit()
+        await db.refresh(consultation)
+    except Exception as e:
+        await db.rollback()
+        print(f"Database error during update: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail="Failed to update consultation status."
+        )
+    return {
+        "message": f"Consultation ID {consultation_id} status updated successfully.",
+        "old_status": old_status,
+        "new_status": consultation.status,
+        "updated_at": consultation.updated_at.isoformat(),
+    }
+    
+
+
+
+
+async def send_email_notification(to_email: str, subject: str, body: str):
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["From"] = EMAIL_USER
+        msg["To"] = to_email
+        msg["Subject"] = subject
+        
+        # Create a basic plain text version from the HTML content for compatibility
+        # Note: A real parser might be better, but for this simple HTML, a placeholder is often sufficient.
+        text_body = f"Your consultation is confirmed: {subject}. Please enable HTML to view full details."
+        
+        html = body
+        
+        # Attach both versions
+        msg.attach(MIMEText(text_body, "plain")) # Updated text to be relevant
+        msg.attach(MIMEText(html, "html"))
+        
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(EMAIL_USER, EMAIL_PASS)
+            server.sendmail(EMAIL_USER, to_email, msg.as_string())
+            
+    except smtplib.SMTPException as e:
+        print(f"SMTP error sending to {to_email}: {e}")
+    except Exception as e:
+        print(f"General error sending to {to_email}: {e}")
+        
+        
+class TemplateTaskSchema(BaseModel):
+    id: int
+    title: str
+    description: Optional[str]
+    
+class ServiceTemplateSchema(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    default_tasks: List[TemplateTaskSchema]
+
+    class Config:
+        from_attributes = True
+
+
+class ProjectCreateSchema(BaseModel):
+    # Project Specifics
+    project_name: str          
+    notes: Optional[str] = ""
+    company_name: str
+    email: str
+    phone: str
+
+    template_id: Optional[int] = None
+    selected_task_ids: List[int] = [] 
+    custom_tasks: List[str] = []
+
+@app.get("/api/service-templates", response_model=List[ServiceTemplateSchema])
+async def get_service_templates(db: AsyncSession = Depends(get_db)):
+    # We MUST use selectinload to fetch the related 'default_tasks'
+    result = await db.execute(
+        select(ServiceTemplate).options(selectinload(ServiceTemplate.default_tasks))
+    )
+    templates = result.scalars().all()
+    return templates
+
+# --- 3. Updated Create Project Endpoint ---
+@app.post("/api/sessions/{session_id}/project")
+async def create_project_from_session(
+    session_id: str, 
+    payload: ProjectCreateSchema, 
+    db: AsyncSession = Depends(get_db)
+):
+    # 1. Fetch Session and Phase Info to update them
+    result = await db.execute(
+        select(SessionModel)
+        .options(selectinload(SessionModel.phase_info), selectinload(SessionModel.project))
+        .where(SessionModel.id == session_id)
+    )
+    session = result.scalar_one_or_none()
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    if session.project:
+        raise HTTPException(status_code=400, detail="Project already exists for this session")
+
+  
+    if payload.phone:
+        session.mobile = payload.phone
+    
+    # Update Company & Email in SessionPhase table
+    if session.phase_info:
+        session.phase_info.q1_company = payload.company_name
+        session.phase_info.q1_email = payload.email
+    new_project = Project(
+        id=str(uuid.uuid4()),
+        name=payload.project_name, # As defined by consultant
+        notes=payload.notes,
+        status="Active",
+        progress_percent=0,
+        template_id=payload.template_id,
+        session_id=session_id
+    )
+    db.add(new_project)
+    await db.flush() # Flush to generate ID
+
+    # 4. CREATE PROJECT TASKS (One by One)
+    task_sequence = 1
+    
+    # A. Add Selected Template Tasks
+    if payload.template_id and payload.selected_task_ids:
+        stmt = select(TemplateTask).where(TemplateTask.id.in_(payload.selected_task_ids))
+        t_result = await db.execute(stmt)
+        selected_template_tasks = t_result.scalars().all()
+        
+        # Sort by original sequence
+        selected_template_tasks.sort(key=lambda x: x.sequence_number)
+
+        for t_task in selected_template_tasks:
+            new_p_task = ProjectTask(
+                project_id=new_project.id,
+                title=t_task.title,
+                details=t_task.description,
+                status="Pending",
+                sequence_number=task_sequence
+            )
+            db.add(new_p_task)
+            task_sequence += 1
+
+    # B. Add Custom Tasks
+    for custom_title in payload.custom_tasks:
+        if custom_title.strip():
+            custom_task = ProjectTask(
+                project_id=new_project.id,
+                title=custom_title.strip(),
+                details="Custom task added by consultant",
+                status="Pending",
+                sequence_number=task_sequence
+            )
+            db.add(custom_task)
+            task_sequence += 1
+
+    await db.commit()
+    return {"message": "Project created and Client Data updated", "project_id": new_project.id}
+
+
+
+
+class TaskFileSchema(BaseModel):
+    id: int
+    file_name: str
+    storage_path: str
+    uploaded_at: datetime  
+
+    class Config:
+        from_attributes = True
+
+class ProjectTaskSchema(BaseModel):
+    id: int
+    title: str
+    details: Optional[str]
+    status: str
+    sequence_number: int
+    files: List[TaskFileSchema] = []
+   
+    
+    class Config:
+        from_attributes = True
+
+class ProjectListSchema(BaseModel):
+    id: str
+    name: str
+    notes: str | None 
+    status: str
+    progress_percent: int
+    total_tasks: int 
+    created_at: datetime  
+    updated_at: datetime  
+
+    class Config:
+        from_attributes = True
+
+class ProjectSchema(BaseModel):
+    id: str
+    name: str
+    status: str
+    progress_percent: int
+    created_at: datetime  
+    updated_at: datetime 
+
+class ProjectDetailSchema(ProjectSchema):
+    notes: Optional[str]
+    tasks: List[ProjectTaskSchema] = []
+
+class ProjectStatusUpdate(BaseModel):
+    status: str
+
+class ConsultantBase(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    tier: str = "junior"
+
+class ConsultantCreate(ConsultantBase):
+    pass 
+
+class ConsultantOut(ConsultantBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class MessageResponse(BaseModel):
+    message: str
+
+
+
+@app.get("/projects", response_model=List[ProjectListSchema])
+async def list_projects(db: AsyncSession = Depends(get_db)):
+    query = (
+        select(
+            Project,
+            func.count(ProjectTask.id).label("total_tasks")
+        )
+        .outerjoin(Project.tasks) 
+        .group_by(Project.id)
+        .order_by(Project.updated_at.desc())
+    )
+
+    result = await db.execute(query)
+    projects_data = []
+    for project, total_tasks in result.all():
+        projects_data.append(
+            ProjectListSchema(
+                id=project.id,
+                name=project.name,
+                notes=project.notes, 
+                status=project.status,
+                progress_percent=project.progress_percent,
+                total_tasks=total_tasks, 
+                created_at=project.created_at,
+                updated_at=project.updated_at,
+            )
+        )
+    
+    return projects_data
+
+@app.get("/projects/{project_id}", response_model=ProjectDetailSchema)
+async def get_project_details(project_id: str, db: AsyncSession = Depends(get_db)):
+    query = (
+        select(Project)
+        .where(Project.id == project_id)
+        .options(
+            selectinload(Project.tasks).selectinload(ProjectTask.files)
+        )
+    )
+    result = await db.execute(query)
+    project = result.scalar_one_or_none()
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    return project
+
+@app.patch("/tasks/{task_id}/status")
+async def update_task_status(
+    task_id: int, 
+    status: str = Form(...), 
+    db: AsyncSession = Depends(get_db)
+):
+
+    result = await db.execute(select(ProjectTask).where(ProjectTask.id == task_id))
+    task = result.scalar_one_or_none()
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task.status = status
+    if status == "Completed":
+        task.completed_at = func.now()
+    tasks_result = await db.execute(
+        select(ProjectTask.status).where(ProjectTask.project_id == task.project_id)
+    )
+    all_statuses = tasks_result.scalars().all()
+    
+    total_tasks = len(all_statuses)
+    completed_tasks = all_statuses.count("Completed") + (1 if status == "Completed" and "Completed" not in all_statuses else 0)
+    
+    completed_count = 0
+    for s in all_statuses:
+        if s == "Completed": 
+            completed_count += 1
+
+    count_q = select(func.count()).where(ProjectTask.project_id == task.project_id)
+    total_count = await db.scalar(count_q)
+    
+    completed_q = select(func.count()).where(
+        ProjectTask.project_id == task.project_id, 
+        ProjectTask.status == "Completed"
+    )
+    await db.flush() 
+    
+    real_completed = await db.scalar(completed_q)
+    
+    new_progress = 0
+    if total_count > 0:
+        new_progress = int((real_completed / total_count) * 100)
+    
+    # Update Project
+    project_result = await db.execute(select(Project).where(Project.id == task.project_id))
+    project = project_result.scalar_one()
+    project.progress_percent = new_progress
+    
+    await db.commit()
+    
+    return {"status": "updated", "new_progress": new_progress, "task_status": task.status}
+
+@app.post("/tasks/{task_id}/files", response_model=TaskFileSchema)
+async def upload_task_file(
+    task_id: int,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """Uploads a file, saves to disk, and links to the task."""
+    # Verify Task Exists
+    task = await db.get(ProjectTask, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # Save File
+    file_location = os.path.join(UPLOAD_DIR, f"{task_id}_{file.filename}")
+    with open(file_location, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Create DB Entry
+    new_file = TaskFile(
+        task_id=task_id,
+        file_name=file.filename,
+        storage_path=f"/uploads/{task_id}_{file.filename}", # Web accessible path
+        mime_type=file.content_type
+    )
+    
+    db.add(new_file)
+    await db.commit()
+    await db.refresh(new_file)
+    
+    return new_file
+
+@app.patch("/projects/{project_id}/status")
+async def update_project_status(
+    project_id: str, 
+    update: ProjectStatusUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+
+    project = await db.get(Project, project_id)
+    
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project with ID '{project_id}' not found")
+    
+    # 2. Validate and Update Status
+    new_status = update.status
+    
+    # Optional: Add validation logic here if you only allow specific statuses
+    allowed_statuses = ["Active", "On Hold", "Completed", "Canceled"]
+    if new_status not in allowed_statuses:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid status '{new_status}'. Must be one of: {', '.join(allowed_statuses)}"
+        )
+        
+    project.status = new_status
+    
+    # 3. Commit changes (updated_at will be automatically updated by SQLAlchemy's func.now())
+    await db.commit()
+    await db.refresh(project)
+    
+    return {
+        "id": project.id, 
+        "status": project.status, 
+        "message": f"Project status successfully updated to '{project.status}'"
+    }
+    
+    
+class TemplateTaskBase(BaseModel):
+    title: str = Field(..., max_length=255)
+    description: Optional[str] = None
+    sequence_number: int = Field(1, ge=1)
+    is_milestone: bool = False
+
+class TemplateTaskCreate(TemplateTaskBase):
+    pass 
+
+class TemplateTaskRead(TemplateTaskBase):
+    id: int
+    template_id: int
+
+    class Config:
+        from_attributes = True
+        
+class ServiceTemplateCreate(BaseModel):
+    name: str = Field(..., max_length=255)
+    description: Optional[str] = None
+    default_tasks: List[TemplateTaskCreate] = Field([])
+
+class ServiceTemplateRead(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    default_tasks: List[TemplateTaskRead] = Field([]) # Nested tasks
+
+    class Config:
+        from_attributes = True
+
+class StatusResponse(BaseModel):
+    status: str = "success"
+    message: str
+    
+@app.get("/api/templates/", response_model=List[ServiceTemplateRead])
+async def get_all_templates(db: AsyncSession = Depends(get_db)):
+    """Fetches all ServiceTemplates with their associated TemplateTasks."""
+    
+    # FIX: Use .options(selectinload(...)) to fetch tasks immediately
+    stmt = select(ServiceTemplate).options(selectinload(ServiceTemplate.default_tasks))
+    
+    result = await db.execute(stmt)
+    templates = result.scalars().all()
+    return templates
+
+# 2. POST: Create a new template with tasks
+@app.post("/api/templates/", response_model=ServiceTemplateRead, status_code=status.HTTP_201_CREATED)
+async def create_template(
+    template_data: ServiceTemplateCreate, 
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        # Create the template object
+        new_template = ServiceTemplate(
+            name=template_data.name, 
+            description=template_data.description
+        )
+        db.add(new_template)
+        await db.flush() 
+
+        # Create the tasks
+        for task_data in template_data.default_tasks:
+            new_task = TemplateTask(
+                template_id=new_template.id,
+                title=task_data.title,
+                description=task_data.description,
+                sequence_number=task_data.sequence_number,
+                is_milestone=task_data.is_milestone
+            )
+            db.add(new_task)
+
+        await db.commit()
+        
+        # FIX: Re-fetch the object with relationships loaded to prevent MissingGreenlet error on response
+        stmt = (
+            select(ServiceTemplate)
+            .options(selectinload(ServiceTemplate.default_tasks))
+            .where(ServiceTemplate.id == new_template.id)
+        )
+        result = await db.execute(stmt)
+        return result.scalar_one()
+
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Failed to create template: {e}"
+        )
+
+@app.delete("/api/templates/{template_id}", response_model=StatusResponse)
+async def delete_template(template_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = delete(ServiceTemplate).where(ServiceTemplate.id == template_id)
+    result = await db.execute(stmt)
+    await db.commit()
+    
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail=f"Template with ID {template_id} not found.")
+
+    return {"status": "success", "message": f"Template ID {template_id} deleted successfully."}
+
+
+@app.delete("/api/tasks/{task_id}", response_model=StatusResponse)
+async def delete_task(task_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = delete(TemplateTask).where(TemplateTask.id == task_id)
+    result = await db.execute(stmt)
+    await db.commit()
+    
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found.")
+
+    return {"status": "success", "message": f"Task ID {task_id} deleted successfully."}
+
+
+
+@app.post("/api/consultant/",response_model=ConsultantOut,status_code=status.HTTP_201_CREATED,summary="Create a new Consultant")
+async def create_new_consultant(consultant_data: ConsultantCreate, db: AsyncSession = Depends(get_db)):
+
+    db_consultant = Consultant(
+        name=consultant_data.name,
+        phone=consultant_data.phone,
+        tier=consultant_data.tier,
+    )
+    db.add(db_consultant)
+    await db.commit()
+    await db.refresh(db_consultant)
+    return db_consultant
+
+@app.get("/api/consultants/",
+    response_model=List[ConsultantOut],
+    summary="Retrieve all Consultants"
+)
+async def get_all_consultants(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Consultant).order_by(Consultant.created_at.desc()))
+    consultants = result.scalars().all()
+    return consultants
+
+
+@app.delete("/api/consultant/{consultant_id}",
+    response_model=MessageResponse,
+    summary="Delete a Consultant by ID"
+)
+async def remove_consultant(consultant_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        delete(Consultant).where(Consultant.id == consultant_id)
+    )
+    await db.commit()
+
+    if result.rowcount == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Consultant not found")
+
+    return {"message": f"Consultant with ID {consultant_id} deleted successfully"}

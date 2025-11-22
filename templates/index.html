@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
   <title>Business ChatBot</title>
   <script src="/static/tailwind.js"></script>
+  <script src="/static/dataset.js"></script>
   <style>
     #messages::-webkit-scrollbar { width: 6px; }
     #messages::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.2); border-radius: 6px; }
@@ -85,6 +86,55 @@
         top: 10px;
       }
     }
+
+
+    .autocomplete-wrapper {
+      position: relative;
+    }
+  
+    .ghost-text-overlay {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      font-size: 14px;
+      color: #ffffff;
+      opacity: 0.6;
+      z-index: 1;
+      pointer-events: none;
+      white-space: pre;
+      font-family: inherit;
+      overflow: hidden;
+      display: none;
+  }
+
+    .suggestions-list {
+      position: absolute;
+      bottom: 100%; 
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: none; 
+      margin-bottom: 8px; 
+      overflow: hidden;
+      background-color: white;
+    }
+  
+    .suggestion-item {
+      padding: 11px 20px;
+      cursor: pointer;
+      border-bottom: 1px solid #c7c7c7;
+      color: #555;
+      transition: background 0.2s;
+      font-size: 13px;
+  }
+  
+  .suggestion-item:last-child { border-bottom: none; }
+  
+  .highlight { 
+  font-weight: 600; 
+  color: #000000; 
+  }
+
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans text-sm text-slate-700 relative">
@@ -144,17 +194,11 @@
 
     <div class="bg-white p-7">
       <form id="composer" class="flex items-center gap-2" onsubmit="return false;">
-        <div class="absolute right-2 left-2 bottom-3">
-          <input
-            id="input"
-            type="text"
-            autocomplete="off"
-            placeholder="Type your message..."
-            class="w-full bg-slate-50 border border-slate-200 rounded-full px-[15px] py-[15px]  text-sm focus:outline-none  "
-          />
-          <button id="sendBtn" class="absolute right-[0.3rem] top-1/2 transform -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 bg-gray-800 text-white rounded-full hover:bg-gray-800/90 transition shadow-sm hover:shadow focus:outline-none focus:ring-1" title="Send"><svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="icon"><path d="M8.99992 16V6.41407L5.70696 9.70704C5.31643 10.0976 4.68342 10.0976 4.29289 9.70704C3.90237 9.31652 3.90237 8.6835 4.29289 8.29298L9.29289 3.29298L9.36907 3.22462C9.76184 2.90427 10.3408 2.92686 10.707 3.29298L15.707 8.29298L15.7753 8.36915C16.0957 8.76192 16.0731 9.34092 15.707 9.70704C15.3408 10.0732 14.7618 10.0958 14.3691 9.7754L14.2929 9.70704L10.9999 6.41407V16C10.9999 16.5523 10.5522 17 9.99992 17C9.44764 17 8.99992 16.5523 8.99992 16Z"></path></svg>
-                  </button>
-              
+        
+        <div class="absolute right-2 left-2 bottom-3 autocomplete-wrapper">
+          <div id="suggestionBox" class="suggestions-list"></div>
+          <input id="input" type="text" autocomplete="off" placeholder="Type your message..." class="w-full bg-slate-50 border border-slate-200 rounded-full px-[15px] py-[15px]  text-sm focus:outline-none "/>
+          <button id="sendBtn" class="absolute right-[0.3rem] top-1/2 transform -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 bg-gray-800 text-white rounded-full hover:bg-gray-800/90 transition shadow-sm hover:shadow focus:outline-none focus:ring-1" title="Send"><svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="icon"><path d="M8.99992 16V6.41407L5.70696 9.70704C5.31643 10.0976 4.68342 10.0976 4.29289 9.70704C3.90237 9.31652 3.90237 8.6835 4.29289 8.29298L9.29289 3.29298L9.36907 3.22462C9.76184 2.90427 10.3408 2.92686 10.707 3.29298L15.707 8.29298L15.7753 8.36915C16.0957 8.76192 16.0731 9.34092 15.707 9.70704C15.3408 10.0732 14.7618 10.0958 14.3691 9.7754L14.2929 9.70704L10.9999 6.41407V16C10.9999 16.5523 10.5522 17 9.99992 17C9.44764 17 8.99992 16.5523 8.99992 16Z"></path></svg></button>  
         </div>
       </form>
     </div>
@@ -171,6 +215,63 @@
     const chatDiv = document.getElementById('chatDiv');
     const overlay = document.getElementById('overlay');
     const closeBtn = document.getElementById('closeBtn');
+
+    const suggestionBox = document.getElementById('suggestionBox');
+    function getFuzzyResults(query) {
+      if (!query) return [];
+      const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const terms = safeQuery.split(/\s+/).filter(t => t.length > 0);
+      if (terms.length === 0) return [];
+      const highlightRegex = new RegExp(`(${terms.join('|')})`, 'gi');
+      return questions
+        .map(item => {
+          const itemLower = item.toLowerCase();
+          const isMatch = terms.every(term => itemLower.includes(term.toLowerCase()));
+          if (!isMatch) return { original: item, isMatch: false };
+          const html = item.replace(highlightRegex, match => `<span class="highlight">${match}</span>`);
+          return { original: item, html: html, isMatch: true };
+        })
+        .filter(res => res.isMatch)
+        .sort((a, b) => {
+          const qLower = query.toLowerCase();
+          const aStart = a.original.toLowerCase().startsWith(qLower);
+          const bStart = b.original.toLowerCase().startsWith(qLower);
+          if (aStart && !bStart) return -1;
+          if (!aStart && bStart) return 1;
+          return 0;
+        });
+    }
+
+    inputEl.addEventListener('input', function(e) {
+      const val = this.value;
+      suggestionBox.innerHTML = '';
+      suggestionBox.style.display = 'none';
+      if (!val) return;
+      const results = getFuzzyResults(val);
+      if (results.length > 0) {
+        const topMatch = results[0].original;
+
+
+
+        suggestionBox.style.display = 'block';
+
+        results.slice(0, 4).forEach(res => {
+          const div = document.createElement('div');
+          div.className = 'suggestion-item';
+          div.innerHTML = res.html;
+          div.onclick = () => selectSuggestion(res.original);
+          suggestionBox.appendChild(div);
+        });
+      }
+    });
+    
+
+    function selectSuggestion(text) {
+      input.value = text;
+      suggestionBox.innerHTML = '';
+      suggestionBox.style.display = 'none';
+      input.focus();
+    }
 
     function toggleChat(open) {
       if (open) {
