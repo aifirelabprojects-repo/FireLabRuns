@@ -20,5 +20,27 @@
       ]
     },
     "timestamp": 1762959420.10512
+  },
+  "79802fbd2fb6fbfa5ced1ee73ec19483": {
+    "result": {
+      "summary": "Nex-Tech is a telecommunications and technology company headquartered in Lenora, Kansas, with over 200 employees. Founded in 1951, it has a long history of providing broadband, telephone, and enterprise technology solutions. Nex-Tech operates a robust fiber-to-the-premise and fiber-to-wireless network delivering high-speed internet, streaming TV, home security, and phone services to residential and business customers. The company also offers managed IT, cloud services, cybersecurity, physical security, and creative marketing solutions. It supports local communities through donations and sponsorships and maintains more than 20 store locations with a 24/7 Network Operations Center. Nex-Tech has expanded through acquisitions and partnerships, including broadband providers and technology services, serving clients nationwide with a focus on local support and advanced technology.",
+      "details": {
+        "founded": "1951",
+        "employees": "201-500",
+        "founders": null,
+        "location": "Lenora, Kansas, United States",
+        "revenue": null,
+        "industry": "Telecommunications and Technology Services",
+        "confidence": 95
+      },
+      "sources": [
+        "https://leadiq.com/c/nex-tech/5a1d9831230000540086d746",
+        "https://www.nex-tech.com/about/",
+        "https://www.nex-tech.co",
+        "https://leadiq.com/c/nextech/5a1d9df623000054008de9fa",
+        "https://nex-tech.biz"
+      ]
+    },
+    "timestamp": 1763798892.4487772
   }
 }

@@ -129,11 +129,45 @@
   }
   
   .suggestion-item:last-child { border-bottom: none; }
+
+  .suggestion-item:only-child {
+    border-bottom: none;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+  }
   
   .highlight { 
   font-weight: 600; 
   color: #000000; 
   }
+
+  /* --- TOGGLE FIX STARTS HERE --- */
+  .toggle-checkbox:checked {
+    transform: translateX(100%); 
+    border-color: black;
+}
+
+.toggle-checkbox:checked + .toggle-label {
+    background-color: black;
+}
+/* --- TOGGLE FIX ENDS HERE --- */
+
+/* Range Input Styling */
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #1f2937;
+    margin-top: -6px;
+    cursor: pointer;
+}
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+}
 
   </style>
 </head>
@@ -158,35 +192,70 @@
       </button>
       <p class="text-sm text-slate-700">Unlock 20% off our expert advisory services with your Business</p>
     </div>
-    <header class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100 bg-white">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100">
-          <svg class="w-6 h-6" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-            <g id="Product-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-              <g id="ic_fluent_bot_24_regular" fill="#000" fill-rule="nonzero">
-                <path d="M17.7530511,13.999921 C18.9956918,13.999921 20.0030511,15.0072804 20.0030511,16.249921 L20.0030511,17.1550008 C20.0030511,18.2486786 19.5255957,19.2878579 18.6957793,20.0002733 C17.1303315,21.344244 14.8899962,22.0010712 12,22.0010712 C9.11050247,22.0010712 6.87168436,21.3444691 5.30881727,20.0007885 C4.48019625,19.2883988 4.00354153,18.2500002 4.00354153,17.1572408 L4.00354153,16.249921 C4.00354153,15.0072804 5.01090084,13.999921 6.25354153,13.999921 L17.7530511,13.999921 Z M17.7530511,15.499921 L6.25354153,15.499921 C5.83932796,15.499921 5.50354153,15.8357075 5.50354153,16.249921 L5.50354153,17.1572408 C5.50354153,17.8128951 5.78953221,18.4359296 6.28670709,18.8633654 C7.5447918,19.9450082 9.44080155,20.5010712 12,20.5010712 C14.5599799,20.5010712 16.4578003,19.9446634 17.7186879,18.8621641 C18.2165778,18.4347149 18.5030511,17.8112072 18.5030511,17.1550005 L18.5030511,16.249921 C18.5030511,15.8357075 18.1672647,15.499921 17.7530511,15.499921 Z M11.8985607,2.00734093 L12.0003312,2.00049432 C12.380027,2.00049432 12.6938222,2.2826482 12.7434846,2.64872376 L12.7503312,2.75049432 L12.7495415,3.49949432 L16.25,3.5 C17.4926407,3.5 18.5,4.50735931 18.5,5.75 L18.5,10.254591 C18.5,11.4972317 17.4926407,12.504591 16.25,12.504591 L7.75,12.504591 C6.50735931,12.504591 5.5,11.4972317 5.5,10.254591 L5.5,5.75 C5.5,4.50735931 6.50735931,3.5 7.75,3.5 L11.2495415,3.49949432 L11.2503312,2.75049432 C11.2503312,2.37079855 11.5324851,2.05700336 11.8985607,2.00734093 L12.0003312,2.00049432 L11.8985607,2.00734093 Z M16.25,5 L7.75,5 C7.33578644,5 7,5.33578644 7,5.75 L7,10.254591 C7,10.6688046 7.33578644,11.004591 7.75,11.004591 L16.25,11.004591 C16.6642136,11.004591 17,10.6688046 17,10.254591 L17,5.75 C17,5.33578644 16.6642136,5 16.25,5 Z M9.74928905,6.5 C10.4392523,6.5 10.9985781,7.05932576 10.9985781,7.74928905 C10.9985781,8.43925235 10.4392523,8.99857811 9.74928905,8.99857811 C9.05932576,8.99857811 8.5,8.43925235 8.5,7.74928905 C8.5,7.05932576 9.05932576,6.5 9.74928905,6.5 Z M14.2420255,6.5 C14.9319888,6.5 15.4913145,7.05932576 15.4913145,7.74928905 C15.4913145,8.43925235 14.9319888,8.99857811 14.2420255,8.99857811 C13.5520622,8.99857811 12.9927364,8.43925235 12.9927364,7.74928905 C12.9927364,7.05932576 13.5520622,6.5 14.2420255,6.5 Z" id="🎨-Color"></path>
-              </g>
-            </g>
-          </svg>
-        </div>
-        <div>
-          <div class="text-slate-900 font-medium leading-tight">Business Chatbot</div>
-          <div class="text-xs text-slate-400">Testing</div>
-        </div>
+    <header class="flex flex-col border-b border-slate-100 bg-white z-20 relative transition-all duration-300">
+      <div class="flex items-center justify-between gap-3 px-4 py-3">
+          <div class="flex items-center gap-3">
+              <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                      <g id="Product-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                          <g id="ic_fluent_bot_24_regular" fill="#000" fill-rule="nonzero">
+                              <path d="M17.7530511,13.999921 C18.9956918,13.999921 20.0030511,15.0072804 20.0030511,16.249921 L20.0030511,17.1550008 C20.0030511,18.2486786 19.5255957,19.2878579 18.6957793,20.0002733 C17.1303315,21.344244 14.8899962,22.0010712 12,22.0010712 C9.11050247,22.0010712 6.87168436,21.3444691 5.30881727,20.0007885 C4.48019625,19.2883988 4.00354153,18.2500002 4.00354153,17.1572408 L4.00354153,16.249921 C4.00354153,15.0072804 5.01090084,13.999921 6.25354153,13.999921 L17.7530511,13.999921 Z M17.7530511,15.499921 L6.25354153,15.499921 C5.83932796,15.499921 5.50354153,15.8357075 5.50354153,16.249921 L5.50354153,17.1572408 C5.50354153,17.8128951 5.78953221,18.4359296 6.28670709,18.8633654 C7.5447918,19.9450082 9.44080155,20.5010712 12,20.5010712 C14.5599799,20.5010712 16.4578003,19.9446634 17.7186879,18.8621641 C18.2165778,18.4347149 18.5030511,17.8112072 18.5030511,17.1550005 L18.5030511,16.249921 C18.5030511,15.8357075 18.1672647,15.499921 17.7530511,15.499921 Z M11.8985607,2.00734093 L12.0003312,2.00049432 C12.380027,2.00049432 12.6938222,2.2826482 12.7434846,2.64872376 L12.7503312,2.75049432 L12.7495415,3.49949432 L16.25,3.5 C17.4926407,3.5 18.5,4.50735931 18.5,5.75 L18.5,10.254591 C18.5,11.4972317 17.4926407,12.504591 16.25,12.504591 L7.75,12.504591 C6.50735931,12.504591 5.5,11.4972317 5.5,10.254591 L5.5,5.75 C5.5,4.50735931 6.50735931,3.5 7.75,3.5 L11.2495415,3.49949432 L11.2503312,2.75049432 C11.2503312,2.37079855 11.5324851,2.05700336 11.8985607,2.00734093 L12.0003312,2.00049432 L11.8985607,2.00734093 Z M16.25,5 L7.75,5 C7.33578644,5 7,5.33578644 7,5.75 L7,10.254591 C7,10.6688046 7.33578644,11.004591 7.75,11.004591 L16.25,11.004591 C16.6642136,11.004591 17,10.6688046 17,10.254591 L17,5.75 C17,5.33578644 16.6642136,5 16.25,5 Z M9.74928905,6.5 C10.4392523,6.5 10.9985781,7.05932576 10.9985781,7.74928905 C10.9985781,8.43925235 10.4392523,8.99857811 9.74928905,8.99857811 C9.05932576,8.99857811 8.5,8.43925235 8.5,7.74928905 C8.5,7.05932576 9.05932576,6.5 9.74928905,6.5 Z M14.2420255,6.5 C14.9319888,6.5 15.4913145,7.05932576 15.4913145,7.74928905 C15.4913145,8.43925235 14.9319888,8.99857811 14.2420255,8.99857811 C13.5520622,8.99857811 12.9927364,8.43925235 12.9927364,7.74928905 C12.9927364,7.05932576 13.5520622,6.5 14.2420255,6.5 Z" id="🎨-Color"></path>
+                          </g>
+                      </g>
+                  </svg>
+              </div>
+              <div>
+                  <div class="text-slate-900 font-medium leading-tight">Business Chatbot</div>
+                  <div class="text-xs text-slate-400">Testing</div>
+              </div>
+          </div>
+          
+          <div class="flex items-center gap-2">
+              <button id="settingsBtn" class="p-2 rounded-md hover:bg-slate-50 transition-colors" title="Settings">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+              </button>
+              <button id="newBtn" title="New Chat" class="p-2 rounded-md hover:bg-slate-50">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-slate-500">
+                      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+              </button>
+              <button id="closeBtn" title="Close" class="p-2 rounded-md hover:bg-slate-50">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-slate-500">
+                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+                  </svg>
+              </button>
+          </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button id="newBtn" title="New Chat" class="p-2 rounded-md hover:bg-slate-50">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-slate-500">
-            <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <button id="closeBtn" title="Close" class="p-2 rounded-md hover:bg-slate-50">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-slate-500">
-            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+      
+      <div id="settingsPanel" class="hidden px-4 py-3 bg-white border-t border-slate-100">
+          <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold text-gray-800 text-sm tracking-wide">Chat Preferences</h3>
+              </div>
+  
+          <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+              
+              <div class="flex items-center justify-between col-span-2 sm:col-span-1">
+                  <span class="text-xs font-medium text-gray-700">Show Suggestions</span>
+                  <div class="relative inline-block w-11 align-middle select-none transition duration-200 ease-in">
+                      <input type="checkbox" name="toggle" id="toggleSuggestions" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer pointer-events-none transition-all duration-300 ease-in-out top-0 left-0 border-slate-300"/>
+                      <label for="toggleSuggestions" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-200 cursor-pointer checked:bg-blue-500"></label>
+                  </div>
+              </div>
+              
+              <div class="col-span-2 sm:col-span-1">
+                  <div class="flex justify-between mb-1">
+                      <label for="limitRange" class="text-xs font-medium text-gray-700">Max Results</label>
+                      <span id="rangeValue" class="text-xs font-bold text-gray-800">4</span>
+                  </div>
+                  <input type="range" id="limitRange" min="1" max="5" value="4" class="w-full h-4 bg-gray-100 rounded-full appearance-none cursor-pointer range-xs">
+              </div>
+              
+          </div>
       </div>
-    </header>
+  </header>
 
     <main id="messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-white hover-in-right">
 
@@ -197,7 +266,10 @@
         
         <div class="absolute right-2 left-2 bottom-3 autocomplete-wrapper">
           <div id="suggestionBox" class="suggestions-list"></div>
+            
+          
           <input id="input" type="text" autocomplete="off" placeholder="Type your message..." class="w-full bg-slate-50 border border-slate-200 rounded-full px-[15px] py-[15px]  text-sm focus:outline-none "/>
+        
           <button id="sendBtn" class="absolute right-[0.3rem] top-1/2 transform -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 bg-gray-800 text-white rounded-full hover:bg-gray-800/90 transition shadow-sm hover:shadow focus:outline-none focus:ring-1" title="Send"><svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="icon"><path d="M8.99992 16V6.41407L5.70696 9.70704C5.31643 10.0976 4.68342 10.0976 4.29289 9.70704C3.90237 9.31652 3.90237 8.6835 4.29289 8.29298L9.29289 3.29298L9.36907 3.22462C9.76184 2.90427 10.3408 2.92686 10.707 3.29298L15.707 8.29298L15.7753 8.36915C16.0957 8.76192 16.0731 9.34092 15.707 9.70704C15.3408 10.0732 14.7618 10.0958 14.3691 9.7754L14.2929 9.70704L10.9999 6.41407V16C10.9999 16.5523 10.5522 17 9.99992 17C9.44764 17 8.99992 16.5523 8.99992 16Z"></path></svg></button>  
         </div>
       </form>
@@ -217,60 +289,138 @@
     const closeBtn = document.getElementById('closeBtn');
 
     const suggestionBox = document.getElementById('suggestionBox');
+    
+    // Settings Elements
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const toggleSuggestions = document.getElementById('toggleSuggestions');
+    const limitRange = document.getElementById('limitRange');
+    const rangeValue = document.getElementById('rangeValue');
+
+    // --- 2. Settings Logic (Local Storage) ---
+    
+    // Default config
+    let config = {
+        enabled: true,
+        limit: 4
+    };
+
+    // Load from LocalStorage on init
+    function loadSettings() {
+        const saved = localStorage.getItem('autocompleteConfig');
+        if (saved) {
+            config = JSON.parse(saved);
+        }
+        // Update UI to match config
+        toggleSuggestions.checked = config.enabled;
+        limitRange.value = config.limit;
+        rangeValue.textContent = config.limit;
+    }
+
+    // Save to LocalStorage
+    function saveSettings() {
+        config.enabled = toggleSuggestions.checked;
+        config.limit = parseInt(limitRange.value);
+        localStorage.setItem('autocompleteConfig', JSON.stringify(config));
+        
+        // If disabled, immediately hide box
+        if (!config.enabled) {
+            suggestionBox.style.display = 'none';
+        } else if (inputEl.value.trim() !== '') {
+            // If enabled and typing, refresh results immediately
+            triggerSearch(inputEl.value);
+        }
+    }
+
+    // --- 3. Event Listeners for Settings ---
+
+    loadSettings(); // Run immediately
+
+    // Open/Close Panel
+    settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent closing immediately
+        settingsPanel.classList.toggle('hidden');
+    });
+
+
+    // Close panel if clicking outside
+    document.addEventListener('click', (e) => {
+        if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
+            settingsPanel.classList.add('hidden');
+        }
+    });
+
+    // Update Settings
+    toggleSuggestions.addEventListener('change', saveSettings);
+    
+    limitRange.addEventListener('input', (e) => {
+        rangeValue.textContent = e.target.value;
+        saveSettings();
+    });
+
+    // --- 4. Search Logic (Updated) ---
+
     function getFuzzyResults(query) {
-      if (!query) return [];
-      const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const terms = safeQuery.split(/\s+/).filter(t => t.length > 0);
-      if (terms.length === 0) return [];
-      const highlightRegex = new RegExp(`(${terms.join('|')})`, 'gi');
-      return questions
-        .map(item => {
-          const itemLower = item.toLowerCase();
-          const isMatch = terms.every(term => itemLower.includes(term.toLowerCase()));
-          if (!isMatch) return { original: item, isMatch: false };
-          const html = item.replace(highlightRegex, match => `<span class="highlight">${match}</span>`);
-          return { original: item, html: html, isMatch: true };
-        })
-        .filter(res => res.isMatch)
-        .sort((a, b) => {
-          const qLower = query.toLowerCase();
-          const aStart = a.original.toLowerCase().startsWith(qLower);
-          const bStart = b.original.toLowerCase().startsWith(qLower);
-          if (aStart && !bStart) return -1;
-          if (!aStart && bStart) return 1;
-          return 0;
-        });
+        if (!query) return [];
+        const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const terms = safeQuery.split(/\s+/).filter(t => t.length > 0);
+        if (terms.length === 0) return [];
+        const highlightRegex = new RegExp(`(${terms.join('|')})`, 'gi');
+        
+        return questions
+            .map(item => {
+                const itemLower = item.toLowerCase();
+                const isMatch = terms.every(term => itemLower.includes(term.toLowerCase()));
+                if (!isMatch) return { original: item, isMatch: false };
+                const html = item.replace(highlightRegex, match => `<span class="highlight">${match}</span>`);
+                return { original: item, html: html, isMatch: true };
+            })
+            .filter(res => res.isMatch)
+            .sort((a, b) => { // Simple sort: startsWith > contains
+                const qLower = query.toLowerCase();
+                const aStart = a.original.toLowerCase().startsWith(qLower);
+                const bStart = b.original.toLowerCase().startsWith(qLower);
+                return (aStart === bStart) ? 0 : aStart ? -1 : 1;
+            });
+    }
+
+    function triggerSearch(val) {
+        // CHECK SETTING: If disabled, stop here
+        if (!config.enabled) {
+            suggestionBox.style.display = 'none';
+            return;
+        }
+
+        suggestionBox.innerHTML = '';
+        suggestionBox.style.display = 'none';
+        
+        if (!val) return;
+        
+        const results = getFuzzyResults(val);
+        
+        if (results.length > 0) {
+            suggestionBox.style.display = 'block';
+            
+            // CHECK SETTING: Slice based on limit
+            results.slice(0, config.limit).forEach(res => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.innerHTML = res.html;
+                div.onclick = () => selectSuggestion(res.original);
+                suggestionBox.appendChild(div);
+            });
+        }
     }
 
     inputEl.addEventListener('input', function(e) {
-      const val = this.value;
-      suggestionBox.innerHTML = '';
-      suggestionBox.style.display = 'none';
-      if (!val) return;
-      const results = getFuzzyResults(val);
-      if (results.length > 0) {
-        const topMatch = results[0].original;
-
-
-
-        suggestionBox.style.display = 'block';
-
-        results.slice(0, 4).forEach(res => {
-          const div = document.createElement('div');
-          div.className = 'suggestion-item';
-          div.innerHTML = res.html;
-          div.onclick = () => selectSuggestion(res.original);
-          suggestionBox.appendChild(div);
-        });
-      }
+        triggerSearch(this.value);
     });
-    
 
     function selectSuggestion(text) {
-      input.value = text;
-      suggestionBox.innerHTML = '';
-      suggestionBox.style.display = 'none';
-      input.focus();
+        inputEl.value = text;
+        suggestionBox.innerHTML = '';
+        suggestionBox.style.display = 'none';
+        inputEl.focus();
     }
 
     function toggleChat(open) {

@@ -1295,7 +1295,11 @@ async function openSession(id, mode, name, email, phone, company, mood, verified
     modal.classList.remove('hidden');
     renderUserDetails(); // Ensure this is defined elsewhere in your code
     currentWsUrl = `/ws/${mode === 'control' ? 'control' : 'view'}/${id}`;
-    document.getElementById('messagesContainer').innerHTML = '';
+    document.getElementById('messagesContainer').innerHTML = `
+    <div id="loading-spinner" class="flex items-center justify-center w-full h-full">
+        <div class="animate-spin rounded-full h-10 w-10 border-[4px] border-gray-900 border-t-transparent"></div>
+    </div>
+    `;
     connectWebSocket();
 }
 

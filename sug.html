@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autocomplete with Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom Scrollbar for suggestions */
+        .suggestions-list {
+            max-height: 200px;
+            overflow-y: auto;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 50;
+        }
+    
+        .suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+            color: #334155;
+            transition: all 0.2s;
+        }
+    
+        .suggestion-item:hover {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+    
+        .highlight {
+            font-weight: 600;
+            color: #3b82f6;
+        }
+    
+        /* --- TOGGLE FIX STARTS HERE --- */
+        .toggle-checkbox:checked {
+            /* Move the ball 100% of its own width to the right */
+            transform: translateX(100%); 
+            border-color: #10b981;
+        }
+        
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #10b981;
+        }
+        /* --- TOGGLE FIX ENDS HERE --- */
+        
+        /* Range Input Styling */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #1f2937;
+            margin-top: -6px;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-slate-200 h-screen relative overflow-hidden">
+
+    <div class="absolute right-2 left-2 bottom-6 max-w-2xl mx-auto w-full sm:left-1/2 sm:-translate-x-1/2 autocomplete-wrapper">
+        
+        <div id="suggestionBox" class="suggestions-list"></div>
+
+        <div id="settingsPanel" class="hidden absolute bottom-full right-0 mb-3 w-64 bg-white rounded-xl shadow-xl border border-slate-100 p-4 z-50 transform transition-all duration-200 origin-bottom-right">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
+                <h3 class="font-bold text-slate-700 text-sm">Search Settings</h3>
+                <button id="closeSettings" class="text-slate-400 hover:text-slate-600 text-xs">✕</button>
+            </div>
+
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-xs font-medium text-slate-600">Show Suggestions</span>
+                <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="toggle" id="toggleSuggestions" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer pointer-events-none transition-all duration-300 ease-in-out top-0 left-0 border-slate-300"/>
+                    <label for="toggleSuggestions" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-300 cursor-pointer"></label>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <div class="flex justify-between mb-1">
+                    <label class="text-xs font-medium text-slate-600">Max Results</label>
+                    <span id="rangeValue" class="text-xs font-bold text-blue-600">4</span>
+                </div>
+                <input type="range" id="limitRange" min="1" max="5" value="4" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+            </div>
+        </div>
+
+        <div class="relative flex items-center">
+            <input id="input" type="text" autocomplete="off" placeholder="Type your message..." class="w-full bg-white border border-slate-200 rounded-full pl-5 pr-[90px] py-[14px] text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"/>
+            
+            <div class="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+                
+                <button id="settingsBtn" class="p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors focus:outline-none" title="Settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </button>
+
+                <button id="sendBtn" class="inline-flex items-center justify-center w-9 h-9 bg-gray-800 text-white rounded-full hover:bg-gray-900 transition shadow-sm focus:outline-none" title="Send">
+                    <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Data & Variables ---
+        const questions = [
+            "How to reset password?", "How do I update my profile?", "What is the refund policy?",
+            "Contact customer support", "How to delete account?", "Shipping delivery times",
+            "Payment methods accepted", "Is there a mobile app?", "Difference between plans",
+            "Change billing address", "Where can I find invoices?", "Technical support hours"
+        ];
+
+        const inputEl = document.getElementById('input');
+        const suggestionBox = document.getElementById('suggestionBox');
+        
+        // Settings Elements
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const closeSettings = document.getElementById('closeSettings');
+        const toggleSuggestions = document.getElementById('toggleSuggestions');
+        const limitRange = document.getElementById('limitRange');
+        const rangeValue = document.getElementById('rangeValue');
+
+        // --- 2. Settings Logic (Local Storage) ---
+        
+        // Default config
+        let config = {
+            enabled: true,
+            limit: 4
+        };
+
+        // Load from LocalStorage on init
+        function loadSettings() {
+            const saved = localStorage.getItem('autocompleteConfig');
+            if (saved) {
+                config = JSON.parse(saved);
+            }
+            // Update UI to match config
+            toggleSuggestions.checked = config.enabled;
+            limitRange.value = config.limit;
+            rangeValue.textContent = config.limit;
+        }
+
+        // Save to LocalStorage
+        function saveSettings() {
+            config.enabled = toggleSuggestions.checked;
+            config.limit = parseInt(limitRange.value);
+            localStorage.setItem('autocompleteConfig', JSON.stringify(config));
+            
+            // If disabled, immediately hide box
+            if (!config.enabled) {
+                suggestionBox.style.display = 'none';
+            } else if (inputEl.value.trim() !== '') {
+                // If enabled and typing, refresh results immediately
+                triggerSearch(inputEl.value);
+            }
+        }
+
+        // --- 3. Event Listeners for Settings ---
+
+        loadSettings(); // Run immediately
+
+        // Open/Close Panel
+        settingsBtn.addEventListener('click', (e) => {
+            console.log("clciked");
+            e.stopPropagation(); // Prevent closing immediately
+            settingsPanel.classList.toggle('hidden');
+        });
+
+        closeSettings.addEventListener('click', () => {
+            settingsPanel.classList.add('hidden');
+        });
+
+        // Close panel if clicking outside
+        document.addEventListener('click', (e) => {
+            if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
+                settingsPanel.classList.add('hidden');
+            }
+        });
+
+        // Update Settings
+        toggleSuggestions.addEventListener('change', saveSettings);
+        
+        limitRange.addEventListener('input', (e) => {
+            rangeValue.textContent = e.target.value;
+            saveSettings();
+        });
+
+        // --- 4. Search Logic (Updated) ---
+
+        function getFuzzyResults(query) {
+            if (!query) return [];
+            const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const terms = safeQuery.split(/\s+/).filter(t => t.length > 0);
+            if (terms.length === 0) return [];
+            const highlightRegex = new RegExp(`(${terms.join('|')})`, 'gi');
+            
+            return questions
+                .map(item => {
+                    const itemLower = item.toLowerCase();
+                    const isMatch = terms.every(term => itemLower.includes(term.toLowerCase()));
+                    if (!isMatch) return { original: item, isMatch: false };
+                    const html = item.replace(highlightRegex, match => `<span class="highlight">${match}</span>`);
+                    return { original: item, html: html, isMatch: true };
+                })
+                .filter(res => res.isMatch)
+                .sort((a, b) => { // Simple sort: startsWith > contains
+                    const qLower = query.toLowerCase();
+                    const aStart = a.original.toLowerCase().startsWith(qLower);
+                    const bStart = b.original.toLowerCase().startsWith(qLower);
+                    return (aStart === bStart) ? 0 : aStart ? -1 : 1;
+                });
+        }
+
+        function triggerSearch(val) {
+            // CHECK SETTING: If disabled, stop here
+            if (!config.enabled) {
+                suggestionBox.style.display = 'none';
+                return;
+            }
+
+            suggestionBox.innerHTML = '';
+            suggestionBox.style.display = 'none';
+            
+            if (!val) return;
+            
+            const results = getFuzzyResults(val);
+            
+            if (results.length > 0) {
+                suggestionBox.style.display = 'block';
+                
+                // CHECK SETTING: Slice based on limit
+                results.slice(0, config.limit).forEach(res => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.innerHTML = res.html;
+                    div.onclick = () => selectSuggestion(res.original);
+                    suggestionBox.appendChild(div);
+                });
+            }
+        }
+
+        inputEl.addEventListener('input', function(e) {
+            triggerSearch(this.value);
+        });
+
+        function selectSuggestion(text) {
+            inputEl.value = text;
+            suggestionBox.innerHTML = '';
+            suggestionBox.style.display = 'none';
+            inputEl.focus();
+        }
+
+    </script>
+</body>
+</html>
