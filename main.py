@@ -39,7 +39,7 @@ from concurrent.futures import ThreadPoolExecutor
 from sqlalchemy.sql import Select
 from KnowledgeBase import cfg
 from dataclasses import dataclass
-
+from ClientModel import client
 
 
 load_dotenv()
@@ -84,9 +84,6 @@ async def startup_event():
 @app.on_event("shutdown")
 def shutdown_event():
     cfg.stop()
-
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 class ConnectionManager:
@@ -290,82 +287,8 @@ async def get_bot_response_async(question: str, session_obj, session_id: str = "
             }
     except Exception as lc_err:
         print(f"[LangChain invoke failed — falling back to direct client] {lc_err}")
-        # Fallback to direct client (wrap sync call in executor for async compatibility)
-        loop = asyncio.get_event_loop()
-        try:
-            completion = await loop.run_in_executor(
-                None,
-                lambda: client.chat.completions.create(
-                    model="qwen/qwen-2.5-coder-32b-instruct:free",
-                    messages=[
-                        {"role": "system", "content": "You are a JSON-only business assistant following the SNIP flow. Respond EXCLUSIVELY with valid JSON in the EXACT format specified. No other text."},
-                        {"role": "user", "content": input_text}
-                    ],
-                )
-            )
-            raw_output = completion.choices[0].message.content
-            try:
-                parsed = json.loads(raw_output)
-                if "options" not in parsed or not parsed["options"]:
-                    parsed["options"] = options
-                return parsed
-            except json.JSONDecodeError:
-                json_part = re.search(r'\{.*\}', raw_output, re.DOTALL)
-                if json_part:
-                    parsed = json.loads(json_part.group(0))
-                    if "options" not in parsed or not parsed["options"]:
-                        parsed["options"] = options
-                    return parsed
-                else:
-                    return {
-                        "answer": raw_output,
-                        "options": options,
-                        "phase": phase,
-                        "lead_data": lead_data,
-                        "routing": "none",
-                        "analysis": {"interest": "unknown", "mood": "confused", "details": {}}
-                    }
-        except AuthenticationError as e:
-            print(f"Authentication Error: {e}")
-            return {
-                "answer": "Authentication failed — check your API key.",
-                "options": [],
-                "phase": phase,
-                "lead_data": lead_data,
-                "routing": "none",
-                "analysis": {"interest": "unknown", "mood": "frustrated", "details": {}}
-            }
-        except RateLimitError as e:
-            print(f"Rate Limit Error: {e}")
-            return {
-                "answer": "Too many requests. Please try again later.",
-                "options": [],
-                "phase": phase,
-                "lead_data": lead_data,
-                "routing": "none",
-                "analysis": {"interest": "high", "mood": "impatient", "details": {}}
-            }
-        except APIError as e:
-            print(f"API Error: {e}")
-            return {
-                "answer": "Something went wrong on my end. Let me try that again or feel free to rephrase!",
-                "options": [],
-                "phase": phase,
-                "lead_data": lead_data,
-                "routing": "none",
-                "analysis": {"interest": "medium", "mood": "confused", "details": {}}
-            }
-        except Exception as e:
-            print(f"Error: {e}")
-            return {
-                "answer": "Something went wrong on my end. Let me try that again or feel free to rephrase!",
-                "options": [],
-                "phase": phase,
-                "lead_data": lead_data,
-                "routing": "none",
-                "analysis": {"interest": "unknown", "mood": "confused", "details": {}}
-            }
-         
+        
+
             
 async def insert_user_message_async(session_id: str, content: str) -> Tuple[str, str]:
     async with AsyncSessionLocal() as db:  
@@ -2348,17 +2271,21 @@ class ServiceTemplateSchema(BaseModel):
         from_attributes = True
 
 
+class AITaskSchema(BaseModel):
+    title: str
+    description: Optional[str] = ""
+
 class ProjectCreateSchema(BaseModel):
-    # Project Specifics
-    project_name: str          
+    project_name: str
     notes: Optional[str] = ""
     company_name: str
     email: str
     phone: str
 
     template_id: Optional[int] = None
-    selected_task_ids: List[int] = [] 
+    selected_task_ids: List[int] = []
     custom_tasks: List[str] = []
+    ai_tasks: List[AITaskSchema] = []
 
 @app.get("/api/service-templates", response_model=List[ServiceTemplateSchema])
 async def get_service_templates(db: AsyncSession = Depends(get_db)):
@@ -2445,6 +2372,22 @@ async def create_project_from_session(
             )
             db.add(custom_task)
             task_sequence += 1
+            
+    ai_tasks = getattr(payload, "ai_tasks", []) or []
+    for ai in ai_tasks:
+        title = (ai.title or "").strip()
+        desc = (ai.description or "").strip()
+        if not title:
+            continue
+        ai_task = ProjectTask(
+            project_id=new_project.id,
+            title=title,
+            details=desc or "AI-suggested task",
+            status="Pending",
+            sequence_number=task_sequence
+        )
+        db.add(ai_task)
+        task_sequence += 1
 
     await db.commit()
     return {"message": "Project created and Client Data updated", "project_id": new_project.id}
@@ -2840,3 +2783,189 @@ async def remove_consultant(consultant_id: str, db: AsyncSession = Depends(get_d
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Consultant not found")
 
     return {"message": f"Consultant with ID {consultant_id} deleted successfully"}
+
+
+class GenerateRequest(BaseModel):
+    session_id: Optional[str] = None
+    template_id: Optional[int] = None
+    project_name: Optional[str] = None
+    company: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    notes: Optional[str] = None
+    max_tasks: Optional[int] = 8
+
+class GeneratedTask(BaseModel):
+    title: str
+    description: Optional[str] = ""
+
+def _build_prompt(company_ctx: str, categories: Optional[str], services: Optional[str], max_tasks: int) -> str:
+    parts = [
+        "You are a task generator for a professional business services firm working in Saudi Arabia.",
+        f"Context: company: {company_ctx or 'N/A'}; categories: {categories or 'N/A'}; services: {services or 'N/A'}",
+        f"Produce up to {max_tasks} concise suggested tasks (title + one-line description) to move this lead to a project-ready state.",
+        "Output MUST be valid JSON: an array of objects with exactly these fields: title (string), description (string).",
+        "Return JSON only — no explanation, no backticks, no commentary.",
+        "Keep descriptions short (<= 140 characters). Use plain text only."
+    ]
+    return "\n".join(parts)
+
+
+async def _call_model_with_retries(prompt: str, max_tokens: int = 700, attempts: int = 3, backoff: float = 0.7) -> str:
+    last_exc = None
+    for attempt in range(1, attempts + 1):
+        try:
+            resp = await client.responses.create(
+                model=MODEL_NAME,
+                input=prompt,
+                temperature=0.0,
+            )
+            
+            # --- SIMPLIFIED EXTRACTION LOGIC ---
+            # Most modern SDKs provide a simple way to get the text.
+            raw_text = getattr(resp, "output_text", None) or getattr(resp, "text", None)
+            
+            if raw_text:
+                return raw_text
+                
+            # If the simple property retrieval fails, use the complex logic as a fallback
+            # (Keeping it here as provided, but marking it as complex/specific)
+            parts = []
+            for item in getattr(resp, "output", []) or []:
+                # ... existing complex extraction logic ...
+                if isinstance(item, dict):
+                    for c in item.get("content", []):
+                        if isinstance(c, dict) and c.get("type") == "output_text":
+                            parts.append(c.get("text", ""))
+                        elif isinstance(c, str):
+                            parts.append(c)
+                elif isinstance(item, str):
+                    parts.append(item)
+            text = "\n".join(p for p in parts if p)
+            if text:
+                return text
+
+            # Fallback to string representation (less reliable)
+            return str(resp)
+
+        except Exception as e:
+            last_exc = e
+            if attempt < attempts:
+                await asyncio.sleep(backoff * attempt)
+            else:
+                break
+
+    raise last_exc if last_exc else Exception("Unknown model call error after retries")
+
+
+def _extract_json_from_text(text: str) -> Optional[List[Dict[str, Any]]]:
+    """Robustly extracts a JSON array of objects from the LLM text output."""
+    
+    # 1. Try direct parse
+    try:
+        parsed = json.loads(text.strip())
+        if isinstance(parsed, list):
+            return parsed
+    except Exception:
+        pass
+    m = re.search(r"(\[\s*\{.*?\}\s*\])", text, flags=re.DOTALL)
+    if m:
+        try:
+            parsed = json.loads(m.group(1))
+            if isinstance(parsed, list):
+                return parsed
+        except Exception:
+            pass
+
+    matches = re.findall(r"\{[^{}]+\}", text, flags=re.DOTALL)
+    if matches:
+        items = []
+        for m in matches:
+            try:
+                items.append(json.loads(m))
+            except Exception:
+                continue
+        return items if items else None
+        
+    return None
+
+
+@app.post("/api/projects/generate-tasks")
+async def generate_tasks(req: GenerateRequest, db: AsyncSession = Depends(get_db)):
+    categories = None
+    services = None
+    company_ctx = (req.company or "")[:1000]
+    try:
+        if req.session_id:
+            q = await db.execute(select(SessionPhase).where(SessionPhase.session_id == req.session_id))
+            sp = q.scalar_one_or_none()
+            if sp:
+                categories = sp.q3_categories
+                services = sp.q4_services
+                
+            q2 = await db.execute(select(CompanyDetails).where(CompanyDetails.session_id == req.session_id))
+            cd = q2.scalar_one_or_none()
+            if cd and cd.c_info:
+                company_ctx = company_ctx or cd.c_info
+                
+    except Exception as e:
+        print(f"Error fetching session context: {e}")
+
+
+    prompt = _build_prompt(company_ctx, categories, services, req.max_tasks or 8)
+
+    try:
+        raw_text = await _call_model_with_retries(prompt, max_tokens=700, attempts=3, backoff=0.7)
+        
+    except Exception as e:
+        print(f"Model call failed permanently: {e}")
+        if req.template_id:
+            try:
+                # SQLAlchemy async execution for template fallback
+                qtpl = await db.execute(select(ServiceTemplate).where(ServiceTemplate.id == req.template_id))
+                tpl = qtpl.scalar_one_or_none()
+                
+                if tpl and getattr(tpl, 'default_tasks', None):
+                    fallback = []
+                    for t in tpl.default_tasks[: (req.max_tasks or 8)]:
+                        # Using getattr for safer access to properties
+                        fallback.append({
+                            "title": getattr(t, 'title', '')[:200], 
+                            "description": (getattr(t, 'description', '') or "")[:400]
+                        })
+                    return {"tasks": fallback}
+            except Exception as fe:
+                print(f"Fallback template read failed: {fe}")
+
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="LLM generation failed; try again later")
+
+    # 4. Extract and Clean Tasks
+    tasks_raw = _extract_json_from_text(raw_text)
+    
+    if not tasks_raw or not isinstance(tasks_raw, list):
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Model returned non-JSON output. Try again later.")
+
+    clean_tasks = []
+    for t in tasks_raw[: (req.max_tasks or 8)]:
+        if isinstance(t, dict):
+            title = (t.get("title") or "").strip()
+            desc = (t.get("description") or "").strip()
+        elif isinstance(t, str):
+            # Fallback for LLM returning a list of strings
+            title = t.strip()
+            desc = ""
+        else:
+            continue
+            
+        if not title:
+            continue
+            
+        # Truncation and cleaning
+        title = title[:200]
+        desc = desc[:400]
+        clean_tasks.append({"title": title, "description": desc})
+
+    if not clean_tasks:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Model returned empty/invalid task list.")
+        
+    return {"tasks": clean_tasks}

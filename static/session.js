@@ -1475,12 +1475,11 @@ function autoUpdateProjectName() {
     }
 }
 
-// --- 3. Handle Template Change (FIX FOR TASKS NOT SHOWING) ---
 function handleTemplateChange() {
+    updateTaskListHeading(false);
     const select = document.getElementById('templateSelect');
     const container = document.getElementById('templateTasksContainer');
-    
-    // Parse ID as integer because Select value is string, but JSON ID is int
+
     const templateId = parseInt(select.value);
 
     if (!templateId) {
@@ -1567,14 +1566,12 @@ function removeCustomTask(i) {
     renderCustomTasks();
 }
 
-// --- 5. Submit (Export) Logic ---
 async function submitProjectCreation() {
     const btn = document.getElementById('submitProjectBtn');
-    
-    // Validation
+
     const company = document.getElementById('edit_company').value.trim();
     const projectName = document.getElementById('edit_project_name').value.trim();
-    
+
     if (!company || !projectName) {
         showPopup("Company Name and Project Name are required.");
         return;
@@ -1584,24 +1581,34 @@ async function submitProjectCreation() {
     btn.disabled = true;
 
     try {
-        // Collect Checkbox IDs
         const checkedBoxes = document.querySelectorAll('input[name="template_task"]:checked');
         const taskIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
 
-        // Prepare Payload
+        const aiTasksSelected = Array.from(document.querySelectorAll('input[name="ai_generated_task"]:checked'))
+            .map(i => {
+                const raw = i.value || "";
+                try {
+                    return JSON.parse(decodeURIComponent(raw));
+                } catch (err) {
+                    const [title = "", details = ""] = raw.split('||');
+                    return { title: title || '', description: details || '' };
+                }
+            })
+            .filter(t => t && (t.title || t.description)); // drop empty items
+
         const payload = {
-            // Client Info (Updates Session/Phase)
             company_name: company,
             email: document.getElementById('edit_email').value.trim(),
             phone: document.getElementById('edit_phone').value.trim(),
-            
-            // Project Info
             project_name: projectName,
             notes: document.getElementById('edit_notes').value,
             template_id: document.getElementById('templateSelect').value ? parseInt(document.getElementById('templateSelect').value) : null,
             selected_task_ids: taskIds,
-            custom_tasks: currentCustomTasks
+            custom_tasks: currentCustomTasks || []
         };
+        if (aiTasksSelected.length > 0) {
+            payload.ai_tasks = aiTasksSelected;
+        }
 
         const response = await fetch(`/api/sessions/${currentSessionId}/project`, {
             method: 'POST',
@@ -1615,16 +1622,133 @@ async function submitProjectCreation() {
             showPopup("Project Created Successfully!");
             closeProjectModal();
         } else {
-            showPopup("Error Creating Project");
+            showPopup(result.detail || "Error Creating Project");
         }
 
     } catch (error) {
+        console.error("submitProjectCreation error:", error);
         showPopup("Network Error");
     } finally {
         btn.innerText = "Create Project & Save Changes";
         btn.disabled = false;
     }
 }
+
+
+
+// --- AI Task Generation (Frontend) ---
+// Adds a new AI suggestions block to the templateTasksContainer
+async function generateAutoTasks() {
+    const btn = document.getElementById('generateAiTasksBtn');
+    
+    const label = document.getElementById('generateAiBtnLabel');
+    const container = document.getElementById('templateTasksContainer');
+    const select = document.getElementById('templateSelect');
+
+    // Prevent double clicks
+    if (btn.dataset.busy === "1") return;
+    btn.dataset.busy = "1";
+    document.getElementById('magicSpark').classList.add('spin-magic');
+    label.textContent = 'Generating...';
+
+
+    try {
+        // Build payload to backend. Send session id and optionally selected template id and some UI fields
+        const payload = {
+            session_id: window.currentSessionId || null,
+            template_id: select.value ? parseInt(select.value) : null,
+            project_name: document.getElementById('edit_project_name').value || null,
+            company: document.getElementById('edit_company').value || null,
+            email: document.getElementById('edit_email').value || null,
+            phone: document.getElementById('edit_phone').value || null,
+            notes: document.getElementById('edit_notes').value || null
+        };
+
+        const resp = await fetch('/api/projects/generate-tasks', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+            const text = await resp.text();
+            throw new Error(text || 'Failed to generate tasks');
+        }
+
+        const data = await resp.json();
+        const tasks = data.tasks || [];
+
+        // Render AI suggestions in the container (create or replace AI section)
+        renderAITaskSuggestions(tasks);
+
+    } catch (err) {
+        console.error('AI generation error', err);
+        // Show an inline error message inside templateTasksContainer (non-destructive)
+        const errNode = document.createElement('p');
+        errNode.className = 'text-red-500 text-sm text-center';
+        errNode.textContent = 'AI task generation failed. Please try again.';
+        // place at top
+        container.prepend(errNode);
+        setTimeout(() => errNode.remove(), 6000);
+    } finally {
+        document.getElementById('magicSpark').classList.remove('spin-magic');
+        label.textContent = 'Auto-generate tasks';
+        btn.dataset.busy = "0";
+    }
+}
+
+// Helper to render AI task suggestions (checkbox list) above the current tasks area.
+function renderAITaskSuggestions(taskList) {
+    const container = document.getElementById('templateTasksContainer');
+    updateTaskListHeading(taskList.length > 0);
+
+    // Remove existing AI section if present
+    const existing = document.getElementById('aiSuggestionsSection');
+    if (existing) existing.remove();
+
+    const rowsHtml = taskList.map((task, idx) => {
+        // Use ai_generated_task as name so existing template_task processing won't be impacted.
+        const id = `ai_task_${idx}`;
+        return `
+            <label class="flex-shrink-0 w-64 p-3 border border-gray-200 rounded-xl cursor-pointer transition hover:bg-gray-50 hover:border-gray-300">
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input type="checkbox" name="ai_generated_task" value="${escapeHtml(task.title)}||${escapeHtml(task.description || '')}" checked
+                            class="h-4 w-4 accent-gray-800 focus:ring-gray-800 border-gray-300 rounded-md">
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <span class="font-semibold text-gray-800">${escapeHtml(task.title)}</span>
+                        ${task.description ? `<p class="text-gray-500 text-xs mt-0.5">${escapeHtml(task.description)}</p>` : ''}
+                    </div>
+                </div>
+            </label>
+        `;
+    }).join('');
+
+    const section = document.createElement('div');
+    section.id = 'aiSuggestionsSection';
+    section.className = 'space-y-4 pb-1';
+    section.innerHTML = `
+        <div class="mb-2">
+            <div class="flex gap-3">
+                ${rowsHtml || '<p class="text-gray-500 text-sm italic">No suggestions returned.</p>'}
+            </div>
+        </div>
+    `;
+    container.prepend(section);
+}
+
+function updateTaskListHeading(hasAI) {
+    const taskHead = document.getElementById("task-head");
+    if (!taskHead) return;
+
+    if (hasAI) {
+        taskHead.innerHTML = `TASK LIST <span class="text-blue-600 font-semibold">(AI Suggestions Added)</span>`;
+    } else {
+        taskHead.textContent = "TASK LIST";
+    }
+}
+
 function closeChat() {
     reconnectAttempts = maxReconnectAttempts;
     if (currentWs) {
