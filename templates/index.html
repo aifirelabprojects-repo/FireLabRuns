@@ -10,6 +10,42 @@
   <script src="/static/tailwind.js"></script>
   <script src="/static/dataset.js"></script>
   <style>
+    #email-verify-anim {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px); 
+      left: 0;
+      margin: 0 auto;
+      width: max-content;
+      padding: 8px 12px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 21px;
+      font-family: sans-serif;
+      font-size: 12px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 9999;
+    }
+  
+    #email-verify-anim .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ccc;
+      border-top-color: #333;
+      border-radius: 50%;
+      animation: simple-spin 0.8s linear infinite;
+    }
+  
+    @keyframes simple-spin {
+      from { transform: rotate(0); }
+      to   { transform: rotate(360deg); }
+    }
+  </style>
+  
+  <style>
     #messages::-webkit-scrollbar { width: 6px; }
     #messages::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.2); border-radius: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -267,7 +303,10 @@ input[type=range]::-webkit-slider-runnable-track {
         
         <div class="absolute right-2 left-2 bottom-3 autocomplete-wrapper">
           <div id="suggestionBox" class="suggestions-list"></div>
-            
+        <div id="email-verify-anim" style="display: none;" >
+          <div class="spinner"></div>
+          <div>Verifying email</div>
+        </div>
           
           <input id="input" type="text" autocomplete="off" placeholder="Type your message..." class="w-full bg-slate-50 border border-slate-200 rounded-full px-[15px] py-[15px]  text-sm focus:outline-none "/>
         
@@ -623,7 +662,7 @@ input[type=range]::-webkit-slider-runnable-track {
       }
     }
 
-    const emailRegex = /@[a-zA-Z0-9.-]*(?:gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|icloud\.com|proton\.me|zoho\.com|aol\.com|gmx\.com|tutanota\.com|mail\.com|yandex\.com)\b/i;
+    
 
     // Function to show email popup
     function showEmailPopup() {
@@ -643,19 +682,131 @@ input[type=range]::-webkit-slider-runnable-track {
       const popup = document.getElementById('emailPopup');
       popup.classList.remove('show');
     }
+
+    const EMAIL_URL = "/verify/email"; 
+    const personalProviderRegex = /@[a-zA-Z0-9.-]*(?:gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|icloud\.com|proton\.me|zoho\.com|aol\.com|gmx\.com|tutanota\.com|mail\.com|yandex\.com)\b/i;
+    const emailExtractRegex = /([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+    const ROLE_WORDS = ['admin','support','sales','info','contact','help','no-reply','noreply','postmaster','founder'];
+
+
+    function showEmailVerifyAnimation() {
+      document.getElementById("email-verify-anim").style.display = "flex";
+    }
     
+    function closeEmailVerifyAnimation() {
+      document.getElementById("email-verify-anim").style.display = "none";
+    }
+    
+    function extractEmails(text) {
+      const matches = [];
+      let m;
+      while ((m = emailExtractRegex.exec(text)) !== null) {
+        const email = `${m[1]}@${m[2]}`;
+        if (!matches.includes(email)) matches.push(email);
+      }
+      return matches;
+    }
+
+    async function verifyEmailWithApi(email, timeoutMs = 8000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+    
+      try {
+        const url = `${EMAIL_URL}?email=${encodeURIComponent(email)}`;
+    
+        const res = await fetch(url, {
+          method: 'GET',
+          signal: controller.signal
+        });
+    
+        clearTimeout(id);
+    
+        if (!res.ok) {
+          throw new Error(`verify API returned ${res.status}`);
+        }
+    
+        return await res.json();
+    
+      } catch (err) {
+        clearTimeout(id);
+        throw err;
+      }
+    }
+    
+
+    function isRoleLocalPart(localPart) {
+      if (!localPart) return false;
+      const lp = localPart.toLowerCase();
+      return ROLE_WORDS.some(role => lp === role || lp.startsWith(`${role}`) || lp.includes(role + '.'));
+    }
 
     async function sendMessage() {
       const text = inputEl.value.trim();
       suggestionBox.innerHTML = '';
       suggestionBox.style.display = 'none';
       if (!text) return;
+
       const originalText = text;
-      inputEl.value = ''; // Clear input immediately
-      // Check for personal email domains
-      if (emailRegex.test(originalText)) {
-        showEmailPopup();
+      inputEl.value = '';
+
+      const emails = extractEmails(originalText);
+
+      if (personalProviderRegex.test(originalText)) {
+        try { showEmailPopup(); } catch (e) { }
       }
+
+      if (emails.length > 0) {
+        showEmailVerifyAnimation();
+
+        try {
+          for (const em of emails) {
+            let apiResp;
+            try {
+              apiResp = await verifyEmailWithApi(em);
+            } catch (err) {
+              closeEmailVerifyAnimation();
+              addMessage('system', 'Could not verify the email address right now. Please try again in a moment.');
+              inputEl.value = originalText;
+              return;
+            }
+            const vals = apiResp.validations || {};
+
+            const formatOk = !!vals.syntax;
+            const domainOk = !!vals.domain_exists;
+            const mxOk = !!vals.mx_records;
+            const isDisposable = !!vals.is_disposable;
+            const isRoleBased = !!vals.is_role_based;
+
+            const localPart = em.split('@')[0] || '';
+            const localPartIsRole = isRoleLocalPart(localPart);
+
+            if (!formatOk || !domainOk || !mxOk || isDisposable) {
+              closeEmailVerifyAnimation();
+              addMessage('system', `We detected that the email "${em}" appears invalid or disposable. Please provide a valid business email.`);
+              inputEl.value = originalText;
+              return; 
+            }
+
+            if (isRoleBased || localPartIsRole) {
+              closeEmailVerifyAnimation();
+              addMessage('system', `The email "${em}" looks like a role/organization address (${localPart}). Please provide a personal or corporate contact email if you want a response.`);
+              inputEl.value = originalText;
+              return; 
+            }
+
+          } 
+
+          closeEmailVerifyAnimation();
+        } catch (err) {
+
+          closeEmailVerifyAnimation();
+          console.error('Email verification error', err);
+          addMessage('system', 'Unexpected error verifying email. Please try again.');
+          inputEl.value = originalText;
+          return;
+        }
+      }
+
       try {
         await ensureSessionAndConnect();
         if (ws.readyState !== WebSocket.OPEN) throw new Error('WebSocket not open');
@@ -663,10 +814,11 @@ input[type=range]::-webkit-slider-runnable-track {
         showGenerating();
         ws.send(JSON.stringify({ type: 'message', content: originalText }));
       } catch (err) {
-        inputEl.value = originalText; // Restore input on failure
+        inputEl.value = originalText;
         addMessage('system', 'Unable to send message. Please try again.');
       }
     }
+
 
     async function sendOption(value, text) {
       try {
