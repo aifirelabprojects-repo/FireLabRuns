@@ -4,7 +4,9 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script src="/static/tailwind.js"></script>
     <link rel="stylesheet" href="/static/chat.css">
@@ -15,20 +17,36 @@
                 extend: {
                     colors: {
                         primary: "#4F46E5",
-                        "background-light": "#F8FAFC", 
-                        "background-dark": "#111827", 
+                        "background-light": "#F8FAFC",
+                        "background-dark": "#111827",
                     },
                     fontFamily: {
-                        display: ["Inter", "sans-serif"],
+                        sans: ["Inter", "system-ui", "sans-serif"],
+                        display: ["Inter", "system-ui", "sans-serif"],
                     },
                     borderRadius: {
-                        DEFAULT: "0.75rem",
+                        DEFAULT: "0.75rem", 
+                        lg: "1rem",
                     },
                 },
             },
         };
     </script>
     <style>
+        /* Apply Manrope (or any Google Font) to everything – no Tailwind config needed */
+        body, html {
+          font-family: "Plus Jakarta Sans", "system-ui", "sans-serif";
+          font-feature-settings: "cv11", "ss01";
+          font-weight: 400;
+        }
+      
+        /* Optional: make headings bolder automatically */
+        h1, h2, h3, h4, h5, h6, .font-bold {
+          font-weight: 600 !important;
+        }
+        .font-medium { font-weight: 500 !important; }
+        .font-semibold { font-weight: 600 !important; }
+
         .material-symbols-outlined {
             font-variation-settings:
                 'FILL' 0,
@@ -115,16 +133,14 @@
         }
     </style>
 </head>
-<body class="font-display bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100">
+<body class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100">
     <div class="flex h-screen pt-20">
         <div id="navbar-wrapper" class="w-full fixed top-0 z-50 bg-gray-50 dark:bg-gray-900 px-8 py-2">
     
             <nav id="navbar" class="w-full mx-auto bg-white dark:bg-gray-800 rounded-full  border border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between">
                 
                 <div class="flex items-center gap-3 shrink-0">
-                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                        A
-                    </div>
+                    
                     <span class="text-xl font-bold text-gray-800 dark:text-white tracking-tight">Analytix</span>
                 </div>
         
@@ -132,15 +148,7 @@
                     
                     <a href="#" data-tab="dashboard" class="px-5 py-2 rounded-full bg-gray-800 dark:bg-gray-700/50 text-white dark:text-white font-semibold text-sm transition-colors tab-link">
                         Dashboard
-                    </a>
-        
-                    <a href="#" data-tab="analytics" class="px-5 py-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/30 text-sm font-medium transition-colors tab-link">
-                        Analytics
-                    </a>
-                    
-                    <a href="#" data-tab="insights" class="px-5 py-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/30 text-sm font-medium transition-colors tab-link">
-                        Insights
-                    </a>
+                    </a>     
                     
                     <a href="#" data-tab="sessions" class="px-5 py-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/30 text-sm font-medium transition-colors tab-link">
                         Sessions
@@ -153,6 +161,13 @@
                     <a href="#" data-tab="projects" class="px-5 py-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/30 text-sm font-medium transition-colors tab-link">
                         Projects
                     </a>
+                    <a href="#" data-tab="analytics" class="px-5 py-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/30 text-sm font-medium transition-colors tab-link">
+                        Analytics
+                    </a>
+                    
+                    <a href="#" data-tab="insights" class="px-5 py-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/30 text-sm font-medium transition-colors tab-link">
+                        Knowledge
+                    </a>
         
                 </div>
         
@@ -160,11 +175,11 @@
                     <div class=" bg-gray-100 rounded-full p-1" >
                         <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 relative">
                             <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                         </button>
             
                         <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </button>
                     </div>
         
@@ -198,33 +213,33 @@
                         
                         <button onclick="loadDashboard()" class="p-2 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg hover:bg-background-light dark:hover:bg-background-dark transition-colors duration-200" title="Refresh analytics">
                             <svg class="w-5 h-5 text-text-secondary-light dark:text-text-secondary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                             </svg>
                         </button>
                     </header>
                 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
                         <!-- Total Leads -->
-                        <div class="bg-white dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm card-hover">
+                        <div class="bg-gradient-to-b from-[#1f76fa] to-[#78a3e4] p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm card-hover">
                             <div class="flex justify-between items-start mb-2">
-                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Total Leads</span>
-                                <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                <span class="text-sm font-medium text-white uppercase">Total Leads</span>
+                                <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-full">
+                                    <svg class="w-6 h-6 text-gray-900 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                                     </svg>
                                 </div>
                             </div>
-                            <p class="text-4xl font-bold text-gray-800 dark:text-white" id="total-leads">0</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Collected this week</p>
+                            <p class="text-4xl font-bold text-white" id="total-leads">0</p>
+                            <p class="text-sm text-gray-100 dark:text-gray-400">Collected this week</p>
                         </div>
                         <!-- High Engagement -->
                         <div class="bg-white dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm card-hover">
                             <div class="flex justify-between items-start mb-2">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">High Engagement</span>
-                                <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
-                                    </svg>
+                                <div class="p-2 bg-gradient-to-b from-[#1f76fa] to-[#65a3ff] dark:bg-blue-900/50 rounded-full">
+                                    <svg class="w-6 h-6 text-white dark:text-blue-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M6.08913 13.2799H9.17913V20.4799C9.17913 22.1599 10.0891 22.4999 11.1991 21.2399L18.7691 12.6399C19.6991 11.5899 19.3091 10.7199 17.8991 10.7199H14.8091V3.5199C14.8091 1.8399 13.8991 1.4999 12.7891 2.7599L5.21913 11.3599C4.29913 12.4199 4.68913 13.2799 6.08913 13.2799Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
                                 </div>
                             </div>
                             <p class="text-4xl font-bold text-gray-800 dark:text-white" id="high-engagement">0</p>
@@ -234,10 +249,11 @@
                         <div class="bg-white dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm card-hover">
                             <div class="flex justify-between items-start mb-2">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Active Chats</span>
-                                <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                                    </svg>
+                                <div class="p-2 bg-gradient-to-b from-[#1f76fa] to-[#65a3ff] dark:bg-blue-900/50 rounded-full">
+                                    <svg class="w-6 h-6 text-white dark:text-blue-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="3" cy="3" r="3" transform="matrix(-1 0 0 1 22 2)" stroke="currentColor" stroke-width="1.5"/>
+                                        <path d="M14 2.20004C13.3538 2.06886 12.6849 2 12 2C10.1786 2 8.47087 2.48697 7 3.33782M21.8 10C21.9311 10.6462 22 11.3151 22 12C22 17.5228 17.5228 22 12 22C10.4003 22 8.88837 21.6244 7.54753 20.9565C7.19121 20.7791 6.78393 20.72 6.39939 20.8229L4.17335 21.4185C3.20701 21.677 2.32295 20.793 2.58151 19.8267L3.17712 17.6006C3.28001 17.2161 3.22094 16.8088 3.04346 16.4525C2.37562 15.1116 2 13.5997 2 12C2 10.1786 2.48697 8.47087 3.33782 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        </svg>
                                 </div>
                             </div>
                             <p class="text-4xl font-bold text-gray-800 dark:text-white" id="active-chats">0</p>
@@ -247,9 +263,9 @@
                         <div class="bg-white dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm card-hover">
                             <div class="flex justify-between items-start mb-2">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Avg Response</span>
-                                <div class="p-2 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
-                                    <svg class="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                <div class="p-2 bg-gray-900 dark:bg-gray-700/50 rounded-full">
+                                    <svg class="w-6 h-6 text-gray-100 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                 </div>
                             </div>
@@ -260,16 +276,17 @@
                         <div class="bg-white dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm card-hover">
                             <div class="flex justify-between items-start mb-2">
                                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Requested Services</span>
-                                <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                <div class="p-2 bg-gradient-to-b from-[#1f76fa] to-[#65a3ff] dark:bg-blue-900/50 rounded-full">
+                                    <svg class="w-6 h-6 text-white dark:text-blue-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M6.4443 3.6853C6.97115 3.33327 7.52766 3.03383 8.10577 2.7894C9.50868 2.19627 10.2101 1.8997 11.1051 2.49296C12 3.08623 12 4.05748 12 6V8C12 9.88561 12 10.8284 12.5858 11.4142C13.1716 12 14.1144 12 16 12H18C19.9425 12 20.9138 12 21.507 12.8949C22.1003 13.7899 21.8037 14.4913 21.2106 15.8942C20.9662 16.4723 20.6667 17.0288 20.3147 17.5557C19.2159 19.2002 17.6541 20.4819 15.8268 21.2388C13.9996 21.9957 11.9889 22.1937 10.0491 21.8078C8.10929 21.422 6.32746 20.4696 4.92894 19.0711C3.53041 17.6725 2.578 15.8907 2.19215 13.9509C1.8063 12.0111 2.00433 10.0004 2.76121 8.17316C3.51809 6.3459 4.79981 4.78412 6.4443 3.6853Z" stroke="currentColor" stroke-width="1.5"/>
+                                        <path d="M14.5 2.31506C18.014 3.21951 20.7805 5.986 21.685 9.50002" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                                     </svg>
                                 </div>
                             </div>
                             <p class="text-4xl font-bold text-gray-800 dark:text-white" id="requested-services">0</p>
                             <p class="flex items-center text-sm text-green-600 dark:text-green-400" id="requested-change">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
                                 </svg>
                                 0% vs last period
                             </p>
@@ -294,7 +311,7 @@
                                         <p class="font-semibold text-gray-800 dark:text-white" id="top-service-name">N/A</p>
                                         <p class="flex items-center text-sm text-green-600 dark:text-green-400" id="top-service-change">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
                                             </svg>
                                             0% vs last week
                                         </p>
@@ -302,7 +319,7 @@
                                 </div>
                             </div>
                             <div class="space-y-5" id="service-demand-list">
-                                <!-- Dynamic service bars will be inserted here -->
+                                
                             </div>
                         </div>
                         <div class="bg-white dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm card-hover">
@@ -320,7 +337,7 @@
                                 <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Hot Leads Radar</h2>
                                 <span class="text-sm bg-gray-100 dark:bg-gray-700/50 px-3 py-1 rounded-full text-gray-600 dark:text-gray-300 flex items-center gap-1" id="hot-leads-count">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                     </svg>
                                     0 ready
                                 </span>
@@ -331,41 +348,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                        <div class="bg-white dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm card-hover flex flex-col justify-between">
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">AI Analytics</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Explore conversation trends and AI insights to optimize performance.</p>
-                            </div>
-                            <a class="self-end text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary tab-link" href="#" data-tab="analytics">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                </svg>
-                            </a>
-                        </div>
-                        <div class="bg-white dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm card-hover flex flex-col justify-between">
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">All Leads</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">View and manage all collected leads. Export data for your CRM.</p>
-                            </div>
-                            <a class="self-end text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary tab-link" href="#" data-tab="leads">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                </svg>
-                            </a>
-                        </div>
-                        <div class="bg-white dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm card-hover flex flex-col justify-between">
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Chat Sessions</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Review full conversational history and user interactions.</p>
-                            </div>
-                            <a class="self-end text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary tab-link" href="#" data-tab="sessions">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                </svg>
-                            </a>
-                        </div>
-                    </div>
+                    
                     </div>
                 </div>
 
@@ -398,7 +381,7 @@
                             const colorClass = isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
                             reqChangeEl.innerHTML = `
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${reqPathD}"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${reqPathD}"></path>
                                 </svg>
                                 ${data.requested_change} vs last period
                             `;
@@ -416,7 +399,7 @@
                             const topColor = topIsPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
                             topChangeEl.innerHTML = `
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${topPathD}"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${topPathD}"></path>
                                 </svg>
                                 ${data.top_service.change} vs last week
                             `;
@@ -436,8 +419,8 @@
                                             <span>${service.name}</span>
                                             <div><span class="font-semibold text-gray-800 dark:text-white">${service.count}</span> <span class="${icon} ml-2">${changeText}</span></div>
                                         </div>
-                                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                            <div class="bg-gray-800 dark:bg-gray-300 h-1.5 rounded-full" style="width: ${barWidth}%"></div>
+                                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                                            <div class="bg-gradient-to-r from-[#1f76fa] to-[#65a3ff] h-2.5 rounded-full" style="width: ${barWidth}%"></div>
                                         </div>
                                     </div>
                                 `;
@@ -462,7 +445,7 @@
                                             <p class="font-semibold text-gray-800 dark:text-white">${conv.duration}</p>
                                             <p class="flex items-center justify-end text-sm ${changeColor}">
                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${convPathD}"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${convPathD}"></path>
                                                 </svg>
                                                 ${conv.change}
                                             </p>
@@ -475,7 +458,7 @@
                             // Hot Leads Radar
                             document.getElementById('hot-leads-count').innerHTML = `
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                 </svg>
                                 ${data.hot_leads_count} ready
                             `;
@@ -512,8 +495,8 @@
                     } else {
                         loadDashboard();
                     }
-
                 </script>
+
                 <div id="analytics-tab" class="tab-panel hidden">
                     <div id="analytics-spinner" class="fixed inset-0 flex items-center justify-center z-50">
                         <div class="animate-spin rounded-full h-10 w-10 border-[4px] border-gray-900 border-t-transparent"></div>
@@ -527,14 +510,14 @@
                             <div class="flex items-center space-x-2">
                                 <button id="refresh-btn" class="p-2 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg hover:bg-background-light dark:hover:bg-background-dark transition-colors duration-200" title="Refresh analytics">
                                     <svg class="w-5 h-5 text-text-secondary-light dark:text-text-secondary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                     </svg>
                                 </button>
                                 <div class="relative">
                                     <button id="period-toggle" class="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg text-sm font-medium" aria-expanded="false">
                                         <span id="period-text">This Week</span>
                                         <svg id="chevron-icon" class="w-4 h-4 text-text-secondary-light dark:text-text-secondary-dark transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"></path>
                                         </svg>
                                     </button>
                                     <div id="period-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg shadow-lg opacity-0 invisible transition-all duration-200 z-10">
@@ -555,9 +538,9 @@
                                         <p class="text-4xl font-bold mt-2" id="highly-engaged-count">0</p>
                                         <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1" id="highly-engaged-pct">0% of all conversations</p>
                                     </div>
-                                    <div class="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-lg">
-                                        <svg class="w-6 h-6 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                                    <div class="p-2 bg-gradient-to-b from-[#1f76fa] to-[#65a3ff] rounded-full">
+                                        <svg class="w-6 h-6 text-white dark:text-blue-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M6.08913 13.2799H9.17913V20.4799C9.17913 22.1599 10.0891 22.4999 11.1991 21.2399L18.7691 12.6399C19.6991 11.5899 19.3091 10.7199 17.8991 10.7199H14.8091V3.5199C14.8091 1.8399 13.8991 1.4999 12.7891 2.7599L5.21913 11.3599C4.29913 12.4199 4.68913 13.2799 6.08913 13.2799Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                     </div>
                                 </div>
@@ -570,9 +553,9 @@
                                         <p class="text-4xl font-bold mt-2" id="ai-enriched-leads">0</p>
                                         <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1">Deep research completed</p>
                                     </div>
-                                    <div class="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-lg">
-                                        <svg class="w-6 h-6 text-blue-500 dark:text-blue-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M11.7086 1.53214C10.9786 1.05676 10.078 0.917375 9.27255 1.04467C8.46803 1.17183 7.62325 1.5904 7.12591 2.39445C6.9332 2.70601 6.81024 3.04646 6.7559 3.40767C5.97312 3.35525 5.18086 3.59264 4.58547 4.08919C3.98255 4.59201 3.59741 5.34432 3.59741 6.25684C3.59741 6.55614 3.63851 6.86315 3.72008 7.17654C3.42298 7.23942 3.13697 7.34918 2.86932 7.50027C1.98542 7.99927 1.36438 8.90663 1.11913 9.88841C0.869371 10.8882 0.989124 12.0467 1.70052 13.0391C2.0609 13.5419 2.54903 13.9691 3.1623 14.305C3.01053 14.5081 2.88229 14.7271 2.77811 14.9565C2.35249 15.8935 2.32044 17.0038 2.64559 17.98C2.97535 18.9701 3.69756 19.8871 4.83624 20.3254C5.57833 20.6111 6.42615 20.6665 7.35551 20.4749C7.39798 20.9494 7.52745 21.3806 7.74983 21.7577C8.22598 22.5651 9.0236 22.9458 9.80541 22.9947C10.5523 23.0414 11.3758 22.778 12 22.2458C12.6242 22.778 13.4477 23.0414 14.1946 22.9947C14.9764 22.9458 15.774 22.5651 16.2502 21.7577C16.4725 21.3806 16.602 20.9494 16.6445 20.4749C17.5738 20.6665 18.4217 20.6111 19.1638 20.3254C20.3024 19.8871 21.0246 18.9701 21.3544 17.98C21.6796 17.0038 21.6475 15.8935 21.2219 14.9565C21.1177 14.7271 20.9895 14.5081 20.8377 14.305C21.451 13.9691 21.9391 13.5419 22.2995 13.0391C23.0109 12.0467 23.1306 10.8882 22.8809 9.88841C22.6356 8.90663 22.0146 7.99927 21.1307 7.50027C20.863 7.34918 20.577 7.23942 20.2799 7.17654C20.3615 6.86315 20.4026 6.55614 20.4026 6.25684C20.4026 5.34432 20.0175 4.59201 19.4145 4.08919C18.8191 3.59264 18.0269 3.35525 17.2441 3.40767C17.1898 3.04646 17.0668 2.70601 16.8741 2.39445C16.3767 1.5904 15.532 1.17183 14.7274 1.04467C13.922 0.917375 13.0214 1.05676 12.2914 1.53214C11.9861 1.73097 12.0139 1.73097 11.7086 1.53214ZM13.0033 20.0518L13.0033 17.5288C13.0045 17.0494 13.1133 16.3457 13.3939 15.7998C13.6573 15.2872 13.9946 15.0268 14.5082 15.0268C15.0623 15.0268 15.5115 14.5773 15.5115 14.0227C15.5115 13.4682 15.0623 13.0186 14.5082 13.0186C13.9202 13.0186 13.4216 13.16 13.0033 13.3894V12.5084C13.0045 12.029 13.1133 11.3254 13.3939 10.7794C13.6573 10.2668 13.9946 10.0064 14.5082 10.0064C15.0623 10.0064 15.5115 9.55688 15.5115 9.00234C15.5115 8.4478 15.0623 7.99826 14.5082 7.99826C13.9202 7.99826 13.4216 8.13957 13.0033 8.36902L13.0033 3.97532C13.005 3.57853 13.1671 3.35779 13.3859 3.21528C13.6436 3.04746 14.0284 2.96723 14.4144 3.02824C14.8013 3.08939 15.0539 3.26704 15.1679 3.45142C15.2603 3.60078 15.3726 3.9329 15.091 4.59054C14.9015 5.03294 15.0524 5.54766 15.4507 5.8175C15.849 6.08734 16.3825 6.03639 16.7226 5.69604C17.0903 5.32811 17.7563 5.32032 18.1299 5.63189C18.2795 5.75662 18.396 5.94564 18.396 6.25684C18.396 6.59422 18.2548 7.14633 17.705 7.91672C17.4235 8.31116 17.4637 8.85055 17.8006 9.19878C18.1375 9.54701 18.6749 9.60465 19.0779 9.33577C19.5101 9.04741 19.8566 9.08664 20.1448 9.24934C20.4837 9.44063 20.8032 9.85112 20.9342 10.3755C21.0607 10.8818 20.9923 11.4176 20.669 11.8686C20.3466 12.3184 19.6765 12.8121 18.3565 13.0323C17.8683 13.1137 17.5124 13.5392 17.5182 14.0344C17.5239 14.5296 17.8896 14.9467 18.3795 15.0167C18.8812 15.0884 19.207 15.3732 19.3952 15.7874C19.5966 16.231 19.6273 16.8151 19.4508 17.345C19.2789 17.861 18.9351 18.2619 18.4434 18.4511C17.9498 18.6411 17.1399 18.6809 15.9267 18.129C15.5761 17.9695 15.1653 18.025 14.8694 18.2716C14.5735 18.5183 14.4448 18.9127 14.5382 19.2866C14.6621 19.7827 14.8668 20.9406 14.0694 20.9905C13.5184 21.0249 13.0062 20.6055 13.0033 20.0518ZM10.9967 3.97532C10.995 3.57853 10.8329 3.35779 10.6141 3.21528C10.3564 3.04746 9.97157 2.96723 9.58558 3.02824C9.19869 3.08939 8.94611 3.26704 8.83207 3.45142C8.73968 3.60078 8.62739 3.9329 8.90901 4.59054C9.09846 5.03294 8.94757 5.54766 8.54931 5.8175C8.15105 6.08734 7.61747 6.03639 7.27739 5.69604C6.90975 5.32811 6.24365 5.32032 5.87006 5.63189C5.72051 5.75662 5.604 5.94564 5.604 6.25684C5.604 6.59422 5.74515 7.14633 6.29501 7.91672C6.57653 8.31116 6.53629 8.85055 6.19937 9.19878C5.86246 9.54701 5.32505 9.60465 4.92206 9.33577C4.48987 9.04741 4.1434 9.08664 3.8552 9.24934C3.51634 9.44063 3.19679 9.85112 3.06581 10.3755C2.93933 10.8818 3.0077 11.4176 3.33095 11.8686C3.65342 12.3184 4.32349 12.8121 5.64353 13.0323C6.13166 13.1137 6.48757 13.5392 6.48182 14.0344C6.47607 14.5296 6.11037 14.9467 5.62048 15.0167C5.1188 15.0884 4.793 15.3732 4.60484 15.7874C4.40339 16.231 4.37273 16.8151 4.54922 17.345C4.7211 17.861 5.06489 18.2619 5.55656 18.4511C6.05021 18.6411 6.86015 18.6809 8.0733 18.129C8.42388 17.9695 8.83474 18.025 9.13063 18.2716C9.42652 18.5183 9.5552 18.9127 9.4618 19.2866C9.33788 19.7827 9.13324 20.9406 9.93058 20.9905C10.4816 21.0249 10.9938 20.6055 10.9967 20.0518L10.9967 20.0472V17.5292C10.9955 17.0498 10.8868 16.3459 10.6061 15.7998C10.3427 15.2872 10.0054 15.0268 9.49176 15.0268C8.93765 15.0268 8.48846 14.5773 8.48846 14.0227C8.48846 13.4682 8.93765 13.0186 9.49176 13.0186C10.0798 13.0186 10.5784 13.16 10.9967 13.3894V12.5088C10.9955 12.0294 10.8868 11.3255 10.6061 10.7794C10.3427 10.2668 10.0054 10.0064 9.49176 10.0064C8.93765 10.0064 8.48846 9.55688 8.48846 9.00234C8.48846 8.4478 8.93765 7.99826 9.49176 7.99826C10.0798 7.99826 10.5784 8.13957 10.9967 8.36902L10.9967 3.97532Z" fill="currentColor"/>
+                                    <div class="p-2 bg-gradient-to-b from-[#1f76fa] to-[#65a3ff] rounded-full">
+                                        <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M11.7086 1.53214C10.9786 1.05676 10.078 0.917375 9.27255 1.04467C8.46803 1.17183 7.62325 1.5904 7.12591 2.39445C6.9332 2.70601 6.81024 3.04646 6.7559 3.40767C5.97312 3.35525 5.18086 3.59264 4.58547 4.08919C3.98255 4.59201 3.59741 5.34432 3.59741 6.25684C3.59741 6.55614 3.63851 6.86315 3.72008 7.17654C3.42298 7.23942 3.13697 7.34918 2.86932 7.50027C1.98542 7.99927 1.36438 8.90663 1.11913 9.88841C0.869371 10.8882 0.989124 12.0467 1.70052 13.0391C2.0609 13.5419 2.54903 13.9691 3.1623 14.305C3.01053 14.5081 2.88229 14.7271 2.77811 14.9565C2.35249 15.8935 2.32044 17.0038 2.64559 17.98C2.97535 18.9701 3.69756 19.8871 4.83624 20.3254C5.57833 20.6111 6.42615 20.6665 7.35551 20.4749C7.39798 20.9494 7.52745 21.3806 7.74983 21.7577C8.22598 22.5651 9.0236 22.9458 9.80541 22.9947C10.5523 23.0414 11.3758 22.778 12 22.2458C12.6242 22.778 13.4477 23.0414 14.1946 22.9947C14.9764 22.9458 15.774 22.5651 16.2502 21.7577C16.4725 21.3806 16.602 20.9494 16.6445 20.4749C17.5738 20.6665 18.4217 20.6111 19.1638 20.3254C20.3024 19.8871 21.0246 18.9701 21.3544 17.98C21.6796 17.0038 21.6475 15.8935 21.2219 14.9565C21.1177 14.7271 20.9895 14.5081 20.8377 14.305C21.451 13.9691 21.9391 13.5419 22.2995 13.0391C23.0109 12.0467 23.1306 10.8882 22.8809 9.88841C22.6356 8.90663 22.0146 7.99927 21.1307 7.50027C20.863 7.34918 20.577 7.23942 20.2799 7.17654C20.3615 6.86315 20.4026 6.55614 20.4026 6.25684C20.4026 5.34432 20.0175 4.59201 19.4145 4.08919C18.8191 3.59264 18.0269 3.35525 17.2441 3.40767C17.1898 3.04646 17.0668 2.70601 16.8741 2.39445C16.3767 1.5904 15.532 1.17183 14.7274 1.04467C13.922 0.917375 13.0214 1.05676 12.2914 1.53214C11.9861 1.73097 12.0139 1.73097 11.7086 1.53214ZM13.0033 20.0518L13.0033 17.5288C13.0045 17.0494 13.1133 16.3457 13.3939 15.7998C13.6573 15.2872 13.9946 15.0268 14.5082 15.0268C15.0623 15.0268 15.5115 14.5773 15.5115 14.0227C15.5115 13.4682 15.0623 13.0186 14.5082 13.0186C13.9202 13.0186 13.4216 13.16 13.0033 13.3894V12.5084C13.0045 12.029 13.1133 11.3254 13.3939 10.7794C13.6573 10.2668 13.9946 10.0064 14.5082 10.0064C15.0623 10.0064 15.5115 9.55688 15.5115 9.00234C15.5115 8.4478 15.0623 7.99826 14.5082 7.99826C13.9202 7.99826 13.4216 8.13957 13.0033 8.36902L13.0033 3.97532C13.005 3.57853 13.1671 3.35779 13.3859 3.21528C13.6436 3.04746 14.0284 2.96723 14.4144 3.02824C14.8013 3.08939 15.0539 3.26704 15.1679 3.45142C15.2603 3.60078 15.3726 3.9329 15.091 4.59054C14.9015 5.03294 15.0524 5.54766 15.4507 5.8175C15.849 6.08734 16.3825 6.03639 16.7226 5.69604C17.0903 5.32811 17.7563 5.32032 18.1299 5.63189C18.2795 5.75662 18.396 5.94564 18.396 6.25684C18.396 6.59422 18.2548 7.14633 17.705 7.91672C17.4235 8.31116 17.4637 8.85055 17.8006 9.19878C18.1375 9.54701 18.6749 9.60465 19.0779 9.33577C19.5101 9.04741 19.8566 9.08664 20.1448 9.24934C20.4837 9.44063 20.8032 9.85112 20.9342 10.3755C21.0607 10.8818 20.9923 11.4176 20.669 11.8686C20.3466 12.3184 19.6765 12.8121 18.3565 13.0323C17.8683 13.1137 17.5124 13.5392 17.5182 14.0344C17.5239 14.5296 17.8896 14.9467 18.3795 15.0167C18.8812 15.0884 19.207 15.3732 19.3952 15.7874C19.5966 16.231 19.6273 16.8151 19.4508 17.345C19.2789 17.861 18.9351 18.2619 18.4434 18.4511C17.9498 18.6411 17.1399 18.6809 15.9267 18.129C15.5761 17.9695 15.1653 18.025 14.8694 18.2716C14.5735 18.5183 14.4448 18.9127 14.5382 19.2866C14.6621 19.7827 14.8668 20.9406 14.0694 20.9905C13.5184 21.0249 13.0062 20.6055 13.0033 20.0518ZM10.9967 3.97532C10.995 3.57853 10.8329 3.35779 10.6141 3.21528C10.3564 3.04746 9.97157 2.96723 9.58558 3.02824C9.19869 3.08939 8.94611 3.26704 8.83207 3.45142C8.73968 3.60078 8.62739 3.9329 8.90901 4.59054C9.09846 5.03294 8.94757 5.54766 8.54931 5.8175C8.15105 6.08734 7.61747 6.03639 7.27739 5.69604C6.90975 5.32811 6.24365 5.32032 5.87006 5.63189C5.72051 5.75662 5.604 5.94564 5.604 6.25684C5.604 6.59422 5.74515 7.14633 6.29501 7.91672C6.57653 8.31116 6.53629 8.85055 6.19937 9.19878C5.86246 9.54701 5.32505 9.60465 4.92206 9.33577C4.48987 9.04741 4.1434 9.08664 3.8552 9.24934C3.51634 9.44063 3.19679 9.85112 3.06581 10.3755C2.93933 10.8818 3.0077 11.4176 3.33095 11.8686C3.65342 12.3184 4.32349 12.8121 5.64353 13.0323C6.13166 13.1137 6.48757 13.5392 6.48182 14.0344C6.47607 14.5296 6.11037 14.9467 5.62048 15.0167C5.1188 15.0884 4.793 15.3732 4.60484 15.7874C4.40339 16.231 4.37273 16.8151 4.54922 17.345C4.7211 17.861 5.06489 18.2619 5.55656 18.4511C6.05021 18.6411 6.86015 18.6809 8.0733 18.129C8.42388 17.9695 8.83474 18.025 9.13063 18.2716C9.42652 18.5183 9.5552 18.9127 9.4618 19.2866C9.33788 19.7827 9.13324 20.9406 9.93058 20.9905C10.4816 21.0249 10.9938 20.6055 10.9967 20.0518L10.9967 20.0472V17.5292C10.9955 17.0498 10.8868 16.3459 10.6061 15.7998C10.3427 15.2872 10.0054 15.0268 9.49176 15.0268C8.93765 15.0268 8.48846 14.5773 8.48846 14.0227C8.48846 13.4682 8.93765 13.0186 9.49176 13.0186C10.0798 13.0186 10.5784 13.16 10.9967 13.3894V12.5088C10.9955 12.0294 10.8868 11.3255 10.6061 10.7794C10.3427 10.2668 10.0054 10.0064 9.49176 10.0064C8.93765 10.0064 8.48846 9.55688 8.48846 9.00234C8.48846 8.4478 8.93765 7.99826 9.49176 7.99826C10.0798 7.99826 10.5784 8.13957 10.9967 8.36902L10.9967 3.97532Z"  fill="currentColor"/>
                                         </svg>
                                     </div>
                                 </div>
@@ -585,9 +568,9 @@
                                         <p class="text-4xl font-bold mt-2" id="buying-signals">0</p>
                                         <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1">High-intent indicators detected</p>
                                     </div>
-                                    <div class="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-lg">
-                                        <svg class="w-6 h-6 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    <div class="p-2 bg-gradient-to-b from-[#1f76fa] to-[#65a3ff] rounded-full">
+                                        <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M7.2998 5H22L20 12H8.37675M21 16H9L7 3H4M4 8H2M5 11H2M6 14H2M10 20C10 20.5523 9.55228 21 9 21C8.44772 21 8 20.5523 8 20C8 19.4477 8.44772 19 9 19C9.55228 19 10 19.4477 10 20ZM21 20C21 20.5523 20.5523 21 20 21C19.4477 21 19 20.5523 19 20C19 19.4477 19.4477 19 20 19C20.5523 19 21 19.4477 21 20Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                     </div>
                                 </div>
@@ -600,9 +583,9 @@
                                         <p class="text-4xl font-bold mt-2" id="avg-chat-duration">0m 0s</p>
                                         <p class="text-sm mt-1" id="avg-change-pct">0% vs last week</p>
                                     </div>
-                                    <div class="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-lg">
-                                        <svg class="w-6 h-6 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    <div class="p-2 bg-gradient-to-b from-[#1f76fa] to-[#65a3ff] rounded-full">
+                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
                                     </div>
                                 </div>
@@ -613,7 +596,7 @@
                                 <div class="flex items-center space-x-4">
                                     <div class="p-3 bg-background-light dark:bg-background-dark rounded-lg">
                                         <svg class="w-6 h-6 text-text-primary-light dark:text-text-primary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                                         </svg>
                                     </div>
                                     <div>
@@ -627,8 +610,8 @@
                                             <span class="font-medium text-sm">Highly Engaged</span>
                                             <span class="font-semibold text-sm" id="eng-highly-count">0</span>
                                         </div>
-                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2">
-                                            <div class="bg-gray-800 dark:bg-gray-200 h-2 rounded-full transition-all duration-300" id="eng-highly-bar" style="width: 0%"></div>
+                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2.5">
+                                            <div class="bg-gray-800 dark:bg-gray-200 h-2.5 rounded-full transition-all duration-300" id="eng-highly-bar" style="width: 0%"></div>
                                         </div>
                                         <p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-2">Shared details, asked questions, long chats</p>
                                     </div>
@@ -637,8 +620,8 @@
                                             <span class="font-medium text-sm">Engaged</span>
                                             <span class="font-semibold text-sm" id="eng-engaged-count">0</span>
                                         </div>
-                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2">
-                                            <div class="bg-gray-600 dark:bg-gray-400 h-2 rounded-full transition-all duration-300" id="eng-engaged-bar" style="width: 0%"></div>
+                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2.5">
+                                            <div class="bg-gray-600 dark:bg-gray-400 h-2.5 rounded-full transition-all duration-300" id="eng-engaged-bar" style="width: 0%"></div>
                                         </div>
                                         <p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-2">Good conversation flow, moderate detail</p>
                                     </div>
@@ -647,8 +630,8 @@
                                             <span class="font-medium text-sm">Neutral</span>
                                             <span class="font-semibold text-sm" id="eng-neutral-count">0</span>
                                         </div>
-                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2">
-                                            <div class="bg-gray-400 dark:bg-gray-600 h-2 rounded-full transition-all duration-300" id="eng-neutral-bar" style="width: 0%"></div>
+                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2.5">
+                                            <div class="bg-gray-400 dark:bg-gray-600 h-2.5 rounded-full transition-all duration-300" id="eng-neutral-bar" style="width: 0%"></div>
                                         </div>
                                         <p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-2">Basic responses, minimal engagement</p>
                                     </div>
@@ -657,8 +640,8 @@
                                             <span class="font-medium text-sm">Disengaged</span>
                                             <span class="font-semibold text-sm" id="eng-disengaged-count">0</span>
                                         </div>
-                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2">
-                                            <div class="bg-gray-200 dark:bg-gray-800 h-2 rounded-full transition-all duration-300" id="eng-disengaged-bar" style="width: 0%"></div>
+                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2.5">
+                                            <div class="bg-gray-200 dark:bg-gray-800 h-2.5 rounded-full transition-all duration-300" id="eng-disengaged-bar" style="width: 0%"></div>
                                         </div>
                                         <p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-2">Brief interaction, no follow-through</p>
                                     </div>
@@ -684,8 +667,8 @@
                                             <span>excited</span>
                                             <span id="sent-excited">0 (0%)</span>
                                         </div>
-                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2">
-                                            <div class="bg-gray-900 dark:bg-gray-200 h-2 rounded-full transition-all duration-300" id="sent-excited-bar" style="width: 0%"></div>
+                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2.5">
+                                            <div class="bg-gray-900 dark:bg-gray-200 h-2.5 rounded-full transition-all duration-300" id="sent-excited-bar" style="width: 0%"></div>
                                         </div>
                                     </div>
                                     <div>
@@ -693,8 +676,8 @@
                                             <span>positive</span>
                                             <span id="sent-positive">0 (0%)</span>
                                         </div>
-                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2">
-                                            <div class="bg-gray-800 dark:bg-gray-300 h-2 rounded-full transition-all duration-300" id="sent-positive-bar" style="width: 0%"></div>
+                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2.5">
+                                            <div class="bg-gray-800 dark:bg-gray-300 h-2.5 rounded-full transition-all duration-300" id="sent-positive-bar" style="width: 0%"></div>
                                         </div>
                                     </div>
                                     <div>
@@ -702,8 +685,8 @@
                                             <span>friendly</span>
                                             <span id="sent-friendly">0 (0%)</span>
                                         </div>
-                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2">
-                                            <div class="bg-gray-600 dark:bg-gray-500 h-2 rounded-full transition-all duration-300" id="sent-friendly-bar" style="width: 0%"></div>
+                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2.5">
+                                            <div class="bg-gray-600 dark:bg-gray-500 h-2.5 rounded-full transition-all duration-300" id="sent-friendly-bar" style="width: 0%"></div>
                                         </div>
                                     </div>
                                     <div>
@@ -711,8 +694,8 @@
                                             <span>neutral</span>
                                             <span id="sent-neutral">0 (0%)</span>
                                         </div>
-                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2">
-                                            <div class="bg-gray-400 dark:bg-gray-700 h-2 rounded-full transition-all duration-300" id="sent-neutral-bar" style="width: 0%"></div>
+                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2.5">
+                                            <div class="bg-gray-400 dark:bg-gray-700 h-2.5 rounded-full transition-all duration-300" id="sent-neutral-bar" style="width: 0%"></div>
                                         </div>
                                     </div>
                                     <div>
@@ -720,8 +703,8 @@
                                             <span>confused</span>
                                             <span id="sent-confused">0 (0%)</span>
                                         </div>
-                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2">
-                                            <div class="bg-gray-300 dark:bg-gray-500 h-2 rounded-full transition-all duration-300" id="sent-confused-bar" style="width: 0%"></div>
+                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2.5">
+                                            <div class="bg-gray-300 dark:bg-gray-500 h-2.5 rounded-full transition-all duration-300" id="sent-confused-bar" style="width: 0%"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -733,9 +716,9 @@
                                 <div class="flex items-center space-x-4">
                                     <div class="p-3 bg-background-light dark:bg-background-dark rounded-lg">
                                         <svg class="w-6 h-6 text-text-primary-light dark:text-text-primary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
-                                            <circle cx="12" cy="12" r="6" stroke-width="2"></circle>
-                                            <circle cx="12" cy="12" r="2" stroke-width="2"></circle>
+                                            <circle cx="12" cy="12" r="10" stroke-width="1.5"></circle>
+                                            <circle cx="12" cy="12" r="6" stroke-width="1.5"></circle>
+                                            <circle cx="12" cy="12" r="2" stroke-width="1.5"></circle>
                                         </svg>
                                     </div>
                                     <div>
@@ -749,8 +732,8 @@
                                             <span class="font-medium text-sm">High Intent</span>
                                             <span class="font-semibold text-sm" id="interest-high-count">0</span>
                                         </div>
-                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2">
-                                            <div class="bg-gray-800 dark:bg-gray-200 h-2 rounded-full transition-all duration-300" id="interest-high-bar" style="width: 0%"></div>
+                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2.5">
+                                            <div class="bg-gray-800 dark:bg-gray-200 h-2.5 rounded-full transition-all duration-300" id="interest-high-bar" style="width: 0%"></div>
                                         </div>
                                         <p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-2">Budget, timeline, requirements shared</p>
                                     </div>
@@ -759,8 +742,8 @@
                                             <span class="font-medium text-sm">Medium Intent</span>
                                             <span class="font-semibold text-sm" id="interest-medium-count">0</span>
                                         </div>
-                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2">
-                                            <div class="bg-gray-600 dark:bg-gray-400 h-2 rounded-full transition-all duration-300" id="interest-medium-bar" style="width: 0%"></div>
+                                        <div class="w-full bg-background-light dark:bg-zinc-700 rounded-full h-2.5">
+                                            <div class="bg-gray-600 dark:bg-gray-400 h-2.5 rounded-full transition-all duration-300" id="interest-medium-bar" style="width: 0%"></div>
                                         </div>
                                         <p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-2">Specific questions, engaged chat</p>
                                     </div>
@@ -770,7 +753,7 @@
                                 <div class="flex items-center space-x-4 mb-6">
                                     <div class="p-3 bg-background-light dark:bg-background-dark rounded-lg">
                                         <svg class="w-6 h-6 text-text-primary-light dark:text-text-primary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                         </svg>
                                     </div>
                                     <div>
@@ -957,16 +940,76 @@
                 </div>
                 </header>
                 <div class="border-b border-gray-200 mb-4 md:mb-6">
-                <nav aria-label="Tabs" class="flex flex-col sm:flex-row space-y-1.5 sm:space-y-0 sm:space-x-6 overflow-x-auto pb-1">
-                <a class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs text-gray-900 border-gray-800 active-tab" data-tab="overview" href="#">Overview</a>
-                <a class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs text-gray-500 hover:border-gray-300 hover:text-gray-700" data-tab="rules" href="#">Rules & Restrictions</a>
-                <a class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs text-gray-500 hover:border-gray-300 hover:text-gray-700" data-tab="documents" href="#">Documents</a>
-                <a class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs text-gray-500 hover:border-gray-300 hover:text-gray-700" data-tab="profile" href="#">Company Profile</a>
-                <a class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs text-gray-500 hover:border-gray-300 hover:text-gray-700" data-tab="alignments" href="#">Alignments</a>
-                <a class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs text-gray-500 hover:border-gray-300 hover:text-gray-700" data-tab="templates" href="#">Template and Tasks</a>
-                <a class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs text-gray-500 hover:border-gray-300 hover:text-gray-700" data-tab="consultants" href="#">Manage Consultants</a>
-                </nav>
-                </div>
+                    <nav aria-label="Tabs"
+                         class="flex flex-col sm:flex-row space-y-1.5 sm:space-y-0 sm:space-x-6 overflow-x-auto">
+                  
+                      <!-- ACTIVE TAB -->
+                      <a
+                        class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs 
+                               text-gray-900 border-gray-800 active-tab transition-colors"
+                        data-tab="overview"
+                        href="#"
+                      >
+                        Overview
+                      </a>
+                  
+                      <!-- INACTIVE TABS: note border-transparent here -->
+                      <a
+                        class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs 
+                               text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 transition-colors"
+                        data-tab="rules"
+                        href="#"
+                      >
+                        Rules & Restrictions
+                      </a>
+                  
+                      <a
+                        class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs 
+                               text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 transition-colors"
+                        data-tab="documents"
+                        href="#"
+                      >
+                        Documents
+                      </a>
+                  
+                      <a
+                        class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs 
+                               text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 transition-colors"
+                        data-tab="profile"
+                        href="#"
+                      >
+                        Company Profile
+                      </a>
+                  
+                      <a
+                        class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs 
+                               text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 transition-colors"
+                        data-tab="alignments"
+                        href="#"
+                      >
+                        Alignments
+                      </a>
+                  
+                      <a
+                        class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs 
+                               text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 transition-colors"
+                        data-tab="templates"
+                        href="#"
+                      >
+                        Template and Tasks
+                      </a>
+                  
+                      <a
+                        class="inner-tab-link py-2 px-3 sm:px-1 border-b-2 font-medium text-xs 
+                               text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 transition-colors"
+                        data-tab="consultants"
+                        href="#"
+                      >
+                        Manage Consultants
+                      </a>
+                    </nav>
+                  </div>
+                  
                 
                 <!-- Overview Tab -->
                 <div id="overview" class="tab-content active">
@@ -1010,9 +1053,9 @@
                             <div>
                                 <div class="flex items-center gap-3 mb-3">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M9 6C9 6.39397 9.0776 6.78407 9.22836 7.14805C9.37913 7.51203 9.6001 7.84274 9.87868 8.12132C10.1573 8.3999 10.488 8.62087 10.852 8.77164C11.2159 8.9224 11.606 9 12 9C12.394 9 12.7841 8.9224 13.1481 8.77164C13.512 8.62087 13.8427 8.3999 14.1213 8.12132C14.3999 7.84274 14.6209 7.51203 14.7716 7.14805C14.9224 6.78407 15 6.39396 15 6C15 5.60603 14.9224 5.21593 14.7716 4.85195C14.6209 4.48797 14.3999 4.15725 14.1213 3.87868C13.8427 3.6001 13.512 3.37912 13.148 3.22836C12.7841 3.0776 12.394 3 12 3C11.606 3 11.2159 3.0776 10.8519 3.22836C10.488 3.37913 10.1573 3.6001 9.87868 3.87868C9.6001 4.15726 9.37912 4.48797 9.22836 4.85195C9.0776 5.21593 9 5.60604 9 6L9 6Z" stroke-width="2" stroke=" currentColor"/>
-                                        <path d="M4.43781 13.9015C4.09663 14.0985 3.79758 14.3607 3.55775 14.6733C3.31792 14.9858 3.142 15.3426 3.04004 15.7231C2.93807 16.1037 2.91206 16.5006 2.96348 16.8912C3.0149 17.2818 3.14275 17.6584 3.33974 17.9996C3.53672 18.3408 3.79897 18.6398 4.11153 18.8796C4.42408 19.1195 4.78081 19.2954 5.16136 19.3974C5.5419 19.4993 5.9388 19.5253 6.32939 19.4739C6.71999 19.4225 7.09663 19.2946 7.43781 19.0977C7.779 18.9007 8.07804 18.6384 8.31787 18.3259C8.5577 18.0133 8.73362 17.6566 8.83559 17.276C8.93756 16.8955 8.96357 16.4986 8.91215 16.108C8.86072 15.7174 8.73287 15.3408 8.53589 14.9996C8.33891 14.6584 8.07665 14.3594 7.7641 14.1195C7.45154 13.8797 7.09481 13.7038 6.71427 13.6018C6.33373 13.4998 5.93683 13.4738 5.54623 13.5252C5.15564 13.5767 4.779 13.7045 4.43781 13.9015L4.43781 13.9015Z" stroke-width="2" stroke=" currentColor"/>
-                                        <path d="M19.5622 13.9015C19.9034 14.0985 20.2024 14.3607 20.4422 14.6733C20.6821 14.9859 20.858 15.3426 20.96 15.7231C21.0619 16.1037 21.0879 16.5006 21.0365 16.8912C20.9851 17.2818 20.8572 17.6584 20.6603 17.9996C20.4633 18.3408 20.201 18.6398 19.8885 18.8796C19.5759 19.1195 19.2192 19.2954 18.8386 19.3974C18.4581 19.4993 18.0612 19.5253 17.6706 19.4739C17.28 19.4225 16.9034 19.2946 16.5622 19.0977C16.221 18.9007 15.922 18.6384 15.6821 18.3259C15.4423 18.0133 15.2664 17.6566 15.1644 17.276C15.0624 16.8955 15.0364 16.4986 15.0879 16.108C15.1393 15.7174 15.2671 15.3408 15.4641 14.9996C15.6611 14.6584 15.9234 14.3594 16.2359 14.1195C16.5485 13.8797 16.9052 13.7038 17.2857 13.6018C17.6663 13.4998 18.0632 13.4738 18.4538 13.5252C18.8444 13.5767 19.221 13.7045 19.5622 13.9015L19.5622 13.9015Z" stroke-width="2" stroke=" currentColor"/>
+                                        <path d="M9 6C9 6.39397 9.0776 6.78407 9.22836 7.14805C9.37913 7.51203 9.6001 7.84274 9.87868 8.12132C10.1573 8.3999 10.488 8.62087 10.852 8.77164C11.2159 8.9224 11.606 9 12 9C12.394 9 12.7841 8.9224 13.1481 8.77164C13.512 8.62087 13.8427 8.3999 14.1213 8.12132C14.3999 7.84274 14.6209 7.51203 14.7716 7.14805C14.9224 6.78407 15 6.39396 15 6C15 5.60603 14.9224 5.21593 14.7716 4.85195C14.6209 4.48797 14.3999 4.15725 14.1213 3.87868C13.8427 3.6001 13.512 3.37912 13.148 3.22836C12.7841 3.0776 12.394 3 12 3C11.606 3 11.2159 3.0776 10.8519 3.22836C10.488 3.37913 10.1573 3.6001 9.87868 3.87868C9.6001 4.15726 9.37912 4.48797 9.22836 4.85195C9.0776 5.21593 9 5.60604 9 6L9 6Z" stroke-width="1.5" stroke=" currentColor"/>
+                                        <path d="M4.43781 13.9015C4.09663 14.0985 3.79758 14.3607 3.55775 14.6733C3.31792 14.9858 3.142 15.3426 3.04004 15.7231C2.93807 16.1037 2.91206 16.5006 2.96348 16.8912C3.0149 17.2818 3.14275 17.6584 3.33974 17.9996C3.53672 18.3408 3.79897 18.6398 4.11153 18.8796C4.42408 19.1195 4.78081 19.2954 5.16136 19.3974C5.5419 19.4993 5.9388 19.5253 6.32939 19.4739C6.71999 19.4225 7.09663 19.2946 7.43781 19.0977C7.779 18.9007 8.07804 18.6384 8.31787 18.3259C8.5577 18.0133 8.73362 17.6566 8.83559 17.276C8.93756 16.8955 8.96357 16.4986 8.91215 16.108C8.86072 15.7174 8.73287 15.3408 8.53589 14.9996C8.33891 14.6584 8.07665 14.3594 7.7641 14.1195C7.45154 13.8797 7.09481 13.7038 6.71427 13.6018C6.33373 13.4998 5.93683 13.4738 5.54623 13.5252C5.15564 13.5767 4.779 13.7045 4.43781 13.9015L4.43781 13.9015Z" stroke-width="1.5" stroke=" currentColor"/>
+                                        <path d="M19.5622 13.9015C19.9034 14.0985 20.2024 14.3607 20.4422 14.6733C20.6821 14.9859 20.858 15.3426 20.96 15.7231C21.0619 16.1037 21.0879 16.5006 21.0365 16.8912C20.9851 17.2818 20.8572 17.6584 20.6603 17.9996C20.4633 18.3408 20.201 18.6398 19.8885 18.8796C19.5759 19.1195 19.2192 19.2954 18.8386 19.3974C18.4581 19.4993 18.0612 19.5253 17.6706 19.4739C17.28 19.4225 16.9034 19.2946 16.5622 19.0977C16.221 18.9007 15.922 18.6384 15.6821 18.3259C15.4423 18.0133 15.2664 17.6566 15.1644 17.276C15.0624 16.8955 15.0364 16.4986 15.0879 16.108C15.1393 15.7174 15.2671 15.3408 15.4641 14.9996C15.6611 14.6584 15.9234 14.3594 16.2359 14.1195C16.5485 13.8797 16.9052 13.7038 17.2857 13.6018C17.6663 13.4998 18.0632 13.4738 18.4538 13.5252C18.8444 13.5767 19.221 13.7045 19.5622 13.9015L19.5622 13.9015Z" stroke-width="1.5" stroke=" currentColor"/>
                                         <path fill-rule="evenodd" clip-rule="evenodd" d="M9.00254 6.12533C9.0008 6.08372 8.99993 6.04203 8.99993 6.0003C8.99993 5.65294 9.06026 5.30857 9.17787 4.98247C9.03301 5.03346 8.8894 5.08843 8.74719 5.14733C7.71592 5.5745 6.77889 6.2006 5.98959 6.9899C5.20029 7.7792 4.57419 8.71623 4.14702 9.7475C3.71986 10.7788 3.5 11.8841 3.5 13.0003C3.5 13.5265 3.54885 14.0502 3.64523 14.5648C3.86884 14.2999 4.13691 14.0755 4.43774 13.9018C4.47388 13.8809 4.51042 13.8609 4.54733 13.8415C4.51586 13.5628 4.5 13.2819 4.5 13.0003C4.5 12.0154 4.69399 11.0401 5.0709 10.1302C5.44781 9.22024 6.00026 8.39345 6.6967 7.69701C7.36051 7.03319 8.14275 6.5002 9.00254 6.12533ZM14.9973 6.12528C15.8572 6.50014 16.6395 7.03315 17.3033 7.697C17.9997 8.39344 18.5522 9.22023 18.9291 10.1302C19.306 11.0401 19.5 12.0154 19.5 13.0003C19.5 13.282 19.4841 13.5628 19.4527 13.8416C19.4895 13.8609 19.526 13.881 19.5621 13.9018C19.863 14.0755 20.1311 14.3 20.3547 14.565C20.4511 14.0503 20.5 13.5265 20.5 13.0003C20.5 11.8841 20.2801 10.7788 19.853 9.74749C19.4258 8.71622 18.7997 7.77919 18.0104 6.98989C17.2211 6.2006 16.2841 5.57449 15.2528 5.14733C15.1105 5.0884 14.9669 5.03342 14.822 4.98242C14.9396 5.30854 14.9999 5.65292 14.9999 6.0003C14.9999 6.04201 14.9991 6.08368 14.9973 6.12528ZM17.533 19.4529C17.1916 19.3917 16.8631 19.2717 16.5621 19.098C16.5261 19.0772 16.4906 19.0556 16.4555 19.0334C15.9665 19.3945 15.4343 19.6957 14.8701 19.9294C13.9602 20.3063 12.9849 20.5003 12 20.5003C11.0151 20.5003 10.0398 20.3063 9.12988 19.9294C8.56568 19.6957 8.03345 19.3945 7.54443 19.0334C7.50935 19.0556 7.47378 19.0772 7.43775 19.098C7.13681 19.2717 6.80829 19.3917 6.46694 19.4528C7.14728 20.0362 7.91668 20.5093 8.74719 20.8533C9.77846 21.2804 10.8838 21.5003 12 21.5003C13.1162 21.5003 14.2215 21.2804 15.2528 20.8533C16.0833 20.5093 16.8527 20.0362 17.533 19.4529Z" stroke-width="1" stroke=" currentColor"/>
                                         </svg>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="behavioral-guidelines">Behavioral Guidelines</label>
@@ -1023,9 +1066,9 @@
                             <div>
                                 <div class="flex items-center gap-3 mb-3">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 7.75V13" stroke=" currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M21.08 8.58003V15.42C21.08 16.54 20.48 17.58 19.51 18.15L13.57 21.58C12.6 22.14 11.4 22.14 10.42 21.58L4.47998 18.15C3.50998 17.59 2.90997 16.55 2.90997 15.42V8.58003C2.90997 7.46003 3.50998 6.41999 4.47998 5.84999L10.42 2.42C11.39 1.86 12.59 1.86 13.57 2.42L19.51 5.84999C20.48 6.41999 21.08 7.45003 21.08 8.58003Z" stroke=" currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M12 16.2V16.2999" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M12 7.75V13" stroke=" currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M21.08 8.58003V15.42C21.08 16.54 20.48 17.58 19.51 18.15L13.57 21.58C12.6 22.14 11.4 22.14 10.42 21.58L4.47998 18.15C3.50998 17.59 2.90997 16.55 2.90997 15.42V8.58003C2.90997 7.46003 3.50998 6.41999 4.47998 5.84999L10.42 2.42C11.39 1.86 12.59 1.86 13.57 2.42L19.51 5.84999C20.48 6.41999 21.08 7.45003 21.08 8.58003Z" stroke=" currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M12 16.2V16.2999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="banned-topics">Banned Topics / PHI</label>
                                 </div>
@@ -1260,7 +1303,7 @@
                         <div>
                             <div class="flex items-center gap-3 mb-3">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke="currentColor"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke="currentColor"/>
                                 </svg>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="main-categories">Main Categories</label>
                             </div>
@@ -1271,7 +1314,7 @@
                         <div>
                             <div class="flex items-center gap-3 mb-3">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor"/>
                                 </svg>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="sub-services">Sub Services</label>
                             </div>
@@ -1282,7 +1325,7 @@
                         <div>
                             <div class="flex items-center gap-3 mb-3">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor"/>
                                 </svg>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="timeline-options">Timeline Options</label>
                             </div>
@@ -1293,7 +1336,7 @@
                         <div>
                             <div class="flex items-center gap-3 mb-3">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor"/>
                                 </svg>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="budget-options">Budget Options</label>
                             </div>
@@ -1389,28 +1432,37 @@
                     }
                 }
             
-                // Tab switching with smooth transitions
                 document.querySelectorAll('.inner-tab-link').forEach(link => {
                     link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const tab = link.dataset.tab;
-                        
-                        // Update active tab
-                        document.querySelectorAll('.inner-tab-link').forEach(l => {
-                            l.classList.remove('active-tab', 'text-gray-900', 'border-gray-800');
-                            l.classList.add('text-gray-500', 'border-transparent');
-                        });
-                        document.querySelectorAll('.tab-content').forEach(c => {
-                            c.classList.remove('active');
-                            c.classList.add('hidden');
-                        });
-                        link.classList.add('active-tab', 'text-gray-900', 'border-gray-800');
-                        link.classList.remove('text-gray-500', 'border-transparent');
-                        const targetTab = document.getElementById(tab);
+                      e.preventDefault();
+                      const current = e.currentTarget;
+                      const tab = current.dataset.tab;
+                  
+                      // Update active tab styles
+                      document.querySelectorAll('.inner-tab-link').forEach(l => {
+                        l.classList.remove('active-tab', 'text-gray-900', 'border-gray-800');
+                        l.classList.add('text-gray-500', 'border-transparent');
+                      });
+                  
+                      // Hide all tab contents
+                      document.querySelectorAll('.tab-content').forEach(c => {
+                        c.classList.remove('active');
+                        c.classList.add('hidden');
+                      });
+                  
+                      // Activate clicked tab
+                      current.classList.add('active-tab', 'text-gray-900', 'border-gray-800');
+                      current.classList.remove('text-gray-500', 'border-transparent');
+                  
+                      // Show target content
+                      const targetTab = document.getElementById(tab);
+                      if (targetTab) {
                         targetTab.classList.remove('hidden');
                         targetTab.classList.add('active');
+                      }
                     });
-                });
+                  });
+                  
             
                 // Single save function
                 async function saveData(updateData) {
@@ -1481,7 +1533,7 @@
                     
                             <div id="add-template-section" class="mb-12 border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
                                 <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     <h2 class="text-lg font-semibold text-gray-800">Create New Definition</h2>
                                 </div>
                                 
@@ -1506,7 +1558,7 @@
                                             <div class="flex justify-between items-end mb-4">
                                                 <h3 class="text-sm font-semibold text-gray-700">Default Task Sequence</h3>
                                                 <button type="button" onclick="addTaskField()" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                                                    <svg class="-ml-0.5 mr-2 h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                    <svg class="-ml-0.5 mr-2 h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"></path></svg>
                                                     Add Task
                                                 </button>
                                             </div>
@@ -1534,7 +1586,7 @@
                     
                             <div id="existing-templates-section">
                                 <div class="flex items-center gap-3 mb-6">
-                                    <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+                                    <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
                                     <h2 class="text-2xl font-bold text-gray-900">Existing Templates <span id="template-count" class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">0</span></h2>
                                 </div>
                                 
@@ -1577,8 +1629,8 @@
                                 <div class="${bgColor} ${borderColor} border ${textColor} px-4 py-3 rounded shadow-md mb-6 flex items-center justify-between transition-all duration-500" role="alert">
                                     <div class="flex items-center">
                                         ${isSuccess ? 
-                                            '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : 
-                                            '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                                            '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>' : 
+                                            '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
                                         }
                                         <span class="font-medium text-sm">${message}</span>
                                     </div>
@@ -1621,7 +1673,7 @@
                                     </div>
                                     <div class="col-span-1 text-right">
                                         <button type="button" onclick="removeTaskField(this)" class="text-gray-400 hover:text-red-600 transition-colors p-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
                                     </div>
                                 </div>
@@ -1791,7 +1843,7 @@
                                     <div class="ml-4 flex-shrink-0 self-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onclick="handleDeleteTask(${task.id}, '${task.title.replace(/'/g, "\\'")}')" 
                                                 class="text-gray-400 hover:text-red-600 transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
                                     </div>
                                 </div>
@@ -1865,7 +1917,7 @@
                     
                             <div id="add-consultant-section-fetch" class="mb-12 border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
                                 <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                                     <h2 class="text-lg font-semibold text-gray-800">Register New Consultant</h2>
                                 </div>
                     
@@ -1905,7 +1957,7 @@
                                     <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Existing Consultants</h2>
                                     <button onclick="fetchConsultants()" class="group inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
                                         <svg class="w-4 h-4 mr-2 text-text-secondary-light dark:text-text-secondary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                         </svg> Refresh
                                     </button>
                                 </div>
@@ -1991,7 +2043,7 @@
                                             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${formatDate(c.created_at)}</td>
                                             <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium">
                                                 <button onclick="deleteConsultant('${c.id}')" class="text-gray-400 hover:text-red-600 transition-colors p-1">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                 </button>
                                             </td>
                                         </tr>
@@ -2102,12 +2154,12 @@
                               </div>
                               <div class="flex items-center gap-2">
                                 <button id="prevPageBtn" onclick="changePage(-1)" class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded text-xs hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/></svg>
                                   Prev
                                 </button>
                                 <button id="nextPageBtn" onclick="changePage(1)" class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded text-xs hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                                   Next
-                                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
                                 </button>
                               </div>
                             </div>
@@ -2133,7 +2185,7 @@
                         <div class="flex items-center gap-4 mb-6">
                             <div class="relative flex-grow">
                                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M11 6C13.7614 6 16 8.23858 16 11M16.6588 16.6549L21 21M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M11 6C13.7614 6 16 8.23858 16 11M16.6588 16.6549L21 21M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 <input id="searchInput" class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-primary focus:border-primary" placeholder="Search leads by name, email, or company..." type="text"/>
                             </div>
@@ -2210,7 +2262,7 @@
                     <h2 id="chatTitle" class="flex text-sm font-semibold">Session Chat</h2>
                   </div>
                   <button id="closeModalBtn" class="p-2 rounded-lg hover:bg-gray-100 transition" onclick="closeChat()" aria-label="Close">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
                 </div>
                 
@@ -2284,7 +2336,7 @@
                     <p class="text-gray-600 text-sm">Review client details (updates database) and set up tasks.</p>
                 </div>
                 <button onclick="closeProjectModal()" class="hover:bg-gray-100 rounded-full p-1"> 
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             
@@ -2641,7 +2693,7 @@ function renderProjects(projects) {
                     
                         <button onclick="openProjModal('${p.id}')" class="text-xs inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded hover:shadow-sm">
                             View
-                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </button>
                     </div>
                 </div>
