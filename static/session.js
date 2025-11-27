@@ -497,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${validEntries.map(([key, value]) => {
                 const displayKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
                 return `
-                    <div class="bg-white/50 p-2.5 rounded-md border border-gray-200/50 backdrop-blur-sm">
+                    <div class="bg-white/50 p-2.5 rounded-md border border-gray-200/50 ">
                     <div class="text-xs text-gray-500 uppercase tracking-wide font-medium mb-0.5">${displayKey}</div>
                     <div class="text-sm text-gray-900 font-semibold">${value}</div>
                     </div>
@@ -571,7 +571,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     companySection = `
-        <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/50 overflow-hidden">
+        <div class="bg-white/80  rounded-lg shadow-sm border border-gray-200/50 overflow-hidden">
         <div class="px-[28px] py-2.5 border-b border-gray-200 bg-white">
         <h3 class="text-lg font-semibold text-gray-900 [&::first-letter]:uppercase">
         ${company}
@@ -767,11 +767,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('researchModal')) return;
         
         const modalHtml = `
-        <div id="researchModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/50 backdrop-blur-sm transition-opacity duration-300 ease-out">
+        <div id="researchModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/80  transition-opacity duration-300 ease-out">
     <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-6 lg:p-8">
         <div class="relative w-full max-w-4xl max-h-[90vh] transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all duration-300 ease-out sm:w-full sm:max-w-5xl">
             <!-- Header -->
-            <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50/50 px-6 py-4 backdrop-blur-sm">
+            <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50/50 px-6 py-4 ">
                 <div class="flex items-center space-x-3">
                     <div class="h-8 w-8 rounded-lg bg-gray-800 shadow-md flex items-center justify-center">
                         <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -796,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
 
             <!-- Footer (optional: add actions if needed) -->
-            <div class="flex justify-end space-x-3 border-t border-slate-200 bg-slate-50/50 px-6 py-4 backdrop-blur-sm">
+            <div class="flex justify-end space-x-3 border-t border-slate-200 bg-slate-50/50 px-6 py-4 ">
                 <button onclick="document.getElementById('researchModal').classList.add('hidden')" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 focus:outline-none">
                     Close
                 </button>
