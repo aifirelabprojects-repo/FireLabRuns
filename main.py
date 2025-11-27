@@ -11,9 +11,9 @@ import asyncio
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Set,AsyncGenerator, Tuple,Union
-from fastapi import Depends, FastAPI, File, Request, Response, UploadFile, WebSocket, WebSocketDisconnect, Query, HTTPException,status, Form
+from fastapi import Depends, FastAPI, File, Request, Response, UploadFile, WebSocket, WebSocketDisconnect, Query, HTTPException,status, Form,BackgroundTasks
 from sqlalchemy.orm import selectinload,joinedload
-import smtplib
+import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from fastapi.staticfiles import StaticFiles
@@ -2057,7 +2057,7 @@ class ConsultationScheduleRequest(BaseModel):
 
 
 @app.post("/schedule_consultant", status_code=status.HTTP_201_CREATED)
-async def schedule_consultant(request: ConsultationScheduleRequest, db: AsyncSession = Depends(get_db)):
+async def schedule_consultant(request: ConsultationScheduleRequest,background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
     session_id = request.session_id
     
     # 🌟 NEW: Get both the ID and the display name from the request
@@ -2080,9 +2080,6 @@ async def schedule_consultant(request: ConsultationScheduleRequest, db: AsyncSes
         if not session.mobile or not (phase and phase.q1_email):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Session is missing mandatory contact details (mobile/email) or phase information.")
 
-        # 2. Skip Consultant lookup (relying on frontend data for notifications)
-        # Note: You might still want to do a quick validation check if needed,
-        # but for a high-traffic flow, this is faster.
 
     except HTTPException:
         raise
@@ -2090,15 +2087,13 @@ async def schedule_consultant(request: ConsultationScheduleRequest, db: AsyncSes
         print(f"Database error during fetch: {e}") 
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error retrieving session data.")
 
-    # 3. Create New Consultation using consultant_id
     new_consultation = Consultation(
         schedule_time=request.schedule_time,
         status="Pending",
         # Store the ID
         consultant_id=consultant_id, 
         session_id=session_id
-        # NOTE: If you still need the raw name/tier for archival/search reasons in Consultation,
-        # you may add those columns back, but consultant_id is the normalized way.
+
     )
     
     db.add(new_consultation)
@@ -2149,8 +2144,7 @@ async def schedule_consultant(request: ConsultationScheduleRequest, db: AsyncSes
     </body>
     </html>
     """
-    await send_email_notification(client_email, email_subject, email_body)
-    
+    background_tasks.add_task(send_email_notification,to_email=client_email,subject= email_subject,body= email_body)
     return {
         "message": "Consultation scheduled successfully",
         "consultation_id": new_consultation.id,
@@ -2233,32 +2227,25 @@ async def update_consultation_status(consultation_id: str,update_data: Consultat
 
 
 async def send_email_notification(to_email: str, subject: str, body: str):
+    message = MIMEMultipart("alternative")
+    message["From"] = EMAIL_USER
+    message["To"] = to_email
+    message["Subject"] = subject
+
+    message.attach(MIMEText(f"Your consultation is confirmed: {subject}.", "plain"))
+    message.attach(MIMEText(body, "html"))
+
     try:
-        msg = MIMEMultipart("alternative")
-        msg["From"] = EMAIL_USER
-        msg["To"] = to_email
-        msg["Subject"] = subject
-        
-        # Create a basic plain text version from the HTML content for compatibility
-        # Note: A real parser might be better, but for this simple HTML, a placeholder is often sufficient.
-        text_body = f"Your consultation is confirmed: {subject}. Please enable HTML to view full details."
-        
-        html = body
-        
-        # Attach both versions
-        msg.attach(MIMEText(text_body, "plain")) # Updated text to be relevant
-        msg.attach(MIMEText(html, "html"))
-        
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(EMAIL_USER, EMAIL_PASS)
-            server.sendmail(EMAIL_USER, to_email, msg.as_string())
-            
-    except smtplib.SMTPException as e:
-        print(f"SMTP error sending to {to_email}: {e}")
+        await aiosmtplib.send(
+            message,
+            hostname="smtp.gmail.com",
+            port=587,
+            start_tls=True,
+            username=EMAIL_USER,
+            password=EMAIL_PASS,
+        )
     except Exception as e:
-        print(f"General error sending to {to_email}: {e}")
-        
+        print(f"Failed to send email to {to_email}: {e}")
         
 class TemplateTaskSchema(BaseModel):
     id: int
@@ -2300,14 +2287,14 @@ async def get_service_templates(db: AsyncSession = Depends(get_db)):
     templates = result.scalars().all()
     return templates
 
-# --- 3. Updated Create Project Endpoint ---
+
 @app.post("/api/sessions/{session_id}/project")
 async def create_project_from_session(
     session_id: str, 
     payload: ProjectCreateSchema, 
     db: AsyncSession = Depends(get_db)
 ):
-    # 1. Fetch Session and Phase Info to update them
+
     result = await db.execute(
         select(SessionModel)
         .options(selectinload(SessionModel.phase_info), selectinload(SessionModel.project))
@@ -2325,13 +2312,13 @@ async def create_project_from_session(
     if payload.phone:
         session.mobile = payload.phone
     
-    # Update Company & Email in SessionPhase table
+
     if session.phase_info:
         session.phase_info.q1_company = payload.company_name
         session.phase_info.q1_email = payload.email
     new_project = Project(
         id=str(uuid.uuid4()),
-        name=payload.project_name, # As defined by consultant
+        name=payload.project_name, 
         notes=payload.notes,
         status="Active",
         progress_percent=0,
@@ -2339,12 +2326,12 @@ async def create_project_from_session(
         session_id=session_id
     )
     db.add(new_project)
-    await db.flush() # Flush to generate ID
+    await db.flush() 
 
-    # 4. CREATE PROJECT TASKS (One by One)
+ 
     task_sequence = 1
     
-    # A. Add Selected Template Tasks
+
     if payload.template_id and payload.selected_task_ids:
         stmt = select(TemplateTask).where(TemplateTask.id.in_(payload.selected_task_ids))
         t_result = await db.execute(stmt)
@@ -2625,7 +2612,7 @@ async def update_project_status(
         
     project.status = new_status
     
-    # 3. Commit changes (updated_at will be automatically updated by SQLAlchemy's func.now())
+   
     await db.commit()
     await db.refresh(project)
     
@@ -2672,16 +2659,13 @@ class StatusResponse(BaseModel):
     
 @app.get("/api/templates/", response_model=List[ServiceTemplateRead])
 async def get_all_templates(db: AsyncSession = Depends(get_db)):
-    """Fetches all ServiceTemplates with their associated TemplateTasks."""
-    
-    # FIX: Use .options(selectinload(...)) to fetch tasks immediately
+
     stmt = select(ServiceTemplate).options(selectinload(ServiceTemplate.default_tasks))
     
     result = await db.execute(stmt)
     templates = result.scalars().all()
     return templates
 
-# 2. POST: Create a new template with tasks
 @app.post("/api/templates/", response_model=ServiceTemplateRead, status_code=status.HTTP_201_CREATED)
 async def create_template(
     template_data: ServiceTemplateCreate, 
@@ -2825,18 +2809,14 @@ async def _call_model_with_retries(prompt: str, max_tokens: int = 700, attempts:
                 temperature=0.0,
             )
             
-            # --- SIMPLIFIED EXTRACTION LOGIC ---
-            # Most modern SDKs provide a simple way to get the text.
+
             raw_text = getattr(resp, "output_text", None) or getattr(resp, "text", None)
             
             if raw_text:
                 return raw_text
                 
-            # If the simple property retrieval fails, use the complex logic as a fallback
-            # (Keeping it here as provided, but marking it as complex/specific)
             parts = []
             for item in getattr(resp, "output", []) or []:
-                # ... existing complex extraction logic ...
                 if isinstance(item, dict):
                     for c in item.get("content", []):
                         if isinstance(c, dict) and c.get("type") == "output_text":

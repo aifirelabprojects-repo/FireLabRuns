@@ -42,3 +42,4 @@ scipy
 lightrag-hku
 docx
 greenlet
+aiosmtplib

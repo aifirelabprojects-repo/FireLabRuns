@@ -59,6 +59,12 @@ async function loadSessions(page = currentPage) {
     totalSessions = pagination.total || 0;
     totalPages = pagination.pages || 1;
     const listDiv = document.getElementById('sessionsList');
+    listDiv.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-16">
+            <div class="animate-spin rounded-full h-10 w-10 border-[4px] border-gray-900 border-t-transparent"></div>
+            <p class="mt-4 text-gray-500 text-sm">Loading sessions...</p>
+        </div>
+    `;
     if (totalSessions === 0) {
         listDiv.innerHTML = '<div class="p-6 text-center text-gray-500">No sessions found.</div>';
         document.getElementById('paginationControls').style.display = 'none';
@@ -145,8 +151,15 @@ async function loadSessions(page = currentPage) {
             <td class="px-6 py-4 whitespace-nowrap text-text-secondary-light dark:text-text-secondary-dark">${session.interest}</td>
             <td class="px-6 py-4 whitespace-nowrap">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-text-secondary-light dark:text-text-secondary-dark">
-                <span class="material-symbols-outlined !text-sm !font-semibold ${session.status === 'active' ? 'text-green-500' : 'text-gray-500'}">${session.status === 'active' ? 'check' : 'schedule'}</span>
-                ${session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+            ${session.status === 'active' 
+                ? `<svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>`
+                : `<svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 9.586V6z" clip-rule="evenodd"/>
+                </svg>`
+            }
+            ${session.status.charAt(0).toUpperCase() + session.status.slice(1)}
             </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-text-secondary-light dark:text-text-secondary-dark">${session.mood || '—'}</td>
@@ -983,7 +996,7 @@ window.loadSessionConsultations = async function(sessionId) {
 function openDeepResearchModal() {
     // Create modal HTML with pre-filled form
     const modalHtml = `
-    <div id="deepResearchModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div id="deepResearchModal" class="fixed inset-0 bg-gray-900/70  z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-xl max-w-[35rem] w-full max-h-[90vh] overflow-y-auto border border-gray-200">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
@@ -1236,14 +1249,9 @@ async function openSession(id, mode, name, email, phone, company, mood, verified
             onclick="approveSession('${id}')">
             Approve Lead
            </button>`;
-
-    // Deep Research Button (SVG omitted for brevity, use yours)
     const DeepRes = `<button title="Run a deep verification" id="deepResearchBtn" onclick="/* your deep research logic */" class="bg-white flex items-center mr-1 gap-1 text-gray-700 border border-gray-300 hover:bg-gray-100 px-4 py-1.5 rounded-full text-sm font-medium shadow-sm transition">
        Deep Research
     </button>`;
-
-    // --- NEW: Export to Project Button ---
-    // Only shows if Approved/Lead (optional logic) or always show
     const exportProjectHtml = 
     isApproved
         ? `<button id="exportProjectBtn" onclick="openExportProjectModal()"
@@ -1401,7 +1409,7 @@ async function submitConsultationSchedule() {
 
         const data = await response.json();
 
-        showPopup(`Consultation scheduled with ${data.consultant_name} for ${data.schedule_time}.`); 
+        showPopup(`Consultation scheduled with ${data.consultant_name}`); 
 
     } catch (error) {
         console.error("Error scheduling consultation:", error);

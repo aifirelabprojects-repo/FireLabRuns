@@ -54,10 +54,10 @@ function showLoading() {
     leadsTbody.innerHTML = `
         <tr>
             <td colspan="7" class="text-center py-8">
-                <div class="flex justify-center items-center space-x-2">
-                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-bg-800"></div>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Loading leads...</span>
-                </div>
+                <div class="flex flex-col items-center justify-center py-16">
+            <div class="animate-spin rounded-full h-8 w-8 border-[4px] border-gray-900 border-t-transparent"></div>
+            <p class="mt-4 text-gray-500 text-sm">Loading sessions...</p>
+        </div>
             </td>
         </tr>
     `;
@@ -197,28 +197,95 @@ LeadnextBtn.addEventListener('click', () => {
     }
 });
 
-exportBtn.addEventListener('click', () => {
+exportBtn.addEventListener('click', async () => {
     const originalText = exportBtn.innerHTML;
-    exportBtn.innerHTML = '<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white dark:border-gray-900"></div><span>Exporting...</span></div>';
+    
+    // Update UI to show loading
+    exportBtn.innerHTML = `
+        <div class="flex items-center space-x-2">
+            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white dark:border-gray-900"></div>
+            <span>Exporting...</span>
+        </div>
+    `;
     exportBtn.disabled = true;
 
-    const params = new URLSearchParams({
-        q: currentQuery,
-        interest: currentInterest,
-        format: 'csv'
+    console.log('[Export] Starting CSV export...');
+    console.log('[Export] Query params:', { 
+        q: currentQuery, 
+        interest: currentInterest, 
+        format: 'csv' 
     });
-    // Trigger download by navigating to the URL (FastAPI will handle attachment)
-    window.location.href = `/api/leads/?${params}`;
 
-    // Re-enable after a short delay (since download is async)
-    setTimeout(() => {
-        exportBtn.innerHTML = originalText;
-        exportBtn.disabled = false;
-    }, 2000);
-});
+    try {
+        const params = new URLSearchParams({
+            q: currentQuery || '',
+            interest: currentInterest || '',
+            format: 'csv'
+        });
 
-// Initial load (assuming this runs when tab is shown; adjust if needed for tab visibility)
-document.addEventListener('DOMContentLoaded', () => {
-    fetchLeads(1);
+        const url = `/api/leads/?${params}`;
+        console.log('[Export] Fetching from:', url);
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'text/csv',
+            },
+        });
+
+        console.log('[Export] Response status:', response.status);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // Get filename from Content-Disposition if available, otherwise fallback
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'leads.csv';
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+            const match = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (match) filename = match[1];
+        }
+        console.log('[Export] Suggested filename:', filename);
+
+        const blob = await response.blob();
+        console.log('[Export] Blob received:', blob);
+
+        // Create download link and trigger it
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        window.URL.revokeObjectURL(downloadUrl);
+        document.body.removeChild(a);
+
+        console.log('[Export] CSV download triggered successfully!');
+        
+        // Show success state briefly
+        exportBtn.innerHTML = '<span>Exported</span>';
+        setTimeout(() => {
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+        }, 1500);
+
+    } catch (error) {
+        console.error('[Export] Export failed:', error);
+        
+        // Show error state
+        exportBtn.innerHTML = '<span>✕ Failed</span>';
+        exportBtn.classList.add('bg-red-600');
+
+        setTimeout(() => {
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+            exportBtn.classList.remove('bg-red-600');
+        }, 3000);
+
+        alert('Export failed. Check console for details.');
+    }
 });
 
