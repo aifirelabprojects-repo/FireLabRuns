@@ -545,7 +545,7 @@
                     <div id="analytics-content" style="display: none;">
                         <header class="flex items-center justify-between mb-8">
                             <div>
-                                <h1 class="text-3xl font-bold">AI Chatbot Intelligence</h1>
+                                <h1 class="text-4xl font-bold">AI Chatbot Intelligence</h1>
                                 <p class="text-text-secondary-light dark:text-text-secondary-dark mt-1">Insights from conversational AI analysis</p>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -960,9 +960,8 @@
         <div id="insights-tab" class="tab-panel hidden">
             <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3">              
                 <div>
-                    <h1 class="text-3xl font-bold inline-flex items-center gap-3">
+                    <h1 class="text-4xl font-bold inline-flex items-center gap-3">
                         Knowledge Base
-                        <!-- Spinner next to the title -->
                         <div id="insights-spinner" class="inline-flex items-center">
                             <div class="animate-spin rounded-full h-6 w-6 border-[3px] border-gray-900 border-t-transparent"></div>
                         </div>
@@ -2265,21 +2264,29 @@
                 </div>
 
                 <div id="projects-tab" class="tab-panel hidden">
-                    <div class="flex justify-between items-start mb-8">
-                        <header class="mb-8">
-                            <h1 class="text-4xl font-bold text-gray-800 dark:text-white">Projects</h1>
-                            <p class="text-gray-500 dark:text-gray-400">Manage Projects</p>
+                        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3">              
+                            <div>
+                                <h1 class="text-4xl font-bold inline-flex items-center gap-3">
+                                    Projects
+                                    <div id="project-spinner" class="inline-flex items-center">
+                                        <div class="animate-spin rounded-full h-6 w-6 border-[3px] border-gray-900 border-t-transparent"></div>
+                                    </div>
+                                </h1>
+                                <p class="text-gray-500 dark:text-gray-400">View and manage all your projects in one place</p>
+                            </div>
+                            <div class="flex justify-items-center gap-2" >
+                            <button onclick="fetchProjects()" title="refresh" class="p-2 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg hover:bg-background-light dark:hover:bg-background-dark transition-colors duration-200">
+                                <svg class="w-5 h-5 text-text-secondary-light dark:text-text-secondary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                            </button>
+                            </div>
                         </header>
-                        
-                    </div>
-                    
                     <div class=" rounded-2xl p-0  overflow-hidden">
                         <div id="project-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div class="col-span-full text-center py-20 text-gray-400">Loading projects...</div>
                         </div>
                     </div>
-                 
-                    
                 </div>
 
             </div>
@@ -2657,11 +2664,15 @@
         
 
         async function fetchProjects() {
+            const projectSpinner = document.getElementById('project-spinner');
+            projectSpinner.style.display = 'flex';
             try {
                 const response = await fetch(`/projects`);
                 const projects = await response.json();
                 renderProjects(projects);
+                projectSpinner.style.display = 'none';
             } catch (error) {
+                projectSpinner.style.display = 'none';
                 console.error("Error fetching projects:", error);
                 document.getElementById('project-grid').innerHTML = `<div class="text-red-500">Error loading projects. Ensure backend is running.</div>`;
             }
