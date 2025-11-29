@@ -19,9 +19,9 @@ from sqlalchemy.orm import selectinload
 from dotenv import load_dotenv
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from Schemas import VerifyPayload
 from SessionUtils import get_field, set_field
 from database import CompanyDetails, Session as SessionModel, VerificationDetails, get_db
-from pydantic import BaseModel
 from functools import lru_cache
 from cachetools import TTLCache  
 
@@ -328,12 +328,7 @@ async def verify_user(company: str, role: str, username: str, email: str) -> Tup
     
     return result
 
-class VerifyPayload(BaseModel):
-    id: str
-    name: str = ""
-    email: str = ""
-    lead_role: str = ""
-    company: str = ""
+
     
     
 def init(app):
@@ -356,7 +351,6 @@ def init(app):
                 selectinload(SessionModel.phase_info),
                 selectinload(SessionModel.company_details),
                 selectinload(SessionModel.verification_details),
-                selectinload(SessionModel.research_details),
             )
             .where(SessionModel.id == payload.id)
         )

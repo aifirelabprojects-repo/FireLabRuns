@@ -196,4 +196,11 @@ class ServiceTemplateRead(BaseModel):
 class StatusResponse(BaseModel):
     status: str = "success"
     message: str
+
+class VerifyPayload(BaseModel):
+    id: str
+    name: str = ""
+    email: str = ""
+    lead_role: str = ""
+    company: str = ""
     
