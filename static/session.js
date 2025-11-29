@@ -20,7 +20,7 @@ const svgIcons = {
 };
 
 
-function showPopup(message, type = 'info', duration = 3000) {
+function showPopup(message, type = 'info', duration = 4000) {
     let popup = document.getElementById('dynamicNotification');
 
     if (!popup) {
@@ -52,66 +52,33 @@ async function loadSessions(page = currentPage) {
     currentPage = page;
     const url = `/api/sessions/?active=${activeOnly}&page=${currentPage}&per_page=${perPage}`;
     try {
-    const response = await fetch(url);
-    const data = await response.json();
-    const sessions = data.sessions || [];
-    const pagination = data.pagination || {};
-    totalSessions = pagination.total || 0;
-    totalPages = pagination.pages || 1;
-    const listDiv = document.getElementById('sessionsList');
-    listDiv.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-16">
-            <div class="animate-spin rounded-full h-10 w-10 border-[4px] border-gray-900 border-t-transparent"></div>
-            <p class="mt-4 text-gray-500 text-sm">Loading sessions...</p>
-        </div>
-    `;
-    if (totalSessions === 0) {
-        listDiv.innerHTML = '<div class="p-6 text-center text-gray-500">No sessions found.</div>';
-        document.getElementById('paginationControls').style.display = 'none';
-        return;
-    }
-    if (!sessions || sessions.length === 0) {
-        listDiv.innerHTML = '<div class="p-6 text-center text-gray-500">No sessions found for this page.</div>';
-        updatePaginationUI();
-        return;
-    }
-    let rows = sessions.map(session => {
-        const idShort = session.id ? session.id.substring(0,8) + '...' : '—';
-        let actions = `<button class="text-xs inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded hover:shadow-sm" onclick="openSession(
-        '${session.id}',
-        'view',
-        '${escapeJs(session.name)}',
-        '${escapeJs(session.lead_email)}',
-        '${escapeJs(session.usr_phone)}',
-        '${escapeJs(session.lead_company)}',
-        '${escapeJs(session.mood)}',
-        '${escapeJs(session.verified)}',
-        '${escapeJs(session.confidence)}',
-        '${escapeJs(session.evidence)}',
-        '${escapeJs(session.sources)}',
-        '${escapeJs(session.interest)}',
-        '${escapeJs(session.lead_email_domain || '')}',
-        '${escapeJs(session.lead_role || '')}',
-        '${escapeJs(session.lead_categories || '')}',
-        '${escapeJs(session.lead_services || '')}',
-        '${escapeJs(session.lead_activity || '')}',
-        '${escapeJs(session.lead_timeline || '')}',
-        '${escapeJs(session.lead_budget || '')}',
-        '${escapeJs(session.c_sources)}',
-        '${escapeJs(session.c_images)}',
-        '${escapeJs(session.c_info)}',
-        '${escapeJs(session.c_data)}',
-        '${escapeJs(session.research_data)}',
-        '${session.approved}'
-        )">
-        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        View
-        </button>`;
-    
-        if (session.status === 'active') {
-        actions += ` <button class="text-xs inline-flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-800/90" onclick="openSession(
+        const sessionSpinner = document.getElementById('session-spinner');
+        sessionSpinner.style.display = 'flex';
+        const listDiv = document.getElementById('sessionsList');
+        const response = await fetch(url);
+        const data = await response.json();
+        const sessions = data.sessions || [];
+        const pagination = data.pagination || {};
+        totalSessions = pagination.total || 0;
+        totalPages = pagination.pages || 1;
+
+        if (totalSessions === 0) {
+            sessionSpinner.style.display = 'none';
+            listDiv.innerHTML = '<div class="p-6 text-center text-gray-500">No sessions found.</div>';
+            document.getElementById('paginationControls').style.display = 'none';
+            return;
+        }
+        if (!sessions || sessions.length === 0) {
+            sessionSpinner.style.display = 'none';
+            listDiv.innerHTML = '<div class="p-6 text-center text-gray-500">No sessions found for this page.</div>';
+            updatePaginationUI();
+            return;
+        }
+        let rows = sessions.map(session => {
+            const idShort = session.id ? session.id.substring(0,8) + '...' : '—';
+            let actions = `<button class="text-xs inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded hover:shadow-sm" onclick="openSession(
             '${session.id}',
-            'control',
+            'view',
             '${escapeJs(session.name)}',
             '${escapeJs(session.lead_email)}',
             '${escapeJs(session.usr_phone)}',
@@ -133,70 +100,102 @@ async function loadSessions(page = currentPage) {
             '${escapeJs(session.c_images)}',
             '${escapeJs(session.c_info)}',
             '${escapeJs(session.c_data)}',
-            '${escapeJs(session.research_data)}',
             '${session.approved}'
-        )">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="white"><path d="M9 7v10l7-5-7-5z" stroke="none" /></svg>
-            Control
-        </button>`;
-        }
-    
-        return `
-        <tr class="session-row hover:bg-background-light dark:hover:bg-background-dark">
-            <td class="px-6 py-4 whitespace-nowrap">
-            <div class="font-medium text-text-primary-light dark:text-text-primary-dark">${session.name || 'Anonymous'}</div>
-            <div class="text-text-secondary-light dark:text-text-secondary-dark">${session.lead_email || 'No email'}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-text-secondary-light dark:text-text-secondary-dark">${session.lead_company || '-'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-text-secondary-light dark:text-text-secondary-dark">${session.interest}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-text-secondary-light dark:text-text-secondary-dark">
-            ${session.status === 'active' 
-                ? `<svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>`
-                : `<svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 9.586V6z" clip-rule="evenodd"/>
-                </svg>`
+            )">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            View
+            </button>`;
+        
+            if (session.status === 'active') {
+            actions += ` <button class="text-xs inline-flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-800/90" onclick="openSession(
+                '${session.id}',
+                'control',
+                '${escapeJs(session.name)}',
+                '${escapeJs(session.lead_email)}',
+                '${escapeJs(session.usr_phone)}',
+                '${escapeJs(session.lead_company)}',
+                '${escapeJs(session.mood)}',
+                '${escapeJs(session.verified)}',
+                '${escapeJs(session.confidence)}',
+                '${escapeJs(session.evidence)}',
+                '${escapeJs(session.sources)}',
+                '${escapeJs(session.interest)}',
+                '${escapeJs(session.lead_email_domain || '')}',
+                '${escapeJs(session.lead_role || '')}',
+                '${escapeJs(session.lead_categories || '')}',
+                '${escapeJs(session.lead_services || '')}',
+                '${escapeJs(session.lead_activity || '')}',
+                '${escapeJs(session.lead_timeline || '')}',
+                '${escapeJs(session.lead_budget || '')}',
+                '${escapeJs(session.c_sources)}',
+                '${escapeJs(session.c_images)}',
+                '${escapeJs(session.c_info)}',
+                '${escapeJs(session.c_data)}',
+                '${session.approved}'
+            )">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="white"><path d="M9 7v10l7-5-7-5z" stroke="none" /></svg>
+                Control
+            </button>`;
             }
-            ${session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-            </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-text-secondary-light dark:text-text-secondary-dark">${session.mood || '—'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-text-secondary-light dark:text-text-secondary-dark">${new Date(session.created_at).toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            ${actions}
-            </td>
-        </tr>
-        `;
-    }).join('');
-    const tableHtml = `
-            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <table class="w-full text-sm text-left">
-            <thead class="bg-gray-50 dark:bg-gray-700/50">
-            <tr class="border-b border-border-light dark:border-border-dark">
-                <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Lead</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Company</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Score</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Status</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Mood</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Last Activity</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Actions</th>
+        
+            return `
+            <tr class="session-row hover:bg-background-light dark:hover:bg-background-dark">
+                <td class="px-6 py-4 whitespace-nowrap">
+                <div class="font-medium text-text-primary-light dark:text-text-primary-dark">${session.name || 'Anonymous'}</div>
+                <div class="text-text-secondary-light dark:text-text-secondary-dark">${session.lead_email || 'No email'}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-text-secondary-light dark:text-text-secondary-dark">${session.lead_company || '-'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-text-secondary-light dark:text-text-secondary-dark">${session.interest}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-text-secondary-light dark:text-text-secondary-dark">
+                ${session.status === 'active' 
+                    ? `<svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>`
+                    : `<svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 9.586V6z" clip-rule="evenodd"/>
+                    </svg>`
+                }
+                ${session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-text-secondary-light dark:text-text-secondary-dark">${session.mood || '—'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-text-secondary-light dark:text-text-secondary-dark">${new Date(session.created_at).toLocaleString()}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                ${actions}
+                </td>
             </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-100">
-            ${rows}
-            </tbody>
-        </table>
-        </div>
-    `;
-    listDiv.innerHTML = tableHtml;
-    updatePaginationUI();
-    } catch (err) {
-    document.getElementById('sessionsList').innerHTML = '<div class="p-6 text-red-600">Failed to load sessions</div>';
-
-    document.getElementById('paginationControls').style.display = 'none';
-    }
+            `;
+        }).join('');
+        const tableHtml = `
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 dark:bg-gray-700/50">
+                <tr class="border-b border-border-light dark:border-border-dark">
+                    <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Lead</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Company</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Score</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Mood</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Last Activity</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Actions</th>
+                </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                ${rows}
+                </tbody>
+            </table>
+            </div>
+        `;
+        sessionSpinner.style.display = 'none';
+        listDiv.innerHTML = tableHtml;
+        updatePaginationUI();
+        } 
+        catch (err) {
+        sessionSpinner.style.display = 'none';
+        document.getElementById('sessionsList').innerHTML = '<div class="p-6 text-red-600">Failed to load sessions</div>';
+        document.getElementById('paginationControls').style.display = 'none';
+        }
 }
 function updatePaginationUI() {
     const infoEl = document.getElementById('paginationInfo');
@@ -262,50 +261,67 @@ async function approveSession(id) {
   }
   
   function downloadResearchAsTxt() {
-    // Get the modal content element
     const contentElement = document.getElementById('researchModalContent');
-    
-    // Check if element exists
-    if (!contentElement) {
+    const DownRepBtn = document.getElementById('DownRepBtn');
 
+    if (!contentElement || !DownRepBtn) {
         return;
     }
-    
-    // Extract the text content (strips HTML, keeps only plain text)
+
+    const originalText = "Download Report"; 
+    DownRepBtn.innerText = "Downloading...";
+    DownRepBtn.disabled = true; 
     const textContent = contentElement.innerText || contentElement.textContent;
-    
-    // Create a Blob with the text content
     const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-    
-    // Create a temporary URL for the Blob
     const url = URL.createObjectURL(blob);
-    
-    // Create a temporary anchor element to trigger download
     const a = document.createElement('a');
     a.href = url;
-    a.download = `research-results-${new Date().toISOString().split('T')[0]}.txt`; // e.g., research-results-2025-11-11.txt
+    a.download = `research-results-${new Date().toISOString().split('T')[0]}.txt`; 
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    
-    // Clean up the URL
     URL.revokeObjectURL(url);
-    
+    setTimeout(() => {
+        DownRepBtn.innerText = originalText;
+        DownRepBtn.disabled = false; 
+    }, 2000); 
 }
 
-// Example: Attach to the "Download Report" button in the modal
-document.addEventListener('DOMContentLoaded', function() {
-    const downloadBtn = document.querySelector('#researchModal .bg-indigo-600'); // Target the indigo button
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', downloadResearchAsTxt);
+
+function markdownToHtml(text) {
+    if (!text) return '';
+    text = text.replace(/^######\s+(.*)$/gm, '<h6>$1</h6>')
+        .replace(/^#####\s+(.*)$/gm, '<h5>$1</h5>')
+        .replace(/^####\s+(.*)$/gm, '<h4>$1</h4>')
+        .replace(/^###\s+(.*)$/gm, '<h3>$1</h3>')
+        .replace(/^##\s+(.*)$/gm, '<h2>$1</h2>')
+        .replace(/^#\s+(.*)$/gm, '<h1>$1</h1>');
+    // Formatting
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/~~(.*?)~~/g, '<del>$1</del>')
+        .replace(/__(.*?)__/g, '<u>$1</u>');
+    return text;
+}
+
+// Function to get a teaser (first ~200 chars, truncated nicely)
+function getTeaser(text) {
+    if (!text || text.trim().length === 0) return '';
+    const maxLength = 200;
+    let teaser = text.substring(0, maxLength);
+    // Truncate at last space to avoid cutting words
+    const lastSpace = teaser.lastIndexOf(' ');
+    if (lastSpace > 0 && lastSpace < maxLength - 10) {
+        teaser = teaser.substring(0, lastSpace);
     }
-});
+    return teaser + '...';
+}
 
   function renderUserDetails() {
     const { name, email, phone, company, mood, verified, confidence, evidence, sources, interest,
-            lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, id, c_sources, c_images, c_info, c_data,research_data,approved } = currentUserData;
+            lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, id, c_sources, c_images, c_info, c_data,approved } = currentUserData;
 
-    window.currentResearchData = research_data;        
+    window.currentResearchData = c_info;        
     const verifyButtonHtml = verified === "true"
     ? `<button id="verifyBtn" title="Verified" class="text-sm font-medium text-white flex items-center gap-1 rounded-md px-2 py-1 " disabled aria-disabled="true">
             <svg class="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.5924 3.20027C9.34888 3.4078 9.22711 3.51158 9.09706 3.59874C8.79896 3.79854 8.46417 3.93721 8.1121 4.00672C7.95851 4.03705 7.79903 4.04977 7.48008 4.07522C6.6787 4.13918 6.278 4.17115 5.94371 4.28923C5.17051 4.56233 4.56233 5.17051 4.28923 5.94371C4.17115 6.278 4.13918 6.6787 4.07522 7.48008C4.04977 7.79903 4.03705 7.95851 4.00672 8.1121C3.93721 8.46417 3.79854 8.79896 3.59874 9.09706C3.51158 9.22711 3.40781 9.34887 3.20027 9.5924C2.67883 10.2043 2.4181 10.5102 2.26522 10.8301C1.91159 11.57 1.91159 12.43 2.26522 13.1699C2.41811 13.4898 2.67883 13.7957 3.20027 14.4076C3.40778 14.6511 3.51158 14.7729 3.59874 14.9029C3.79854 15.201 3.93721 15.5358 4.00672 15.8879C4.03705 16.0415 4.04977 16.201 4.07522 16.5199C4.13918 17.3213 4.17115 17.722 4.28923 18.0563C4.56233 18.8295 5.17051 19.4377 5.94371 19.7108C6.278 19.8288 6.6787 19.8608 7.48008 19.9248C7.79903 19.9502 7.95851 19.963 8.1121 19.9933C8.46417 20.0628 8.79896 20.2015 9.09706 20.4013C9.22711 20.4884 9.34887 20.5922 9.5924 20.7997C10.2043 21.3212 10.5102 21.5819 10.8301 21.7348C11.57 22.0884 12.43 22.0884 13.1699 21.7348C13.4898 21.5819 13.7957 21.3212 14.4076 20.7997C14.6511 20.5922 14.7729 20.4884 14.9029 20.4013C15.201 20.2015 15.5358 20.0628 15.8879 19.9933C16.0415 19.963 16.201 19.9502 16.5199 19.9248C17.3213 19.8608 17.722 19.8288 18.0563 19.7108C18.8295 19.4377 19.4377 18.8295 19.7108 18.0563C19.8288 17.722 19.8608 17.3213 19.9248 16.5199C19.9502 16.201 19.963 16.0415 19.9933 15.8879C20.0628 15.5358 20.2015 15.201 20.4013 14.9029C20.4884 14.7729 20.5922 14.6511 20.7997 14.4076C21.3212 13.7957 21.5819 13.4898 21.7348 13.1699C22.0884 12.43 22.0884 11.57 21.7348 10.8301C21.5819 10.5102 21.3212 10.2043 20.7997 9.5924C20.5922 9.34887 20.4884 9.22711 20.4013 9.09706C20.2015 8.79896 20.0628 8.46417 19.9933 8.1121C19.963 7.95851 19.9502 7.79903 19.9248 7.48008C19.8608 6.6787 19.8288 6.278 19.7108 5.94371C19.4377 5.17051 18.8295 4.56233 18.0563 4.28923C17.722 4.17115 17.3213 4.13918 16.5199 4.07522C16.201 4.04977 16.0415 4.03705 15.8879 4.00672C15.5358 3.93721 15.201 3.79854 14.9029 3.59874C14.7729 3.51158 14.6511 3.40781 14.4076 3.20027C13.7957 2.67883 13.4898 2.41811 13.1699 2.26522C12.43 1.91159 11.57 1.91159 10.8301 2.26522C10.5102 2.4181 10.2043 2.67883 9.5924 3.20027ZM16.3735 9.86314C16.6913 9.5453 16.6913 9.03 16.3735 8.71216C16.0557 8.39433 15.5403 8.39433 15.2225 8.71216L10.3723 13.5624L8.77746 11.9676C8.45963 11.6498 7.94432 11.6498 7.62649 11.9676C7.30866 12.2854 7.30866 12.8007 7.62649 13.1186L9.79678 15.2889C10.1146 15.6067 10.6299 15.6067 10.9478 15.2889L16.3735 9.86314Z" fill="currentColor"/></svg>
@@ -316,41 +332,12 @@ document.addEventListener('DOMContentLoaded', function() {
             <span class="verify-text">Verify</span>
         </button>`;
 
-    function markdownToHtml(text) {
-        if (!text) return '';
-        text = text.replace(/^######\s+(.*)$/gm, '<h6>$1</h6>')
-            .replace(/^#####\s+(.*)$/gm, '<h5>$1</h5>')
-            .replace(/^####\s+(.*)$/gm, '<h4>$1</h4>')
-            .replace(/^###\s+(.*)$/gm, '<h3>$1</h3>')
-            .replace(/^##\s+(.*)$/gm, '<h2>$1</h2>')
-            .replace(/^#\s+(.*)$/gm, '<h1>$1</h1>');
-        // Formatting
-        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/~~(.*?)~~/g, '<del>$1</del>')
-            .replace(/__(.*?)__/g, '<u>$1</u>');
-        return text;
-    }
 
-    // Function to get a teaser (first ~200 chars, truncated nicely)
-    function getTeaser(text) {
-        if (!text || text.trim().length === 0) return '';
-        const maxLength = 200;
-        let teaser = text.substring(0, maxLength);
-        // Truncate at last space to avoid cutting words
-        const lastSpace = teaser.lastIndexOf(' ');
-        if (lastSpace > 0 && lastSpace < maxLength - 10) {
-            teaser = teaser.substring(0, lastSpace);
-        }
-        return teaser + '...';
-    }
-
-    // Generate the teaser button HTML (using a class for event listener instead of inline onclick)
     let ResearchInfoHtml = '';
-    if (research_data && research_data.trim()) {
-        const teaserText = getTeaser(research_data);
+    if (c_info && c_info.trim()) {
+        const teaserText = getTeaser(c_info);
         ResearchInfoHtml = `
-        <div class="research-teaser mt-3 p-4 bg-slate-50/90  rounded-xl border border-slate-200/60 shadow-sm cursor-pointer group  transition-all duration-300 ease-out overflow-hidden">
+        <div id="ResearchInfoDiv" class="research-teaser mt-3 p-4 bg-slate-50/90  rounded-xl border border-slate-200/60 shadow-sm cursor-pointer group  transition-all duration-300 ease-out overflow-hidden">
             <h6 class="text-sm font-bold text-slate-800 mb-2 flex items-center group-hover:text-blue-700 transition-colors duration-200">
             <svg class="w-5 h-5 mr-2 text-slate-500 group-hover:text-blue-500 transition-colors duration-200" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12.2429 6.18353L8.55917 8.27415C7.72801 8.74586 7.31243 8.98172 7.20411 9.38603C7.09579 9.79034 7.33779 10.2024 7.82179 11.0264L8.41749 12.0407C8.88853 12.8427 9.12405 13.2437 9.51996 13.3497C9.91586 13.4558 10.3203 13.2263 11.1292 12.7672L14.8646 10.6472M7.05634 9.72257L3.4236 11.7843C2.56736 12.2702 2.13923 12.5132 2.02681 12.9256C1.91438 13.3381 2.16156 13.7589 2.65591 14.6006C3.15026 15.4423 3.39744 15.8631 3.81702 15.9736C4.2366 16.0842 4.66472 15.8412 5.52096 15.3552L9.1537 13.2935M21.3441 5.18488L20.2954 3.39939C19.8011 2.55771 19.5539 2.13687 19.1343 2.02635C18.7147 1.91584 18.2866 2.15881 17.4304 2.64476L13.7467 4.73538C12.9155 5.20709 12.4999 5.44294 12.3916 5.84725C12.2833 6.25157 12.5253 6.6636 13.0093 7.48766L14.1293 9.39465C14.6004 10.1966 14.8359 10.5976 15.2318 10.7037C15.6277 10.8098 16.0322 10.5802 16.841 10.1212L20.5764 8.00122C21.4326 7.51527 21.8608 7.2723 21.9732 6.85985C22.0856 6.44741 21.8384 6.02657 21.3441 5.18488Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
@@ -360,7 +347,26 @@ document.addEventListener('DOMContentLoaded', function() {
             Deep Research Result
             </h6>
             <div class="relative overflow-hidden max-h-24 transition-all duration-500 ease-out">
-                <p class="text-sm text-slate-600 leading-tight transition-all duration-300">${teaserText}</p>
+                <p class="text-sm text-slate-600 leading-tight transition-all duration-300" id=teaserTextRend${currentSessionId}>${teaserText}</p>
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-50 to-transparent pointer-events-none opacity-70 h-4 transition-all duration-500 ease-out"></div>
+                <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-slate-50/30 via-slate-50/70 to-transparent pointer-events-none opacity-100 transition-all duration-500 ease-out delay-200"></div>
+            </div>
+        </div>
+        `;
+    }
+    else{
+        ResearchInfoHtml = `
+        <div id="ResearchInfoDiv" class="research-teaser mt-3 p-4 hidden bg-slate-50/90  rounded-xl border border-slate-200/60 shadow-sm cursor-pointer group  transition-all duration-300 ease-out overflow-hidden">
+            <h6 class="text-sm font-bold text-slate-800 mb-2 flex items-center group-hover:text-blue-700 transition-colors duration-200">
+            <svg class="w-5 h-5 mr-2 text-slate-500 group-hover:text-blue-500 transition-colors duration-200" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.2429 6.18353L8.55917 8.27415C7.72801 8.74586 7.31243 8.98172 7.20411 9.38603C7.09579 9.79034 7.33779 10.2024 7.82179 11.0264L8.41749 12.0407C8.88853 12.8427 9.12405 13.2437 9.51996 13.3497C9.91586 13.4558 10.3203 13.2263 11.1292 12.7672L14.8646 10.6472M7.05634 9.72257L3.4236 11.7843C2.56736 12.2702 2.13923 12.5132 2.02681 12.9256C1.91438 13.3381 2.16156 13.7589 2.65591 14.6006C3.15026 15.4423 3.39744 15.8631 3.81702 15.9736C4.2366 16.0842 4.66472 15.8412 5.52096 15.3552L9.1537 13.2935M21.3441 5.18488L20.2954 3.39939C19.8011 2.55771 19.5539 2.13687 19.1343 2.02635C18.7147 1.91584 18.2866 2.15881 17.4304 2.64476L13.7467 4.73538C12.9155 5.20709 12.4999 5.44294 12.3916 5.84725C12.2833 6.25157 12.5253 6.6636 13.0093 7.48766L14.1293 9.39465C14.6004 10.1966 14.8359 10.5976 15.2318 10.7037C15.6277 10.8098 16.0322 10.5802 16.841 10.1212L20.5764 8.00122C21.4326 7.51527 21.8608 7.2723 21.9732 6.85985C22.0856 6.44741 21.8384 6.02657 21.3441 5.18488Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M12 12.5L16 22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M12 12.5L8 22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>    
+            Deep Research Result
+            </h6>
+            <div class="relative overflow-hidden max-h-24 transition-all duration-500 ease-out">
+                <p class="text-sm text-slate-600 leading-tight transition-all duration-300" id=teaserTextRend${currentSessionId}></p>
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-50 to-transparent pointer-events-none opacity-70 h-4 transition-all duration-500 ease-out"></div>
                 <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-slate-50/30 via-slate-50/70 to-transparent pointer-events-none opacity-100 transition-all duration-500 ease-out delay-200"></div>
             </div>
@@ -477,7 +483,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cInfoHtml = `
         <div class="mb-3 p-3 bg-gray-50/80 rounded-md border border-gray-200/50">
             <h6 class="text-sm font-semibold text-gray-900 mb-1.5">Company Overview</h6>
-            <p class="text-sm text-gray-700 leading-tight">${c_info}</p>
+            <p id="cInfoSection${currentSessionId}" class="text-sm text-gray-700 leading-tight">${c_info}</p>
         </div>
         `;
     }
@@ -493,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const validEntries = Object.entries(cDataObj).filter(([key, value]) => value !== null && value !== '' && value !== undefined);
         if (validEntries.length > 0) {
             cDataHtml = `
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+            <div id="cDataSection${currentSessionId}" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                 ${validEntries.map(([key, value]) => {
                 const displayKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
                 return `
@@ -800,7 +806,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button onclick="document.getElementById('researchModal').classList.add('hidden')" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 focus:outline-none">
                     Close
                 </button>
-                <button class="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-gray-700 focus:outline-none " onclick="downloadResearchAsTxt()" >
+                <button id="DownRepBtn" class="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-gray-700 focus:outline-none " onclick="downloadResearchAsTxt()" >
                     Download Report
                 </button>
             </div>
@@ -819,8 +825,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (contentDiv) {
                         contentDiv.innerHTML = markdownToHtml(window.currentResearchData || '');
                     }
-                    
-                    // Show modal
+
                     const modal = document.getElementById('researchModal');
                     modal.classList.remove('hidden');
                     document.body.style.overflow = 'hidden';
@@ -924,9 +929,7 @@ window.updateConsultationStatus = async function(consultationId, selectElement) 
         showPopup(`Status Updated to ${newStatus}`);
         const result = await response.json();
     } catch (error) {
-        console.error("Update failed:", error);
-        alert("Failed to update status. Check console for details.");
-        // Revert UI on error
+        showPopup("Failed to update status");
         selectElement.className = originalColorClass; 
     } finally {
         selectElement.disabled = false;
@@ -987,14 +990,13 @@ window.loadSessionConsultations = async function(sessionId) {
         container.innerHTML = html;
 
     } catch (error) {
-        console.error(error);
         container.innerHTML = '<div class="text-red-400 text-sm p-4">Error loading consultations.</div>';
     }
 };
 
-// New function to open Deep Research modal
+
 function openDeepResearchModal() {
-    // Create modal HTML with pre-filled form
+    if (document.getElementById('deepResearchModal')) return;
     const modalHtml = `
     <div id="deepResearchModal" class="fixed inset-0 bg-gray-900/70  z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-xl max-w-[35rem] w-full max-h-[90vh] overflow-y-auto border border-gray-200">
@@ -1080,12 +1082,37 @@ function openDeepResearchModal() {
         };
         closeDeepResearchModal();
         showPopup('You will be notified upon research completion');
+        const researchTeaser = document.getElementById('ResearchInfoDiv');
+        if (researchTeaser.classList.contains('hidden')) {
+            researchTeaser.classList.remove('hidden');
+        }
+        document.getElementById(`teaserTextRend${currentSessionId}`).innerHTML = `
+            <div class="p-1">
+            <div class="h-4 w-full mb-1 rounded overflow-hidden relative">
+                <div class="absolute inset-0 bg-gray-300"></div>
+                <div class="absolute inset-0 animate-shimmer"
+                    style="background-image: linear-gradient(to right, #e2e8f0 0%, #cbd5e0 20%, #e2e8f0 40%, #e2e8f0 100%);
+                            background-size: 1000px 100%;"
+                ></div>
+            </div>
+
+            <div class="h-4 w-3/4 mb-1 rounded overflow-hidden relative">
+                <div class="absolute inset-0 bg-gray-300"></div>
+                <div class="absolute inset-0 animate-shimmer"
+                    style="background-image: linear-gradient(to right, #e2e8f0 0%, #cbd5e0 20%, #e2e8f0 40%, #e2e8f0 100%);
+                            background-size: 1000px 100%;"
+                ></div>
+            </div>
+
+                <div class="h-4 w-1/2 mb-1 rounded bg-gray-300"></div>
+            </div>
+        `;
         try {
             const response = await fetch('/api/deep-research', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    id: researchData.id, // <-- supply session id (match DB)
+                    id: researchData.id, 
                     name: researchData.name,
                     email: researchData.email,
                     company: researchData.company,
@@ -1097,6 +1124,7 @@ function openDeepResearchModal() {
             if (!response.ok) {
                 const text = await response.text();
                 showPopup('Failed to initiate deep research');
+                document.getElementById(`teaserTextRend${currentSessionId}`).innerHTML = '<span style="color: red; font-weight: bold;">Failed to initiate deep research</span>';
                 closeDeepResearchModal();
                 return;
             }
@@ -1123,21 +1151,53 @@ function openDeepResearchModal() {
                 }
             }
         
-            // Use a short summary or fallback to raw
             const summary = data.result;
+            const details = data.details;
+            const researchTeaser = document.getElementById('ResearchInfoDiv');
+            if (researchTeaser.classList.contains('hidden')) {
+                researchTeaser.classList.remove('hidden');
+            }
+            const teaserEl = document.getElementById(`teaserTextRend${data.sessionID}`);
+            if (teaserEl) teaserEl.innerText = getTeaser(summary);
+
+            const infoEl = document.getElementById(`cInfoSection${data.sessionID}`);
+            if (infoEl) infoEl.innerText = summary;
+            if (data.sessionID === currentSessionId) {
+                window.currentResearchData = summary;
+            }
             showPopup('The requested research report is ready');
             showNotification('Research analysis is complete.', summary);
-        
-            // You can update the UI with data.result if you want
-            // e.g., show result in a modal or results area
+            let newCDataHtml
+            if (details && details !== '{}' && details !== 'null' && details !== null) {
+                try {
+                const cDataObjnew = JSON.parse(details);
+                const validEntriesnew = Object.entries(cDataObjnew).filter(([key, value]) => value !== null && value !== '' && value !== undefined);
+                if (validEntriesnew.length > 0) {
+                    newCDataHtml = `
+                        ${validEntriesnew.map(([key, value]) => {
+                        const displayKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+                        return `
+                            <div class="bg-white/50 p-2.5 rounded-md border border-gray-200/50 ">
+                            <div class="text-xs text-gray-500 uppercase tracking-wide font-medium mb-0.5">${displayKey}</div>
+                            <div class="text-sm text-gray-900 font-semibold">${value}</div>
+                            </div>
+                        `;
+                        }).join('')}
+                    `;
+                }
+                } catch (e) {
+                console.warn('Invalid c_data JSON');
+                }
+            }
+            const dataEl = document.getElementById(`cDataSection${data.sessionID}`);
+            if (dataEl) dataEl.innerHTML = newCDataHtml;
+            
+
         } catch (error) {
-            showPopup('Failed to initiate deep research. Please try again.');
+            showPopup(`Failed to initiate deep research. Please try again.${error}`);
         } finally {
-            // Close modal after submission
             closeDeepResearchModal();
         }
-
-        // Close modal after submission
         closeDeepResearchModal();
     });
 }
@@ -1203,7 +1263,6 @@ async function handleVerification() {
         verifyBtn.innerHTML = '<span class="verify-text">Retry</span>';
         verifyBtn.className = 'ml-3 inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 focus:outline-none transition';
         }, 1400);
-        console.error('Verification failed');
     }
     } catch (err) {
     if (err.message === 'cancelled') {
@@ -1226,7 +1285,7 @@ async function handleVerification() {
 let availableTemplates = [];
 let currentCustomTasks = [];
 
-async function openSession(id, mode, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, c_sources, c_images, c_info, c_data, research_data, approved) {
+async function openSession(id, mode, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, c_sources, c_images, c_info, c_data, approved) {
     if (currentWs) {
         reconnectAttempts = maxReconnectAttempts;
         currentWs.close();
@@ -1234,7 +1293,7 @@ async function openSession(id, mode, name, email, phone, company, mood, verified
     currentSessionId = id;
     currentMode = mode;
     // Store data globally so modal can access it
-    currentUserData = { id, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, c_sources, c_images, c_info, c_data, research_data, approved };
+    currentUserData = { id, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, c_sources, c_images, c_info, c_data, approved };
     
     const isApproved = approved === true || approved === "true";
 
@@ -1363,7 +1422,6 @@ async function loadConsultants() {
         });
 
     } catch (error) {
-        console.error("Error loading consultants:", error);
         selectElement.innerHTML = '<option value="" disabled selected>Failed to load consultants</option>';
     }
 }
@@ -1412,7 +1470,6 @@ async function submitConsultationSchedule() {
         showPopup(`Consultation scheduled with ${data.consultant_name}`); 
 
     } catch (error) {
-        console.error("Error scheduling consultation:", error);
         showPopup(`Failed to schedule consultation`);
     } finally {
         document.getElementById('submitScheduleBtn').innerText = "Confirm Schedule";
@@ -1634,7 +1691,6 @@ async function submitProjectCreation() {
         }
 
     } catch (error) {
-        console.error("submitProjectCreation error:", error);
         showPopup("Network Error");
     } finally {
         btn.innerText = "Create Project & Save Changes";
@@ -1690,7 +1746,7 @@ async function generateAutoTasks() {
         renderAITaskSuggestions(tasks);
 
     } catch (err) {
-        console.error('AI generation error', err);
+        console.error('AI generation error');
         // Show an inline error message inside templateTasksContainer (non-destructive)
         const errNode = document.createElement('p');
         errNode.className = 'text-red-500 text-sm text-center';
@@ -1801,7 +1857,7 @@ function connectWebSocket() {
         }
     };
     currentWs.onerror = (error) => {
-        console.error('WebSocket error:');
+        console.error('WebSocket error');
     };
     } catch (err) {
     console.error('Failed to create WebSocket');

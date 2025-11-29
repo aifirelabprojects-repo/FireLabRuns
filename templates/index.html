@@ -5,11 +5,48 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="description" content="Test- Business ChatBot Widget">
   <link rel="icon" href="/static/logo.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
   <title>Business ChatBot</title>
   <script src="/static/tailwind.js"></script>
   <script src="/static/dataset.js"></script>
+  <script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    primary: "#4F46E5",
+                    "background-light": "#F8FAFC",
+                    "background-dark": "#111827",
+                },
+                fontFamily: {
+                    sans: ["Inter", "system-ui", "sans-serif"],
+                    display: ["Inter", "system-ui", "sans-serif"],
+                },
+                borderRadius: {
+                    DEFAULT: "0.75rem", 
+                    lg: "1rem",
+                },
+                keyframes: {
+                    shimmer: {
+                      '0%': { 'background-position': '-1000px 0' },
+                      '100%': { 'background-position': '1000px 0' },
+                    },
+                  },
+                  animation: {
+                    shimmer: 'shimmer 1.5s infinite linear',
+                },
+            },
+        },
+    };
+</script>
   <style>
+    body, html {
+      font-family: "Plus Jakarta Sans", "system-ui", "sans-serif";
+      font-feature-settings: "cv11", "ss01";
+      font-weight: 400;
+    }
     #email-verify-anim {
       display: none;
       position: absolute;
@@ -44,6 +81,7 @@
       to   { transform: rotate(360deg); }
     }
   </style>
+
   
   <style>
     #messages::-webkit-scrollbar { width: 6px; }
@@ -84,6 +122,42 @@
         border-radius: 0;
       } 
     }
+
+    #composer.disabled {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    #composer.disabled #input {
+      background-color: #f1f5f9 !important;
+      cursor: not-allowed;
+    }
+    #composer.disabled #sendBtn {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .typing-wave {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .typing-wave span {
+      display: block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #94a3b8;
+      animation: wave 1.4s ease-in-out infinite;
+    }
+    .typing-wave span:nth-child(1) { animation-delay: 0s; }
+    .typing-wave span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-wave span:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes wave {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.6; }
+      40% { transform: translateY(-7px); opacity: 1; }
+    }
+
     .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 998; opacity: 0; visibility: hidden; transition: all .3s ease-out; }
     .overlay.open { opacity: 1; visibility: visible; }
 
@@ -318,6 +392,7 @@ input[type=range]::-webkit-slider-runnable-track {
 
   <script>
     let ws;
+    let welcomeMessageShown = false;  
     let sessionId = localStorage.getItem('chatSessionId');
     const messagesEl = document.getElementById('messages');
     const inputEl = document.getElementById('input');
@@ -337,15 +412,23 @@ input[type=range]::-webkit-slider-runnable-track {
     const limitRange = document.getElementById('limitRange');
     const rangeValue = document.getElementById('rangeValue');
 
-    // --- 2. Settings Logic (Local Storage) ---
-    
-    // Default config
+
     let config = {
         enabled: true,
         limit: 4
     };
 
-    // Load from LocalStorage on init
+    function showWelcomeMessage() {
+      if (welcomeMessageShown) return;  // Prevent showing twice
+      welcomeMessageShown = true;
+  
+      const welcomeText = `Hi, I'm Sofia from Analytix – your official partner for fast-track business setup in Saudi Arabia.🚀 New business setup or existing client? 😊✨`;
+  
+      const options = ["I'm setting up a new business", "I'm an existing client"];
+  
+      addMessage('bot', welcomeText, new Date().toISOString(), options);
+  }
+
     function loadSettings() {
         const saved = localStorage.getItem('autocompleteConfig');
         if (saved) {
@@ -565,21 +648,53 @@ input[type=range]::-webkit-slider-runnable-track {
     }
 
     function showGenerating() {
-      hideGenerating();
+      hideGenerating(); // prevent duplicates
+    
       const el = document.createElement('div');
       el.id = 'generating-row';
-      el.className = 'fade-up flex items-start gap-3';
+      el.className = 'max-w-[85%] p-3 bg-gray-50 border border-gray-200 rounded-2xl';
       el.innerHTML = `
-        <div class="bg-slate-50 border border-slate-100 rounded-2xl px-3 py-3 inline-flex items-center gap-2">
-          <div class="spinner"></div>
-        </div>`;
+        <div class="flex items-start gap-3 max-w-[85%]">
+        <div class="flex-1 space-y-2 py-1">
+          <div class="h-4 w-full bg-gray-200 rounded-lg overflow-hidden relative">
+            <div class="absolute inset-0 bg-gray-300"></div>
+            <div class="absolute inset-0 animate-shimmer"
+                 style="background-image: linear-gradient(to right, #e2e8f0 0%, #cbd5e1 20%, #e2e8f0 40%, #e2e8f0 100%);
+                        background-size: 1000px 100%;">
+            </div>
+          </div>
+  
+          <div class="h-4 w-11/12 bg-gray-200 rounded-lg overflow-hidden relative">
+            <div class="absolute inset-0 bg-gray-300"></div>
+            <div class="absolute inset-0 animate-shimmer"
+                 style="background-image: linear-gradient(to right, #e2e8f0 0%, #cbd5e1 20%, #e2e8f0 40%, #e2e8f0 100%);
+                        background-size: 1000px 100%;">
+            </div>
+          </div>
+  
+          <div class="h-4 w-9/12 bg-gray-200 rounded-lg overflow-hidden relative">
+            <div class="absolute inset-0 bg-gray-300"></div>
+            <div class="absolute inset-0 animate-shimmer"
+                 style="background-image: linear-gradient(to right, #e2e8f0 0%, #cbd5e1 20%, #e2e8f0 40%, #e2e8f0 100%);
+                        background-size: 1000px 100%;">
+            </div>
+          </div>
+  
+          <div class="h-4 w-7/12 bg-gray-200 rounded-lg"></div>
+        </div>
+      </div>`;
+    
       messagesEl.appendChild(el);
-      setTimeout(() => { messagesEl.scrollTop = messagesEl.scrollHeight; }, 10);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    
+      // Disable input during generation
+      document.getElementById('composer').classList.add('disabled');
     }
     
     function hideGenerating() {
       const el = document.getElementById('generating-row');
       if (el) el.remove();
+      document.getElementById('composer').classList.remove('disabled');
     }
 
     async function createSessionIfNeeded() {
@@ -602,6 +717,7 @@ input[type=range]::-webkit-slider-runnable-track {
         const msg = JSON.parse(e.data);
         if (msg.type === 'history') {
           msg.messages.forEach(m => addMessage(m.role, m.content, m.timestamp));
+          
         } else if (msg.type === 'message') {
           if (msg.role !== 'user') {
             hideGenerating();
@@ -654,14 +770,19 @@ input[type=range]::-webkit-slider-runnable-track {
       await connectWS();
     }
 
+
     async function initChat() {
       try {
-        if (sessionId) await ensureSessionAndConnect();
+          if (sessionId) {
+              await ensureSessionAndConnect();
+          } else {
+              welcomeMessageShown = false;
+              showWelcomeMessage();
+          }
       } catch (err) {
-        addMessage('system', 'Unable to load chat history');
+          addMessage('system', 'Unable to load chat history');
       }
-    }
-
+  }
     
 
     // Function to show email popup
@@ -841,14 +962,15 @@ input[type=range]::-webkit-slider-runnable-track {
       sessionId = null;
       if (ws) ws.close();
       messagesEl.innerHTML = '';
+      welcomeMessageShown = false;  
       addMessage('system', 'Started a new conversation.');
+      showWelcomeMessage();
     });
 
     chatDiv.addEventListener('transitionend', () => {
       if (chatDiv.classList.contains('open')) inputEl.focus();
     });
 
-  
     initChat();
   </script>
 </body>

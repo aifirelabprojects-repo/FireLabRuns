@@ -27,7 +27,7 @@ llm = ChatOpenAI(
     model_kwargs={"response_format": {"type": "json_object"}}
 )
 
-# Make these global for dynamic reloading
+
 prompt = None
 chain = None
 graph = None

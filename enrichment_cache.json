@@ -42,5 +42,49 @@
       ]
     },
     "timestamp": 1763798892.4487772
+  },
+  "dbd97b526109d954cd5e198411dc9e24": {
+    "result": {
+      "summary": "Airlab refers to multiple distinct entities across different industries and regions. One Air Lab is an engagement platform developed by Farelogix and Florida International University focused on data science and advanced predictive analytics for the airline industry, leveraging AI and machine learning to optimize airline revenue management. Another Air Lab, founded by Michael Nitefor, is a company dedicated to vehicular CO2 reduction through hybrid pneumatic powertrain technology, emphasizing cost-effective decarbonization solutions and partnerships with academic and technology institutions. Additionally, AIR Lab Singapore specializes in innovative Air Traffic Management solutions, including the development of an Air Traffic Management Digital Twin to enhance aviation efficiency and sustainability. There is also AirLab Co., Ltd., a South Korean healthcare company founded in 2017 that specializes in respiratory products. Lastly, Airlab in New Zealand is a leading HVAC commissioning company providing air testing, commissioning, and certification services. These entities vary widely in focus, location, and industry, sharing only the name \"Airlab.\"",
+      "details": {
+        "founded": "2017 (for South Korean AirLab)",
+        "employees": null,
+        "founders": "Michael Nitefor (for vehicular CO2 reduction Air Lab)",
+        "location": "Multiple: Miami, Florida (Farelogix/AIRLAB); South Korea (AirLab healthcare); Singapore (AIR Lab ATM); New Zealand (Airlab HVAC)",
+        "revenue": null,
+        "industry": "Multiple: Airline data science and AI; Vehicular decarbonization technology; Air Traffic Management solutions; Healthcare respiratory products; HVAC commissioning",
+        "confidence": 90
+      },
+      "sources": [
+        "https://airlab.fiu.edu/overview/",
+        "https://airlab.global/more-about-us/",
+        "https://airlab.aero",
+        "http://www.airlabkorea.com/8cb9143155d64f0d8976f5e4f5a0913a",
+        "https://app.dealroom.co/companies/airlab_1"
+      ]
+    },
+    "timestamp": 1764325058.1939826
+  },
+  "d34b6c59ef0497d8ff246abd1049352e": {
+    "result": {
+      "summary": "Aloha is a name associated with several distinct companies, each rooted in different industries and regions. Aloha Petroleum, Ltd., established in 1977, is one of Hawaii's largest gasoline marketers and convenience store operators, with over 800 employees and a network of fueling stations and convenience stores. Aloha Island Mart, a subsidiary, began in 1992 and now operates 52 locations. Aloha Shoyu, founded in 1946, is a leading soy sauce manufacturer in Hawaii. Aloha Collection, founded in 2014, is a lifestyle brand known for its beach bags and apparel. Aloha Point-of-Sale is a widely used restaurant POS system, now owned by NCR Corporation. The plant-based protein brand Aloha, led by Brad Charron, was re-founded in 2017 and is recognized for its rapid growth and B Corp status. The name 'Aloha' is also historically linked to iconic Hawaiian shirt brands like Kahala and Kamehameha Garment Company, which date back to the 1930s and 1940s.",
+      "details": {
+        "founded": null,
+        "employees": null,
+        "founders": null,
+        "location": null,
+        "revenue": null,
+        "industry": null,
+        "confidence": 75
+      },
+      "sources": [
+        "https://www.alohagas.com/about-us/history",
+        "https://bitsofaloha.com/blogs/news/legacy-aloha-shirt-brands-history-hawaiian-icons",
+        "https://en.wikipedia.org/wiki/Aloha_Petroleum",
+        "https://alohashoyu.com/about/",
+        "https://aloha-collection.com/pages/about-us"
+      ]
+    },
+    "timestamp": 1764398353.349702
   }
 }

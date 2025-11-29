@@ -6,6 +6,7 @@
     <title>Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="/static/logo.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script src="/static/tailwind.js"></script>
@@ -27,6 +28,15 @@
                     borderRadius: {
                         DEFAULT: "0.75rem", 
                         lg: "1rem",
+                    },
+                    keyframes: {
+                        shimmer: {
+                          '0%': { 'background-position': '-1000px 0' },
+                          '100%': { 'background-position': '1000px 0' },
+                        },
+                      },
+                      animation: {
+                        shimmer: 'shimmer 1.5s infinite linear',
                     },
                 },
             },
@@ -219,13 +229,13 @@
                 </div>
         
                 <div class="flex items-center gap-4 shrink-0 ">
-                    <div class=" bg-gray-100 rounded-full p-1" >
-                        <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 relative">
+                    <div class=" bg-gray-100 rounded-full p-1 " >
+                        <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 relative"style="cursor:not-allowed">
                             <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                         </button>
             
-                        <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500">
+                        <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500" style="cursor:not-allowed">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </button>
                     </div>
@@ -234,7 +244,7 @@
         
                     <div class="flex items-center gap-3 pl-2">
                         <div class="w-9 h-9 rounded-full bg-gray-200 overflow-hidden">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" class="w-full h-full object-cover">
+                            <img src="https://api.dicebear.com/9.x/identicon/svg?seed=Destiny&scale=70&backgroundType[]&backgroundColor[]" alt="User" class="w-full h-full object-cover">
                         </div>
                         <div class="hidden lg:flex flex-col">
                             <span class="text-sm font-semibold text-gray-800 dark:text-white leading-none">Admin</span>
@@ -421,7 +431,7 @@
                             document.getElementById('avg-response').textContent = data.avg_response;
                             document.getElementById('requested-services').textContent = data.requested_services;
                 
-                            // Requested services change
+
                             const reqChangeEl = document.getElementById('requested-change');
                             const isPositive = data.requested_change.includes('+') || data.requested_change === '100%';
                             const reqPathD = isPositive ? 'M5 10l7-7m0 0l7 7m-7-7v18' : 'M19 14l-7 7m0 0l-7-7m7 7V3';
@@ -530,7 +540,7 @@
                             });
                 
                         } catch (error) {
-                            console.error(" ");
+                            showPopup("Failed to load dashboard");
                         } finally {
                             dashSpinner.style.display = 'none';
                             dashContent.style.display = 'block';
@@ -1325,7 +1335,7 @@
                                     noFiles.classList.remove('hidden');
                                 }
                             } catch (err) {
-                                console.error('Failed to load files:', err);
+                                showPopup('Failed to load files');
                             }
                         }
                 
@@ -1435,7 +1445,7 @@
                         updateUnsavedIndicator();
                         insightSpinner.style.display = 'none';
                     } catch (error) {
-                        console.error('Failed to load insight');
+                        showPopup('Failed to load insight');
                         insightSpinner.style.display = 'none';
                     }
                 }
@@ -1531,7 +1541,7 @@
                             throw new Error('Save failed');
                         }
                     } catch (error) {
-                        console.error('Save error:', error);
+                        showPopup('An error occured while saving');
                         showPopup('Save failed. Please try again.');
                     } finally {
                         btn.innerHTML = originalText;
@@ -1638,7 +1648,7 @@
                             <div id="existing-templates-section">
                                 <div class="flex items-center gap-3 mb-6">
                                     <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
-                                    <h2 class="text-2xl font-bold text-gray-900">Existing Templates <span id="template-count" class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">0</span></h2>
+                                    <h2 class="text-2xl font-bold text-gray-900 flex items-center"><span>Existing Templates</span><span id="template-count" class="ml-2 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">0</span></h2>
                                 </div>
                                 
                                 <div id="templates-list-ul" class="grid grid-cols-1 gap-6">
@@ -1813,7 +1823,6 @@
                                 
                             } catch (error) {
                                 showAlert(`Creation failed: ${error.message}`, 'error');
-                                console.error('Submission failed:', error);
                             }
                         }
                     
@@ -1838,7 +1847,7 @@
                                     setTimeout(() => {
                                         listItem.remove();
                                         const count = parseInt(templateCountSpan.textContent) - 1;
-                                        templateCountSpan.textContent = count < 0 ? 0 : count;
+                                        templateCountSpan.textContent = `Total ${count < 0 ? 0 : count}`;
                                         if (count <= 0) emptyMessage.classList.remove('hidden');
                                     }, 300);
                                 }
@@ -1878,7 +1887,7 @@
                         function renderTemplate(template) {
                             const taskHtml = template.default_tasks.map(task => `
                                 <div id="task-row-existing-${task.id}" class="group flex items-start py-2 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-3 -mx-3 rounded">
-                                    <div class="flex-shrink-0 pt-1">
+                                    <div class="flex-shrink-0">
                                         <span class="flex items-center justify-center h-5 w-5 rounded bg-gray-100 text-xs font-medium text-gray-500">
                                             ${task.sequence_number}
                                         </span>
@@ -1926,7 +1935,7 @@
                             templatesListUl.innerHTML = '';
                             loadingSpinner.classList.remove('hidden');
                             emptyMessage.classList.add('hidden');
-                            templateCountSpan.textContent = 0;
+                            templateCountSpan.textContent = `Total 0`;
                     
                             try {
                                 const response = await fetch(`/api/templates/`);
@@ -1941,13 +1950,12 @@
                                 } else {
                                     const htmlContent = templates.map(renderTemplate).join('');
                                     templatesListUl.innerHTML = htmlContent;
-                                    templateCountSpan.textContent = templates.length;
+                                    templateCountSpan.textContent = `Total ${templates.length}`;
                                 }
                     
                             } catch (error) {
                                 loadingSpinner.classList.add('hidden');
                                 templatesListUl.innerHTML = `<div class="text-red-600 text-sm p-4 bg-red-50 rounded-md border border-red-100">Unable to load templates: ${error.message}</div>`;
-                                console.error("Fetch Error:", error);
                             }
                         }
                                         
@@ -2097,7 +2105,7 @@
                                 });
                     
                             } catch (error) {
-                                console.error('Error fetching consultants:', error);
+                                showPopup('Error fetching consultants');
                                 tableBody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-red-600 bg-red-50">Error loading data. Please check the backend connection.</td></tr>';
                             }
                         }
@@ -2163,7 +2171,7 @@
                                     throw new Error(error.detail || 'Failed to delete consultant.');
                                 }
                             } catch (error) {
-                                console.error('Delete consultant error:', error);
+                                showPopup('Delete consultant error');
                                 showPopup('Deletion failed');
                             }
                         }
@@ -2176,7 +2184,10 @@
                     
                     <div class="flex items-start justify-between mb-6">
                       <header class="mb-8">
-                        <h1 class="text-4xl font-bold text-gray-800 dark:text-white">Chat Sessions</h1>
+                        <h1 class="text-4xl font-bold inline-flex items-center gap-3">
+                        Chat Sessions
+                        <div id="session-spinner" class="inline-flex items-center mt-[7px]"><div class="animate-spin rounded-full h-6 w-6 border-[3px] border-gray-900 border-t-transparent"></div></div>
+                        </h1>
                       <p class="text-gray-500 dark:text-gray-400">Monitor all chatbot conversations</p>
                       </header>
                       <div class="flex items-center gap-2">
@@ -2264,24 +2275,24 @@
                 </div>
 
                 <div id="projects-tab" class="tab-panel hidden">
-                        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3">              
-                            <div>
-                                <h1 class="text-4xl font-bold inline-flex items-center gap-3">
-                                    Projects
-                                    <div id="project-spinner" class="inline-flex items-center">
-                                        <div class="animate-spin rounded-full h-6 w-6 border-[3px] border-gray-900 border-t-transparent"></div>
-                                    </div>
-                                </h1>
-                                <p class="text-gray-500 dark:text-gray-400">View and manage all your projects in one place</p>
-                            </div>
-                            <div class="flex justify-items-center gap-2" >
-                            <button onclick="fetchProjects()" title="refresh" class="p-2 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg hover:bg-background-light dark:hover:bg-background-dark transition-colors duration-200">
-                                <svg class="w-5 h-5 text-text-secondary-light dark:text-text-secondary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                </svg>
-                            </button>
-                            </div>
-                        </header>
+                    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3">              
+                        <div>
+                            <h1 class="text-4xl font-bold inline-flex items-center gap-3">
+                                Projects
+                                <div id="project-spinner" class="inline-flex items-center">
+                                    <div class="animate-spin rounded-full h-6 w-6 border-[3px] border-gray-900 border-t-transparent"></div>
+                                </div>
+                            </h1>
+                            <p class="text-gray-500 dark:text-gray-400">View and manage all your projects in one place</p>
+                        </div>
+                        <div class="flex justify-items-center gap-2" >
+                        <button onclick="fetchProjects()" title="refresh" class="p-2 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg hover:bg-background-light dark:hover:bg-background-dark transition-colors duration-200">
+                            <svg class="w-5 h-5 text-text-secondary-light dark:text-text-secondary-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                        </div>
+                    </header>
                     <div class=" rounded-2xl p-0  overflow-hidden">
                         <div id="project-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div class="col-span-full text-center py-20 text-gray-400">Loading projects...</div>
@@ -2293,17 +2304,12 @@
         </main>
     </div>
 
-    <!-- CHAT - WARNING -->
-
     <div id="chatModal" class="fixed inset-0 hidden z-50 overflow-hidden">
         <div class="absolute inset-0 bg-black/50" onclick="closeChat()"></div>
         <div class="absolute inset-0 flex items-center justify-center p-4">
           <div class="w-full max-w-[90rem] h-[90vh] bg-white rounded-[.9rem] shadow-xl flex overflow-hidden">
-            <!-- Left Panel: User & Company Details -->
             <div id="userDetailsSection" class="w-1/3 bg-gray-50 border-r border-gray-200 p-0 overflow-y-auto">
-              <!-- User details tabs will be rendered here -->
             </div>
-            <!-- Right Panel: Chat -->
             <div class="flex-1 flex flex-col">
               <div class="flex flex-row-reverse items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
                 <div class="flex items-center gap-3">
@@ -2673,7 +2679,7 @@
                 projectSpinner.style.display = 'none';
             } catch (error) {
                 projectSpinner.style.display = 'none';
-                console.error("Error fetching projects:", error);
+                showPopup("Error fetching projects","error");
                 document.getElementById('project-grid').innerHTML = `<div class="text-red-500">Error loading projects. Ensure backend is running.</div>`;
             }
         }
@@ -2842,7 +2848,7 @@
 
 function closeProjModal() {
     document.getElementById('project-modal').classList.add('hidden');
-    fetchProjects(); // Refresh main dashboard
+    fetchProjects(); 
 }
 
 function populateModal(project) {
@@ -2943,7 +2949,7 @@ function changeTaskPage(newPage) {
         currentTaskPage = pageNum; 
         renderTasks(allTasks); 
     } else {
-        console.warn("Invalid page requested");
+        showPopup("Invalid page requested");
     }
 }
 
@@ -3014,8 +3020,7 @@ async function updateTaskStatus(taskId, newStatus, selectElement) {
             throw new Error('Failed');
         }
     } catch (error) {
-        console.error(error);
-        selectElement.value = oldStatus; // Rollback
+        selectElement.value = oldStatus; 
         showPopup("Failed to update status");
     } finally {
         selectElement.disabled = false;
@@ -3192,7 +3197,7 @@ function updateHeaderBadge(status) {
                         try {
                             action();
                         } catch (error) {
-                            console.error(`Error executing action for tab "${tabName}":`, error);
+                            showPopup(`Error executing action for tab`);
                         }
                     }
                 }

@@ -1,387 +1,179 @@
-# CompanyFinder.py
 import os
 import json
-import sys
-import hashlib
-from typing import Dict, Any, List, Optional, Tuple
 import time
+import asyncio
 from openai import AsyncOpenAI
-from database import AsyncSessionLocal, CompanyDetails, Session as SessionModel, AsyncSession
+from database import AsyncSessionLocal, CompanyDetails, Session as SessionModel
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-import asyncio
-import re
 from dotenv import load_dotenv
 
 load_dotenv()
-if sys.platform == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
-CACHE_FILE = "enrichment_cache.json"
-
-json_schema = {
-    "name": "company_enrichment",
-    "schema": {
-        "type": "object",
-        "properties": {
-            "summary": {"type": "string", "description": "Detailed 5-8 sentence summary"},
-            "details": {
-                "type": "object",
-                "properties": {
-                    "founded": {"type": ["string", "null"]},
-                    "employees": {"type": ["string", "null"]},
-                    "founders": {"type": ["string", "null"]},
-                    "location": {"type": ["string", "null"]},
-                    "revenue": {"type": ["string", "null"]},
-                    "industry": {"type": ["string", "null"]},
-                    "confidence": {"type": "number", "minimum": 0, "maximum": 100}
-                },
-                "required": [],  
-                "additionalProperties": False
-            }
-        },
-        "required": ["summary", "details"],
-        "additionalProperties": False
-    }
-}
-
-class AsyncRateLimiter:
-    def __init__(self, concurrent_limit: int = 5, rpm: int = 60):
-        self.semaphore = asyncio.Semaphore(concurrent_limit)
-        self.rpm = rpm
-        self.tokens = rpm
-        self.last_refill = time.time()
-        self.lock = asyncio.Lock()
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        pass
-
-    async def acquire(self):
-        async with self.semaphore:
-            # Refill tokens periodically (simple token bucket approximation)
-            async with self.lock:
-                now = time.time()
-                elapsed = now - self.last_refill
-                self.tokens = min(self.rpm, self.tokens + (elapsed / 60) * self.rpm)
-                self.last_refill = now
-                while self.tokens < 1:
-                    await asyncio.sleep(60 / self.rpm)  # Wait for next token
-                    now = time.time()
-                    elapsed = now - self.last_refill
-                    self.tokens = min(self.rpm, self.tokens + (elapsed / 60) * self.rpm)
-                    self.last_refill = now
-                self.tokens -= 1
-
-# Global rate limiter instance (lazy init)
-_rate_limiter = None
-
-def get_rate_limiter() -> AsyncRateLimiter:
-    global _rate_limiter
-    if _rate_limiter is None:
-        concurrent = int(os.getenv("RATE_LIMIT_CONCURRENT", "5"))
-        rpm = int(os.getenv("RATE_LIMIT_RPM", "60"))
-        _rate_limiter = AsyncRateLimiter(concurrent, rpm)
-    return _rate_limiter
-
-class TTLCache:
-    def __init__(self, ttl_seconds: int = 86400):  # 1 day for scale
-        self.cache: Dict[str, Tuple[Dict[str, Any], float]] = {}
-        self.ttl = ttl_seconds
-
-    def get(self, key: str) -> Dict[str, Any] | None:
-        if key in self.cache:
-            value, timestamp = self.cache[key]
-            if time.time() - timestamp < self.ttl:
-                return value
-            else:
-                del self.cache[key]
-        return None
-
-    def set(self, key: str, value: Dict[str, Any]):
-        self.cache[key] = (value, time.time())
-
-def load_persistent_cache() -> Dict[str, Dict[str, Any]]:
-    if os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE, 'r') as f:
-            return json.load(f)
-    return {}
-
-def save_persistent_cache(cache: Dict[str, Dict[str, Any]]):
-    with open(CACHE_FILE, 'w') as f:
-        json.dump(cache, f, indent=2)
-
-persistent_cache = load_persistent_cache()
-ttl_cache = TTLCache()
-
-def get_cache_key(company: str) -> str:
-    return hashlib.md5(company.lower().strip().encode()).hexdigest()
 
 perplexity_client = AsyncOpenAI(
     api_key=os.getenv("PERPLEXITY_API_KEY"),
     base_url="https://api.perplexity.ai"
 )
 
-async def retry_on_failure(coro, max_retries: int = 3, base_delay: float = 1.0, max_delay: float = 10.0):
-    last_exception = None
-    for attempt in range(max_retries + 1):
-        try:
-            return await coro()
-        except Exception as e:
-            last_exception = e
-            if attempt == max_retries:
-                raise
-            delay = min(base_delay * (2 ** attempt) + (time.time() % 1.0), max_delay)
-            await asyncio.sleep(delay)
-    raise last_exception
+class SimpleRateLimiter:
+    def __init__(self, max_concurrent=5, rpm=60):
+        self.sem = asyncio.Semaphore(max_concurrent)
+        self.rpm = rpm
+        self.tokens = rpm
+        self.last = time.time()
+        self.lock = asyncio.Lock()
 
-async def simulate_company_enrichment(company: str, question: str = "") -> Dict[str, Any]:
-    company_lower = company.lower().strip()
-    cache_key = get_cache_key(company)
+    async def wait(self):
+        async with self.sem:
+            async with self.lock:
+                now = time.time()
+                elapsed = now - self.last
+                self.tokens = min(self.rpm, self.tokens + elapsed * (self.rpm / 60))
+                self.last = now
+                if self.tokens < 1:
+                    await asyncio.sleep((1 - self.tokens) * (60 / self.rpm))
+                    self.tokens = 1
+                self.tokens -= 1
 
-    # Cache hits (TTL then disk)
-    ttl_hit = ttl_cache.get(cache_key)
-    if ttl_hit:
-        return ttl_hit
+limiter = SimpleRateLimiter(
+    max_concurrent=int(os.getenv("MAX_CONCURRENT", "5")),
+    rpm=int(os.getenv("RPM_LIMIT", "60"))
+)
 
-    disk_hit = persistent_cache.get(cache_key, {}).get('result')
-    if disk_hit:
-        ttl_cache.set(cache_key, disk_hit)
-        return disk_hit
+async def enrich_company(question: str) -> dict:
+    ques = question.strip()
+    if not ques:
+        return {"summary": "", "details": {}, "sources": []}
 
     if not os.getenv("PERPLEXITY_API_KEY"):
-        payload = {"summary": f"No Perplexity API key found. Cannot enrich '{company}'.", "details": {}, "sources": []}
-        ttl_cache.set(cache_key, payload)
-        return payload
-
-    try:
-        system_prompt = (
-            "You are a helpful assistant that extracts and enriches company information from web search results.\n"
-            "Return JSON ONLY with this exact schema—no extra text, markdown, or explanations:\n"
-            "{\n"
-            '  "summary": "A detailed 5-8 sentence summary of the company based strictly on search results.",\n'
-            '  "details": {\n'
-            '    "founded": "Year founded or null if not found",\n'
-            '    "employees": "Number of employees or range or null",\n'
-            '    "founders": "Names of founders or null",\n'
-            '    "location": "Headquarters location or null",\n'
-            '    "revenue": "Annual revenue or null",\n'
-            '    "industry": "Industry or sector or null",\n'  # <-- Added comma here
-            '    "confidence": <number between 0 and 100>\n'  # <-- Now valid
-            '  },\n'
-            "}\n"
-            "Base everything strictly on the provided search results. If information is not clearly stated, use null. Do not speculate or infer beyond the text.\n"
-        )
-
-        user_content = f"{question}\n\nEnrich the following company with details from web search: {company}"
-
-        # Apply rate limiting
-        limiter = get_rate_limiter()
-        await limiter.acquire()
-
-        async def api_coro():
-            return await asyncio.wait_for(
-                perplexity_client.chat.completions.create(
-                    model="sonar",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_content}
-                    ],
-                    temperature=0.1,  # Low for consistent JSON
-                    max_tokens=800,
-                    response_format={
-                    "type": "json_schema",
-                    "json_schema": json_schema
-                },
-                ),
-                timeout=30.0
-            )
-
-        response = await retry_on_failure(api_coro, max_retries=3, base_delay=1.0, max_delay=10.0)
-
-        content = response.choices[0].message.content.strip()
-
-
-        if not content:
-            raise ValueError("Empty response content from API")
-        
-        # Parse JSON
-        summary_json = json.loads(content)
-        summary_text = (summary_json.get("summary") or "").strip()
-        details = summary_json.get("details", {})
-
-        # Extract sources (top 5; str() for safety)
-        citations = getattr(response, 'citations', []) or []
-        sources = [str(citation).strip() for citation in citations[:5] if str(citation).strip()]
-
-        final_payload = {
-            "summary": summary_text or f"Limited public information found for '{company}' (emerging company?).",
-            "details": details,
-            "sources": sources,
-            
+        return {
+            "summary": "Perplexity API key missing.",
+            "details": {},
+            "sources": []
         }
 
-        # Basic validation
-        required_keys = ["summary", "details", "sources"]
-        if not all(key in final_payload for key in required_keys):
-            raise ValueError(f"Missing required fields in parsed JSON: {set(required_keys) - set(final_payload)}")
+    await limiter.wait()
 
-        # Cache and persist
-        ttl_cache.set(cache_key, final_payload)
-        persistent_cache[cache_key] = {'result': final_payload, 'timestamp': time.time()}
-        save_persistent_cache(persistent_cache)
-        return final_payload
-
-    except asyncio.TimeoutError:
-        err_msg = "API call timed out after retries"
-        # print(f"Debug: {err_msg} for '{company}'")
-        raise Exception(err_msg)
-    except (json.JSONDecodeError, ValueError) as e:
-        # print(f"Debug: Parse error for '{company}': {e}")
-        payload = {"summary": f"Parse error for '{company}': {str(e)}", "details": {}, "sources": []}
-        ttl_cache.set(cache_key, payload)
-        return payload
-    except Exception as e:
-        # print(f"Debug: Overall enrichment error for '{company}': {e}")
-        payload = {"summary": f"Error fetching results for '{company}': {str(e)}", "details": {}, "sources": []}
-        ttl_cache.set(cache_key, payload)
-        return payload
-
-# Rest of the code remains unchanged (functions, find_the_comp, _normalize_output, FindTheComp)
-functions = [
-    {
-        "name": "simulate_company_enrichment",
-        "description": "Enrich company details & return JSON: summary, details, sources.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "company": {"type": "string", "description": "The company name to enrich."},
-                "question": {"type": "string", "description": "The original user question for context."}
-            },
-            "required": ["company", "question"]
-        }
-    }
-]
-
-async def find_the_comp(question: str) -> str:
-    from ClientModel import client, MODEL_NAME  # Assuming OpenAI async client
-
-    response = await client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[
-            {"role": "system", "content": "Detect if the user mentions a specific company name. If yes, call the function. Otherwise, summarize the question."},
-            {"role": "user", "content": question}
-        ],
-        functions=functions,
-        function_call="auto",
-        temperature=0.0,
-        max_tokens=300,
+    system_prompt = (
+        "Return ONLY valid JSON with this exact structure. No explanations.\n"
+        "{\n"
+        '  "summary": "5-8 sentence detailed summary of the company",\n'
+        '  "details": {\n'
+        '    "founded": "year or null",\n'
+        '    "employees": "number/range or null",\n'
+        '    "founders": "names or null",\n'
+        '    "location": "HQ city/country or null",\n'
+        '    "revenue": "latest known revenue or null",\n'
+        '    "industry": "primary industry or null",\n'
+        '    "confidence": 0-100\n'
+        "  }\n"
+        "}\n"
+        "Use null if info not found. Base only on real search results."
     )
 
-    message = response.choices[0].message
+    try:
+        response = await perplexity_client.chat.completions.create(
+            model="sonar",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"{ques}"}
+            ],
+            temperature=0.1,
+            max_tokens=800,
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "company_enrichment",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "summary": {"type": "string"},
+                            "details": {
+                                "type": "object",
+                                "properties": {
+                                    "founded": {"type": ["string", "null"]},
+                                    "employees": {"type": ["string", "null"]},
+                                    "founders": {"type": ["string", "null"]},
+                                    "location": {"type": ["string", "null"]},
+                                    "revenue": {"type": ["string", "null"]},
+                                    "industry": {"type": ["string", "null"]},
+                                    "confidence": {"type": "number", "minimum": 0, "maximum": 100}
+                                },
+                                "required": [],
+                                "additionalProperties": False
+                            }
+                        },
+                        "required": ["summary", "details"],
+                        "additionalProperties": False
+                    }
+                }
+            }
+        )
 
-    if getattr(message, "function_call", None):
-        args = json.loads(message.function_call.arguments or "{}")
-        company = args.get("company")
-        if company:
-            payload = await simulate_company_enrichment(company, question)
-            return json.dumps(payload, ensure_ascii=False)
+        content = response.choices[0].message.content.strip()
+        data = json.loads(content)
 
-    return json.dumps({
-        "summary": "",
-        "details": {},
-        "sources": [],
-    }, ensure_ascii=False)
+        # Extract sources if available
+        sources = []
+        if hasattr(response, "citations") and response.citations:
+            sources = [str(c).strip() for c in response.citations[:5]]
 
-def _normalize_output(raw: Any) -> Tuple[Optional[str], Dict[str, Any], List[str], List[str]]:  # Simplified sources to List[str]
-    if isinstance(raw, str):
+        result = {
+            "summary": data.get("summary", "").strip() or f"Information gathering failed",
+            "details": data.get("details", {}),
+            "sources": sources
+        }
+
+        return result
+
+    except Exception as e:
+        return {
+            "summary": f"Failed to enrich '{ques}': {str(e)}",
+            "details": {},
+            "sources": []
+        }
+
+async def FindTheComp(
+    question: str,
+    session_id: str
+) -> dict:
+    result = await enrich_company(question)
+
+    if not result["summary"] or "failed" in result["summary"].lower() or "error" in result["summary"].lower():
+        return result
+
+    c_data = json.dumps(result["details"], ensure_ascii=False)
+    c_sources = json.dumps(result["sources"], ensure_ascii=False)
+
+    async with AsyncSessionLocal() as db:
         try:
-            parsed = json.loads(raw)
-            raw = parsed
-        except Exception:
-            return raw, {}, [], []
+            stmt = select(SessionModel).options(selectinload(SessionModel.company_details)).where(SessionModel.id == session_id)
+            session_obj = (await db.execute(stmt)).scalar_one_or_none()
 
-    if not isinstance(raw, dict):
-        raw = {}
+            if not session_obj:
+                return result
 
-    summary = raw.get("summary") or None
-    details = raw.get("details") or {}
-    if not isinstance(details, dict):
-        details = {"_raw_details": details}
+            # Update or create CompanyDetails
+            if hasattr(session_obj, "company_details") and session_obj.company_details:
+                cd = session_obj.company_details
+                if not cd.c_data or cd.c_data == "{}":
+                    cd.c_info = result["summary"]
+                    cd.c_data = c_data
+                    cd.c_sources = c_sources
+                    await db.commit()
+            else:
+                new_cd = CompanyDetails(
+                    session_id=session_obj.id,
+                    c_info=result["summary"],
+                    c_data=c_data,
+                    c_sources=c_sources,
+                    c_images=None
+                )
+                session_obj.company_details = new_cd
+                db.add(new_cd)
+                await db.commit()
 
-    sources_in = raw.get("sources") or []
-    sources = [s.strip() for s in sources_in if isinstance(s, str) and s.strip()]
-
-    return summary, details, sources
-
-async def FindTheComp(question: str, session_id: str) -> None:
-    raw_out = await find_the_comp(question)
-    summary, details, sources = _normalize_output(raw_out)
-
-    details = details or {}
-    sources = sources or []
-
-    if not summary or "error" in summary.lower() or "parse" in summary.lower():
-        return
-
-    c_data_val = json.dumps(details)
-    c_sources_val = json.dumps(sources)
-    empty_c_data = '{}'  # used in original logic
-
-    async with AsyncSessionLocal() as sess:
-        try:
-            # load session and its company_details relation
-            stmt = (
-                select(SessionModel)
-                .options(selectinload(SessionModel.company_details))
-                .where(SessionModel.id == session_id)
-            )
-            res = await sess.execute(stmt)
-            session_obj = res.scalar_one_or_none()
-            if session_obj is None:
-                # session not found — nothing to do
-                return
-
-            # If company_details child exists, update it only when c_data is empty
-            cd = getattr(session_obj, "company_details", None)
-            if cd is not None:
-                # cd.c_data might be None or '{}' or something else
-                if cd.c_data is None or cd.c_data == empty_c_data:
-                    cd.c_info = summary
-                    cd.c_data = c_data_val
-                    cd.c_sources = c_sources_val
-                    # commit update
-                    await sess.commit()
-                else:
-                    # already has data — do nothing
-                    await sess.rollback()
-                return
-
-            session_has_cdata = hasattr(SessionModel, "c_data") 
-            current_cdata = getattr(session_obj, "c_data", None) if session_has_cdata else None
-
-            if session_has_cdata and (current_cdata is not None and current_cdata != empty_c_data):
-                # sessions table already has non-empty c_data -> respect existing value, do nothing
-                await sess.rollback()
-                return
-
-            # Create and attach a new CompanyDetails instance, pointing to this session
-            new_cd = CompanyDetails(
-                session_id=session_obj.id,
-                c_info=summary,
-                c_data=c_data_val,
-                c_sources=c_sources_val,
-                c_images=None
-            )
-            # attach to session_obj and add to session so it gets persisted
-            session_obj.company_details = new_cd
-            sess.add(new_cd)
-            await sess.commit()
-            return
-        except Exception:
-            await sess.rollback()
-            raise
-        
-        
+        except Exception as e:
+            await db.rollback()
+            print(f"DB save failed: {e}")

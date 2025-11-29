@@ -10,6 +10,20 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI
 import aiohttp
 from functools import lru_cache
+import json
+import asyncio
+import re
+from typing import Any, Dict, List, Tuple
+from fastapi import Depends, HTTPException
+from sqlalchemy.orm import selectinload
+from dotenv import load_dotenv
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from SessionUtils import get_field, set_field
+from database import CompanyDetails, Session as SessionModel, VerificationDetails, get_db
+from pydantic import BaseModel
+from functools import lru_cache
+from cachetools import TTLCache  
 
 load_dotenv()
 
@@ -289,21 +303,17 @@ Output EXACTLY one strict JSON object—no extra text, markdown, or explanations
 
 
 async def verify_user(company: str, role: str, username: str, email: str) -> Tuple[str, List[str], List[str]]:
-    """Main verification function with caching and parallel operations."""
     inputs = normalize_inputs(company, role, username, email)
     cache_key = get_cache_key(inputs)
     
-    # Check cache first
     cached_result = ttl_cache.get(cache_key)
     if cached_result:
         return cached_result
     
-    # Determine display name
     display_username = inputs["username"]
     if not inputs["username"] or len(inputs["username"]) < 2:
         display_username = extract_name_from_email(inputs["email"])
     
-    # Run verification and image fetch in parallel
     verification_task = asyncio.create_task(
         get_verification(inputs["company"], inputs["role"], inputs["username"], 
                         inputs["email"], display_username)
@@ -313,9 +323,86 @@ async def verify_user(company: str, role: str, username: str, email: str) -> Tup
     llm_output, sources = await verification_task
     images = await images_task
     
-    # Cache result
     result = (llm_output, sources, images)
     ttl_cache.set(cache_key, result)
     
     return result
 
+class VerifyPayload(BaseModel):
+    id: str
+    name: str = ""
+    email: str = ""
+    lead_role: str = ""
+    company: str = ""
+    
+    
+def init(app):
+    @app.post("/api/verify/")
+    async def main_verify_user(payload: VerifyPayload, db: AsyncSession = Depends(get_db)):
+        company = payload.company
+        role = payload.lead_role
+        username = payload.name
+        email = payload.email
+
+        result_str, sources, images = await verify_user(company, role, username, email)
+
+        try:
+            result = json.loads(result_str)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=500, detail=f"Invalid JSON returned : {result_str}")
+        stmt = (
+            select(SessionModel)
+            .options(
+                selectinload(SessionModel.phase_info),
+                selectinload(SessionModel.company_details),
+                selectinload(SessionModel.verification_details),
+                selectinload(SessionModel.research_details),
+            )
+            .where(SessionModel.id == payload.id)
+        )
+        db_result = await db.execute(stmt)
+        db_session = db_result.scalar_one_or_none()
+        if not db_session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        if getattr(db_session, "verification_details", None) is None:
+            vd = VerificationDetails(session_id=db_session.id)
+            db_session.verification_details = vd
+
+        if getattr(db_session, "company_details", None) is None:
+            cd = CompanyDetails(session_id=db_session.id)
+            db_session.company_details = cd
+
+        set_field(db_session, "verified", "true" if result.get("verified") else "false")
+
+        existing_username = get_field(db_session, "username")
+        if result.get("verified") and not existing_username:
+            set_field(db_session, "username", result.get("details", {}).get("name", ""))
+
+        set_field(db_session, "confidence", result.get("confidence"))
+        set_field(db_session, "evidence", result.get("details", {}).get("evidence", ""))
+
+        set_field(db_session, "v_sources", json.dumps(sources))
+
+        set_field(db_session, "c_images", json.dumps(images))
+
+        # persist
+        await db.commit()
+        await db.refresh(db_session)
+
+        # read values back using get_field (works for old or new layout)
+        updated_verified = get_field(db_session, "verified")
+        updated_confidence = get_field(db_session, "confidence")
+        updated_evidence = get_field(db_session, "evidence")
+        updated_sources = get_field(db_session, "v_sources")
+
+        return {
+            "status": "success",
+            "message": "User verification details updated in session",
+            "updated_data": {
+                "verified": updated_verified,
+                "confidence": updated_confidence,
+                "evidence": updated_evidence,
+                "sources": updated_sources,
+            }
+        }

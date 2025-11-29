@@ -55,16 +55,11 @@ class AnalytxConfig:
             return
         self.__initialized = True
         self.filepath = os.path.abspath(filepath)
-        self._write_lock = threading.Lock() # protects our own writes
-        self._cache = _ThreadCache(ttl=0.5) # fast read cache
-        # 1. Ensure file exists
+        self._write_lock = threading.Lock() 
+        self._cache = _ThreadCache(ttl=0.5) 
         self._ensure_file()
-        # 2. Start lightweight watcher (debounced, non-blocking)
         self.observer = None
         self._start_watcher()
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
     def get(self, key: str, default: Any = None) -> Any:
         """Thread-safe, cache-friendly read."""
         data = self._cache.get(self._load_from_disk)
@@ -80,9 +75,6 @@ class AnalytxConfig:
         if self.observer:
             self.observer.stop()
             self.observer.join()
-    # ------------------------------------------------------------------
-    # Private helpers
-    # ------------------------------------------------------------------
     def _ensure_file(self) -> None:
         if not os.path.exists(self.filepath):
             self._atomic_save(self._default())
@@ -122,9 +114,7 @@ class AnalytxConfig:
             os.fsync(f.fileno())
         # 2. Atomic replace (POSIX + Windows)
         shutil.move(tmp, self.filepath)
-    # ------------------------------------------------------------------
-    # Watcher – reloads only when *external* change occurs
-    # ------------------------------------------------------------------
+    # reloads only when *external* change occurs
     def _start_watcher(self) -> None:
         from watchdog.observers import Observer
         from watchdog.events import FileSystemEventHandler

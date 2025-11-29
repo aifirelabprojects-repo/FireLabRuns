@@ -49,9 +49,6 @@ class Session(Base):
     verification_details: Mapped["VerificationDetails"] = relationship(
         "VerificationDetails", back_populates="session", uselist=False, cascade="all, delete-orphan"
     )
-    research_details: Mapped["ResearchDetails"] = relationship(
-        "ResearchDetails", back_populates="session", uselist=False, cascade="all, delete-orphan"
-    )
     consultations: Mapped[list["Consultation"]] = relationship(
         "Consultation", back_populates="session", cascade="all, delete-orphan"
     )
@@ -112,15 +109,6 @@ class VerificationDetails(Base):
     v_sources: Mapped[str | None] = mapped_column(String, nullable=True)
     session: Mapped["Session"] = relationship("Session", back_populates="verification_details")
 
-class ResearchDetails(Base):  
-    __tablename__ = "research_details"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    session_id: Mapped[str] = mapped_column(
-        String, ForeignKey("sessions.id", ondelete="CASCADE"), unique=True, nullable=False
-    )
-    research_data: Mapped[str | None] = mapped_column(String, nullable=True)
-    research_sources: Mapped[str | None] = mapped_column(String, nullable=True)
-    session: Mapped["Session"] = relationship("Session", back_populates="research_details")
 
 class Message(Base):  
     __tablename__ = "messages"
