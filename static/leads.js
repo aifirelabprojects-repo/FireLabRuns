@@ -1,7 +1,7 @@
 let currentLeadPage = 1;
 let currentQuery = '';
 let currentInterest = '';
-const perLeadPage = 5; // Adjustable for scalability
+const perLeadPage = 5; 
 
 const searchInput = document.getElementById('searchInput');
 const scoreSelect = document.getElementById('scoreSelect');
@@ -138,7 +138,6 @@ async function fetchLeads(page = 1, q = currentQuery, interest = currentInterest
                             '${escapeJs(session.c_images)}',
                             '${escapeJs(session.c_info)}',
                             '${escapeJs(session.c_data)}',
-                            '${escapeJs(session.research_data)}',
                             '${session.approved}'
                             )">
                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>

@@ -16,7 +16,8 @@ const svgIcons = {
     name: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     email: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     phone: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5.5C3 14.0604 9.93959 21 18.5 21C18.8862 21 19.2691 20.9859 19.6483 20.9581C20.0834 20.9262 20.3009 20.9103 20.499 20.7963C20.663 20.7019 20.8185 20.5345 20.9007 20.364C21 20.1582 21 19.9181 21 19.438V16.6207C21 16.2169 21 16.015 20.9335 15.842C20.8749 15.6891 20.7795 15.553 20.6559 15.4456C20.516 15.324 20.3262 15.255 19.9468 15.117L16.74 13.9509C16.2985 13.7904 16.0777 13.7101 15.8683 13.7237C15.6836 13.7357 15.5059 13.7988 15.3549 13.9058C15.1837 14.0271 15.0629 14.2285 14.8212 14.6314L14 16C11.3501 14.7999 9.2019 12.6489 8 10L9.36863 9.17882C9.77145 8.93713 9.97286 8.81628 10.0942 8.64506C10.2012 8.49408 10.2643 8.31637 10.2763 8.1317C10.2899 7.92227 10.2096 7.70153 10.0491 7.26005L8.88299 4.05321C8.745 3.67376 8.67601 3.48403 8.55442 3.3441C8.44701 3.22049 8.31089 3.12515 8.15802 3.06645C7.98496 3 7.78308 3 7.37932 3H4.56201C4.08188 3 3.84181 3 3.63598 3.09925C3.4655 3.18146 3.29814 3.33701 3.2037 3.50103C3.08968 3.69907 3.07375 3.91662 3.04189 4.35173C3.01413 4.73086 3 5.11378 3 5.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    company: '<svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none"><path d="M4 7H20M4 12H20M4 17H20M6 17V7M18 17V7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    company: '<svg fill="currentColor" class="w-4 h-4 text-gray-500" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1 {fill: none;}</style></defs> <rect x="20" y="20" width="10" height="2"/><rect x="20" y="24" width="6" height="2"/><path d="M30,17V16A13.9871,13.9871,0,1,0,19.23,29.625l-.46-1.9463A12.0419,12.0419,0,0,1,16,28c-.19,0-.375-.0186-.563-.0273A20.3044,20.3044,0,0,1,12.0259,17Zm-2.0415-2H21.9751A24.2838,24.2838,0,0,0,19.2014,4.4414,12.0228,12.0228,0,0,1,27.9585,15ZM16.563,4.0273A20.3044,20.3044,0,0,1,19.9741,15H12.0259A20.3044,20.3044,0,0,1,15.437,4.0273C15.625,4.0186,15.81,4,16,4S16.375,4.0186,16.563,4.0273Zm-3.7644.4141A24.2838,24.2838,0,0,0,10.0249,15H4.0415A12.0228,12.0228,0,0,1,12.7986,4.4414Zm0,23.1172A12.0228,12.0228,0,0,1,4.0415,17h5.9834A24.2838,24.2838,0,0,0,12.7986,27.5586Z" transform="translate(0 0)"/><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/></svg>'
+
 };
 
 
@@ -53,7 +54,7 @@ async function loadSessions(page = currentPage) {
     const url = `/api/sessions/?active=${activeOnly}&page=${currentPage}&per_page=${perPage}`;
     try {
         const sessionSpinner = document.getElementById('session-spinner');
-        sessionSpinner.style.display = 'flex';
+        if(sessionSpinner) {sessionSpinner.style.display = 'flex';}
         const listDiv = document.getElementById('sessionsList');
         const response = await fetch(url);
         const data = await response.json();
@@ -63,19 +64,18 @@ async function loadSessions(page = currentPage) {
         totalPages = pagination.pages || 1;
 
         if (totalSessions === 0) {
-            sessionSpinner.style.display = 'none';
+            if(sessionSpinner) {sessionSpinner.style.display = 'none';}
             listDiv.innerHTML = '<div class="p-6 text-center text-gray-500">No sessions found.</div>';
             document.getElementById('paginationControls').style.display = 'none';
             return;
         }
         if (!sessions || sessions.length === 0) {
-            sessionSpinner.style.display = 'none';
+            if(sessionSpinner) {sessionSpinner.style.display = 'none';}
             listDiv.innerHTML = '<div class="p-6 text-center text-gray-500">No sessions found for this page.</div>';
             updatePaginationUI();
             return;
         }
         let rows = sessions.map(session => {
-            const idShort = session.id ? session.id.substring(0,8) + '...' : '—';
             let actions = `<button class="text-xs inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded hover:shadow-sm" onclick="openSession(
             '${session.id}',
             'view',
@@ -187,12 +187,11 @@ async function loadSessions(page = currentPage) {
             </table>
             </div>
         `;
-        sessionSpinner.style.display = 'none';
+        if(sessionSpinner) {sessionSpinner.style.display = 'none';}
         listDiv.innerHTML = tableHtml;
         updatePaginationUI();
         } 
         catch (err) {
-        sessionSpinner.style.display = 'none';
         document.getElementById('sessionsList').innerHTML = '<div class="p-6 text-red-600">Failed to load sessions</div>';
         document.getElementById('paginationControls').style.display = 'none';
         }
@@ -319,7 +318,7 @@ function getTeaser(text) {
 
   function renderUserDetails() {
     const { name, email, phone, company, mood, verified, confidence, evidence, sources, interest,
-            lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, id, c_sources, c_images, c_info, c_data,approved } = currentUserData;
+            lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, id, c_sources, c_images, c_info, c_data, approved } = currentUserData;
 
     window.currentResearchData = c_info;        
     const verifyButtonHtml = verified === "true"
@@ -480,10 +479,27 @@ function getTeaser(text) {
     if (company) {
     let cInfoHtml = '';
     if (c_info && c_info.trim()) {
-        cInfoHtml = `
-        <div class="mb-3 p-3 bg-gray-50/80 rounded-md border border-gray-200/50">
-            <h6 class="text-sm font-semibold text-gray-900 mb-1.5">Company Overview</h6>
-            <p id="cInfoSection${currentSessionId}" class="text-sm text-gray-700 leading-tight">${c_info}</p>
+        cInfoHtml = `<div class="company-teaser mt-3 p-4 mb-2 bg-white  rounded-xl border border-slate-200/60 shadow-sm cursor-pointer group  transition-all duration-300 ease-out overflow-hidden">
+            <h6 class="text-sm font-bold text-slate-800 mb-2 flex items-center group-hover:text-blue-700 transition-colors duration-200">
+            <svg fill="currentColor" class="w-5 h-5 mr-2 text-slate-500 group-hover:text-blue-500 transition-colors duration-200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	        viewBox="0 0 24 24" xml:space="preserve">
+            <g id="overview_1_">
+                <path d="M23.6,14.3l-3.7-10l0,0C19.3,3,18,2,16.5,2C14.6,2,13,3.6,13,5.5V6h-2V5.5C11,3.6,9.4,2,7.5,2C6,2,4.7,3,4.2,4.4l0,0
+                    l-3.7,10C0.2,15,0,15.7,0,16.5c0,3,2.5,5.5,5.5,5.5c2.9,0,5.2-2.2,5.5-5H13c0.3,2.8,2.6,5,5.5,5c3,0,5.5-2.5,5.5-5.5
+                    C24,15.7,23.8,15,23.6,14.3z M5.5,20C3.6,20,2,18.4,2,16.5S3.6,13,5.5,13S9,14.6,9,16.5S7.4,20,5.5,20z M9,8.6v3.6
+                    C8,11.5,6.8,11,5.5,11c-0.6,0-1.2,0.1-1.8,0.3l2.1-5.5l0.3-0.7l0,0c0,0,0,0,0,0c0.1-0.3,0.3-0.6,0.5-0.8c0,0,0,0,0,0
+                    C6.7,4.2,6.8,4.1,7,4.1c0,0,0,0,0.1,0C7.2,4,7.3,4,7.5,4C8.3,4,9,4.7,9,5.5V8.6z M13,8v7h-2V8H13z M15,8.6V5.5
+                    C15,4.7,15.7,4,16.5,4c0.2,0,0.3,0,0.4,0.1c0,0,0,0,0.1,0c0.1,0,0.3,0.1,0.4,0.2c0,0,0,0,0,0c0.2,0.2,0.4,0.5,0.5,0.8c0,0,0,0,0,0
+                    l0,0l0.3,0.7l2.1,5.5c-0.6-0.2-1.2-0.3-1.8-0.3c-1.3,0-2.5,0.5-3.5,1.3V8.6z M18.5,20c-1.9,0-3.5-1.6-3.5-3.5s1.6-3.5,3.5-3.5
+                    s3.5,1.6,3.5,3.5S20.4,20,18.5,20z"/>
+            </g>
+            </svg>    
+            Company Overview
+            </h6>
+            <div class="relative overflow-hidden max-h-24 transition-all duration-500 ease-out">
+                <p id="cInfoSection${currentSessionId}" class="text-sm text-slate-600 leading-tight transition-all duration-300">${getTeaser(c_info)}</p>
+                
+            </div>
         </div>
         `;
     }
@@ -504,8 +520,8 @@ function getTeaser(text) {
                 const displayKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
                 return `
                     <div class="bg-white/50 p-2.5 rounded-md border border-gray-200/50 ">
-                    <div class="text-xs text-gray-500 uppercase tracking-wide font-medium mb-0.5">${displayKey}</div>
-                    <div class="text-sm text-gray-900 font-semibold">${value}</div>
+                    <div class="text-xs text-gray-800 uppercase tracking-wide font-medium mb-0.5">${displayKey}</div>
+                    <div class="text-sm text-gray-500 ">${value}</div>
                     </div>
                 `;
                 }).join('')}
@@ -520,60 +536,55 @@ function getTeaser(text) {
     let leadInfoHtml = '';
     if (lead_categories || lead_services || lead_activity || lead_timeline || lead_budget) {
         const leadItems = [];
-        if (lead_categories) leadItems.push(`<div class="flex items-start gap-3 py-2 border-b border-gray-100/50 last:border-b-0 hover:bg-gray-50/50 transition-colors duration-200 rounded-lg px-2 cursor-pointer group">
-        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors duration-200">
-            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-        </div>
-        <div class="min-w-0 flex-1">
-            <span class="text-xs font-semibold text-gray-600 block mb-1">Categories</span>
-            <p class="text-sm font-medium text-gray-900 leading-relaxed">${lead_categories}</p>
-        </div>
-        </div>`);
-    
-        if (lead_services) leadItems.push(`<div class="flex items-start gap-3 py-2 border-b border-gray-100/50 last:border-b-0 hover:bg-gray-50/50 transition-colors duration-200 rounded-lg px-2 cursor-pointer group">
-        <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors duration-200">
-            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-        </div>
-        <div class="min-w-0 flex-1">
-            <span class="text-xs font-semibold text-gray-600 block mb-1">Services</span>
-            <p class="text-sm font-medium text-gray-900 leading-relaxed">${lead_services}</p>
-        </div>
-        </div>`);
-    
-        if (lead_activity) leadItems.push(`<div class="flex items-start gap-3 py-2 border-b border-gray-100/50 last:border-b-0 hover:bg-gray-50/50 transition-colors duration-200 rounded-lg px-2 cursor-pointer group">
-        <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-purple-100 transition-colors duration-200">
-            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        </div>
-        <div class="min-w-0 flex-1">
-            <span class="text-xs font-semibold text-gray-600 block mb-1">Activity</span>
-            <p class="text-sm font-medium text-gray-900 leading-relaxed">${lead_activity}</p>
-        </div>
-        </div>`);
-    
-        if (lead_timeline) leadItems.push(`<div class="flex items-start gap-3 py-2 border-b border-gray-100/50 last:border-b-0 hover:bg-gray-50/50 transition-colors duration-200 rounded-lg px-2 cursor-pointer group">
-        <div class="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors duration-200">
-            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-        </div>
-        <div class="min-w-0 flex-1">
-            <span class="text-xs font-semibold text-gray-600 block mb-1">Timeline</span>
-            <p class="text-sm font-medium text-gray-900 leading-relaxed">${lead_timeline}</p>
-        </div>
-        </div>`);
-    
-        if (lead_budget) leadItems.push(`<div class="flex items-start gap-3 py-2 border-b border-gray-100/50 last:border-b-0 hover:bg-gray-50/50 transition-colors duration-200 rounded-lg px-2 cursor-pointer group">
-        <div class="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-yellow-100 transition-colors duration-200">
-            <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path></svg>
-        </div>
-        <div class="min-w-0 flex-1">
-            <span class="text-xs font-semibold text-gray-600 block mb-1">Budget</span>
-            <p class="text-sm font-medium text-gray-900 leading-relaxed">${lead_budget}</p>
-        </div>
-        </div>`); leadInfoHtml = `
-        <div class="mb-3">
-            <h6 class="text-xs font-semibold text-gray-900 mb-2">Lead Insights</h6>
-            <div class="space-y-0 bg-white/50 rounded-md border border-gray-200/50 p-2">${leadItems.join('')}</div>
-        </div>
-        `;
+        
+        // Base classes for a professional, compact lead item
+        const baseItemClasses = 'flex items-center gap-3 py-1.5 px-2 border-b border-gray-100 last:border-b-0 transition-colors duration-150 hover:bg-gray-50';
+        const iconContainerBase = 'w-8 h-8 rounded flex items-center justify-center flex-shrink-0';
+        const labelBase = 'text-2xs font-medium text-gray-500 block'; // Smaller, less aggressive label
+        const valueBase = 'text-xs text-gray-800 leading-snug'; // Smaller main value text
+
+        // Function to create an item HTML string
+        const createLeadItem = (label, value, colorClass, svgPath) => {
+            if (!value) return '';
+            return `
+            <div class="${baseItemClasses}">
+                <div class="${iconContainerBase} ${colorClass.bg}">
+                    <svg class="w-3.5 h-3.5 ${colorClass.text}" fill="none" stroke="currentColor" viewBox="0 0 24 24">${svgPath}</svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <span class="${labelBase}">${label}</span>
+                    <p class="${valueBase}">${value}</p>
+                </div>
+            </div>`;
+        };
+        
+        // Define color classes and SVG paths for each field
+        const categories = { bg: 'bg-blue-50', text: 'text-blue-600', path: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>' };
+        const services = { bg: 'bg-green-50', text: 'text-green-600', path: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>' };
+        const activity = { bg: 'bg-purple-50', text: 'text-purple-600', path: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>' };
+        const timeline = { bg: 'bg-indigo-50', text: 'text-indigo-600', path: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>' };
+        const budget = { bg: 'bg-yellow-50', text: 'text-yellow-600', path: '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 1C11.4477 1 11 1.44772 11 2V3H10C8.3642 3 7.0588 3.60369 6.1691 4.57428C5.29413 5.52878 4.875 6.77845 4.875 8C4.875 9.22155 5.29413 10.4712 6.1691 11.4257C6.33335 11.6049 6.51177 11.7716 6.70382 11.9243C7.55205 12.5986 8.6662 13 10 13H11V19H10C9.17499 19 8.62271 18.7966 8.2422 18.5429C7.85544 18.2851 7.58511 17.9342 7.39443 17.5528C7.20178 17.1675 7.10048 16.7701 7.04889 16.4606C7.02329 16.307 7.00411 16.1512 6.99999 15.9953C6.99736 15.4454 6.55059 15 6 15C5.44771 15 5 15.4477 5 16C5.00003 16.0672 5.0024 16.1317 5.01035 16.2431C5.02006 16.3791 5.039 16.5668 5.07611 16.7894C5.14952 17.2299 5.29821 17.8325 5.60557 18.4472C5.91489 19.0658 6.39456 19.7149 7.1328 20.2071C7.8773 20.7034 8.82502 21 10 21H11V22C11 22.5523 11.4477 23 12 23C12.5523 23 13 22.5523 13 22V21H14C15.6358 21 16.9412 20.3963 17.8309 19.4257C18.7059 18.4712 19.125 17.2216 19.125 16C19.125 14.7784 18.7059 13.5288 17.8309 12.5743C16.9412 11.6037 15.6358 11 14 11H13V5H14C14.825 5 15.3773 5.20338 15.7578 5.45705C16.1446 5.71489 16.4149 6.06584 16.6056 6.44721C16.7982 6.8325 16.8995 7.22989 16.9511 7.5394C16.9767 7.69303 16.9959 7.84879 17 8.00465C17.0027 8.55467 17.4494 9 18 9C18.5458 9 19 8.54436 19 7.99898C18.9999 7.93212 18.9976 7.8677 18.9896 7.75688C18.9799 7.62092 18.961 7.43322 18.9239 7.2106C18.8505 6.77011 18.7018 6.1675 18.3944 5.55279C18.0851 4.93416 17.6054 4.28511 16.8672 3.79295C16.1227 3.29662 15.175 3 14 3H13V2C13 1.44772 12.5523 1 12 1ZM11 5H10C8.8858 5 8.1287 5.39631 7.6434 5.92572C7.14337 6.47122 6.875 7.22155 6.875 8C6.875 8.77845 7.14337 9.52878 7.6434 10.0743C8.1287 10.6037 8.8858 11 10 11H11V5ZM13 13V19H14C15.1142 19 15.8713 18.6037 16.3566 18.0743C16.8566 17.5288 17.125 16.7784 17.125 16C17.125 15.2216 16.8566 14.4712 16.3566 13.9257C15.8713 13.3963 15.1142 13 14 13H13Z" fill="currentColor"/>' };
+
+
+        leadItems.push(createLeadItem('Categories', lead_categories, categories, categories.path));
+        leadItems.push(createLeadItem('Services', lead_services, services, services.path));
+        leadItems.push(createLeadItem('Activity', lead_activity, activity, activity.path));
+        leadItems.push(createLeadItem('Timeline', lead_timeline, timeline, timeline.path));
+        leadItems.push(createLeadItem('Budget', lead_budget, budget, budget.path));
+        
+        // Filter out empty items
+        const validLeadItems = leadItems.filter(item => item.trim() !== '');
+
+        if (validLeadItems.length > 0) {
+            leadInfoHtml = `
+            <div class="mb-3">
+                <h6 class="text-xs text-gray-600 mb-1.5 px-1 tracking-wider uppercase">Lead Insights</h6>
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
+                    ${validLeadItems.join('')}
+                </div>
+            </div>
+            `;
+        }
     }
 
     companySection = `
@@ -601,51 +612,117 @@ function getTeaser(text) {
     
         const status = verified === "true" ? "Verified" : "Not Verified";
         const statusColor = status === "Verified" ? "text-green-600 bg-green-50/80 border-green-200/50" : "text-red-600 bg-red-50/80 border-red-200/50";
-        let confHtml = '';
+        let verificationMetricsHtml = '';
+
+    if (confidence || evidence) {
+        let confidenceChipClass = "bg-gray-100 text-gray-700"; 
         if (confidence) {
-            confHtml = `<div class="p-3 bg-white/50 rounded-lg border border-gray-200/50 shadow-sm">
-                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Confidence Level</div>
-                <div class="text-base text-gray-900 font-semibold">${confidence}</div>
-            </div>`;
-        }
-        let eviHtml = '';
-        if (evidence) {
-            eviHtml = `<div class="p-3 bg-white/50 rounded-lg border border-gray-200/50 shadow-sm">
-                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Verification Evidence</div>
-                <div class="text-sm text-gray-700 leading-relaxed">${evidence}</div>
-            </div>`;
-        }
-        let srcHtml = '';
-        if (sources && sources !== "[]") {
-            try {
-                const srcList = JSON.parse(sources);
-                srcHtml = `
-                    <div class="space-y-2">
-                        <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">User Verification Sources</div>
-                        <div class="flex flex-wrap gap-2">
-                            ${srcList.map(url => {
-                                const domain = new URL(url).hostname.replace('www.', '');
-                                const favicon = `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
-                                return `
-                                    <a href="${url}" target="_blank" rel="noopener noreferrer" 
-                                    class="group relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white/50 border border-gray-200/50 rounded-lg shadow-sm hover:shadow-md hover:bg-white hover:border-gray-300 transition-all duration-200 overflow-hidden">
-                                        <div class="flex-shrink-0 w-5 h-5 mr-2">
-                                            <img src="${favicon}" alt="${domain}" class="w-5 h-5 rounded-md" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIHN0cm9rZT0iI2U1ZTVlNSIgLz4KPC9zdmc+';">
-                                        </div>
-                                        <span class="min-w-0 flex-1 truncate">${domain}</span>
-                                        <svg class="w-4 h-4 ml-1 text-gray-400 group-hover:text-gray-600 flex-shrink-0 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                        </svg>
-                                    </a>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-            } catch (e) {
-                console.warn('Invalid sources JSON');
+            const confidenceLower = confidence.toLowerCase();
+            if (confidenceLower.includes('high') || confidenceLower.includes('verified')) {
+                confidenceChipClass = "bg-green-100 text-green-700";
+            } else if (confidenceLower.includes('medium') || confidenceLower.includes('moderate')) {
+                confidenceChipClass = "bg-yellow-100 text-yellow-700";
+            } else if (confidenceLower.includes('low') || confidenceLower.includes('unverified')) {
+                confidenceChipClass = "bg-red-100 text-red-700";
             }
         }
+
+        const confidenceChipHtml = confidence 
+            ? `<span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${confidenceChipClass} mr-3 whitespace-nowrap">
+                Confidence: ${confidence}
+            </span>`
+            : '';
+
+        // Construct the Evidence Content (if evidence exists)
+        const evidenceContentHtml = evidence
+            ? `<div class="text-sm text-gray-700 leading-relaxed">${evidence}</div>`
+            : `<div class="text-sm text-gray-500 leading-relaxed">No specific evidence narrative available.</div>`;
+
+        verificationMetricsHtml = `
+            <div class="verification-card mt-3 p-4 mb-2 bg-white  rounded-xl border border-slate-200/60 shadow-sm cursor-pointer group  transition-all duration-300 ease-out overflow-hidden">
+                <div class="flex items-start mb-2">
+                    <div class="text-sm font-bold text-gray-800 flex-grow">
+                        Evidence Summary
+                    </div>
+                    ${confidenceChipHtml}
+                </div>
+                
+                <div class="border-t border-gray-100 pt-2">
+                    ${evidenceContentHtml}
+                </div>
+            </div>
+        `;
+    }
+        let allSourcesHtml = '';
+
+        let userSources = [];
+        let companySources = [];
+
+        if (sources && sources !== "[]") {
+            try {
+                userSources = JSON.parse(sources);
+            } catch (e) {
+                console.warn('Invalid user sources JSON');
+            }
+        }
+
+        if (c_sources && c_sources !== "[]") {
+            try {
+                companySources = JSON.parse(c_sources);
+            } catch (e) {
+                console.warn('Invalid company sources JSON');
+            }
+        }
+
+
+        const combinedSources = [...new Set([...userSources, ...companySources])];
+        const totalCount = combinedSources.length;
+        if (totalCount > 0) {
+            allSourcesHtml = `
+                <div class="citation-container space-y-3 rounded-b-xl">
+                    <div class="text-sm font-semibold text-gray-700 flex items-center">
+                        <svg class="w-5 h-5 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Sources Found (${totalCount} Total)
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2">
+                        ${combinedSources.map((url, index) => {
+                            let domain = 'Unknown Source';
+                            let favicon = '';
+                            try {
+                                domain = new URL(url).hostname.replace('www.', '');
+                                favicon = `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
+                            } catch (e) {
+                                // Handle invalid URL gracefully if needed
+                                console.error('Invalid URL during parsing:', url);
+                            }
+                            
+                            return `
+                                <a href="${url}" target="_blank" rel="noopener noreferrer" 
+                                class="citation-pill group relative inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 whitespace-nowrap"
+                                aria-label="Source ${index + 1}: ${domain}">
+                                    
+                                    <span class="text-gray-500 font-bold mr-2 text-sm">${index + 1}</span> 
+                                    
+                                    <div class="flex-shrink-0 w-4 h-4 mr-2">
+                                        <img src="${favicon}" alt="${domain}" class="w-4 h-4 rounded-full" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIHN0cm9rZT0iI2U1ZTVlNSIgLz4KPC9zdmc+';">
+                                    </div>
+                                    
+                                    <span class="min-w-0 flex-1 truncate">${domain}</span>
+                                    
+                                    <svg class="w-3 h-3 ml-1 text-gray-400 group-hover:text-gray-600 flex-shrink-0 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                </a>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
         let ComsrcHtml = '';
         if (c_images && c_images !== "[]") {
             try {
@@ -656,7 +733,7 @@ function getTeaser(text) {
                         <div class="flex flex-wrap gap-3">
                             ${ComsrcList.map(imgUrl => {
                                 return `
-                                    <div class="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200/50 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer bg-gray-50/50">
+                                    <div class="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200/50 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer bg-white">
                                         <img src="${imgUrl}" alt="Associated Image" class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                                         <a href="${imgUrl}" target="_blank" rel="noopener noreferrer" 
                                         class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all duration-200 opacity-0 group-hover:opacity-100">
@@ -674,63 +751,22 @@ function getTeaser(text) {
                 console.warn('Invalid images JSON');
             }
         }
-        let cSourcesHtml = '';
-        if (c_sources && c_sources !== "[]") {
-        try {
-            const srcList = JSON.parse(c_sources);
-            cSourcesHtml = `
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Verification Sources
-                </div>
-                <div class="h-[1px] flex-1 ml-3 bg-gray-200"></div>
-                </div>
-
-                <div class="flex items-center gap-3 overflow-x-auto pb-2 -mb-2 hide-scrollbar">
-                ${srcList.map((url) => {
-                    const domain = new URL(url).hostname.replace('www.', '');
-                    const favicon = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
-                    return `
-                    <a href="${url}" target="_blank" rel="noopener noreferrer"
-                        class="group flex flex-col items-center justify-center w-14 h-14 bg-white border border-gray-200 rounded-xl
-                                shadow-sm hover:border-gray-300 hover:shadow transition-all duration-150 flex-shrink-0">
-                        <img src="${favicon}" alt="${domain}" class="w-7 h-7 rounded-md" 
-                            onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTQiIHN0cm9rZT0iI2U1ZTVlNSIgc3Ryb2tlLXdpZHRoPSIyIi8+CjxsaW5lIHgxPSIxMCIgeTE9IjE2IiB4Mj0iMjIiIHkyPSIxNiIgc3Ryb2tlPSIjZTVlNWU1IiBzdHJva2Utd2lkdGg9IjIiLz4KPGxpbmUgeDE9IjE2IiB5MT0iMTAiIHgyPSIxNiIgeTI9IjIyIiBzdHJva2U9IiNlNWU1ZTUiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=';">
-                    </a>
-                    `;
-                }).join('')}
-                </div>
-            </div>
-
-            <style>
-                /* Hide scrollbar cleanly */
-                .hide-scrollbar::-webkit-scrollbar { display: none; }
-                .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-            </style>
-            `;
-        } catch (e) {
-            console.warn('Invalid c_sources JSON');
-        }
-        }
 
 
         // Build grid items conditionally
         let gridItems = '<div class="grid grid-cols-1 gap-6">';
-        if (confHtml) gridItems += `<div class="w-full">${confHtml}</div>`;
-        if (eviHtml) gridItems += `<div class="w-full">${eviHtml}</div>`;
-        if (srcHtml) gridItems += `<div class="w-full p-4 bg-gray-50/50 rounded-xl border border-gray-200/50"><div class="text-sm text-gray-700">${srcHtml}</div></div>`;
-        if (ComsrcHtml) gridItems += `<div class="w-full p-4 bg-gray-50/50 rounded-xl border border-gray-200/50"><div class="text-sm text-gray-700">${ComsrcHtml}</div></div>`;
-        if (cSourcesHtml) gridItems += `<div class="w-full p-4 bg-gray-50/50 rounded-xl border border-gray-200/50"><div class="text-sm text-gray-700">${cSourcesHtml}</div></div>`;
+        if (verificationMetricsHtml) gridItems += `<div class="w-full">${verificationMetricsHtml}</div>`;
+        if (allSourcesHtml) gridItems += `<div class="w-full p-4 bg-white rounded-xl border border-gray-200/50"><div class="text-sm text-gray-700">${allSourcesHtml}</div></div>`;
+        if (ComsrcHtml) gridItems += `<div class="w-full p-4 bg-white rounded-xl border border-gray-200/50"><div class="text-sm text-gray-700">${ComsrcHtml}</div></div>`;
         gridItems += '</div>';
 
         // Only show grid if there are items
-        const hasContent = confHtml || eviHtml || srcHtml || ComsrcHtml || cSourcesHtml;
-        const gridSection = hasContent ? `<div class="p-6">${gridItems}</div>` : '';
+        const hasContent = verificationMetricsHtml || ComsrcHtml || allSourcesHtml;
+        const gridSection = hasContent ? `<div class="p-4 bg-white">${gridItems}</div>` : '';
 
         verifiedSection = `
             <div class=" overflow-hidden">
-                <div class="bg-gradient-to-r from-slate-50/80 via-blue-50/50 to-slate-50/80 px-6 py-4 border-b border-gray-200/50">
+                <div class="bg-white px-6 py-4 border-b border-gray-200/50">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="p-2 bg-blue-100/80 rounded-xl border border-blue-200/50">
@@ -757,10 +793,10 @@ function getTeaser(text) {
         <button class="user-tab-btn" data-tab="company">Company Profile</button>
         <button class="user-tab-btn" data-tab="verified">Identity Verification</button>
     </div>
-    <div class="user-tab-content">
-        <div class="user-tab-panel active" id="contact-panel">${contactSection}</div>
-        <div class="user-tab-panel" id="company-panel">${companySection}</div>
-        <div class="user-tab-panel" id="verified-panel">${verifiedSection}</div>
+    <div class="user-tab-content overflow-hidden">
+        <div class="user-tab-panel active h-full overflow-y-auto" id="contact-panel">${contactSection}</div>
+        <div class="user-tab-panel h-full overflow-y-auto" id="company-panel">${companySection}</div>
+        <div class="user-tab-panel h-full overflow-y-auto" id="verified-panel">${verifiedSection}</div>
     </div>
 
     `;
@@ -821,6 +857,18 @@ function getTeaser(text) {
         if (userDetailsSection) {
             userDetailsSection.addEventListener('click', (event) => {
                 if (event.target.closest('.research-teaser')) {
+                    const contentDiv = document.getElementById('researchModalContent');
+                    if (contentDiv) {
+                        contentDiv.innerHTML = markdownToHtml(window.currentResearchData || '');
+                    }
+
+                    const modal = document.getElementById('researchModal');
+                    modal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+            userDetailsSection.addEventListener('click', (event) => {
+                if (event.target.closest('.company-teaser')) {
                     const contentDiv = document.getElementById('researchModalContent');
                     if (contentDiv) {
                         contentDiv.innerHTML = markdownToHtml(window.currentResearchData || '');
@@ -1290,12 +1338,16 @@ async function openSession(id, mode, name, email, phone, company, mood, verified
         reconnectAttempts = maxReconnectAttempts;
         currentWs.close();
     }
+    console.log("asd:",c_data);
+    console.log(approved);
     currentSessionId = id;
     currentMode = mode;
     // Store data globally so modal can access it
     currentUserData = { id, name, email, phone, company, mood, verified, confidence, evidence, sources, interest, lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, c_sources, c_images, c_info, c_data, approved };
     
     const isApproved = approved === true || approved === "true";
+
+    console.log(isApproved);
 
     // Approve/Lead Button
     const approveButtonHtml = isApproved
