@@ -316,6 +316,24 @@ function getTeaser(text) {
     return teaser + '...';
 }
 
+const getDisplayName = (url) => {
+    try {
+        let hostname = new URL(url).hostname.replace(/^www\./, '');
+        const parts = hostname.split('.');
+        if (parts.length > 2) {
+            if (parts[parts.length - 2].length <= 3 && parts[parts.length - 1].length <= 3) {
+                return parts[parts.length - 3].charAt(0).toUpperCase() + parts[parts.length - 3].slice(1);
+            } else {
+                return parts[parts.length - 2].charAt(0).toUpperCase() + parts[parts.length - 2].slice(1);
+            }
+        }
+        const main = parts[0];
+        return main.charAt(0).toUpperCase() + main.slice(1);
+    } catch (e) {
+        return 'Source';
+    }
+};
+
   function renderUserDetails() {
     const { name, email, phone, company, mood, verified, confidence, evidence, sources, interest,
             lead_email_domain, lead_role, lead_categories, lead_services, lead_activity, lead_timeline, lead_budget, id, c_sources, c_images, c_info, c_data, approved } = currentUserData;
@@ -337,7 +355,7 @@ function getTeaser(text) {
         const teaserText = getTeaser(c_info);
         ResearchInfoHtml = `
         <div id="ResearchInfoDiv" class="research-teaser mt-3 p-4 bg-slate-50/90  rounded-xl border border-slate-200/60 shadow-sm cursor-pointer group  transition-all duration-300 ease-out overflow-hidden">
-            <h6 class="text-sm font-bold text-slate-800 mb-2 flex items-center group-hover:text-blue-700 transition-colors duration-200">
+            <h6 class="text-sm font-semibold text-slate-800 mb-2 flex items-center group-hover:text-blue-700 transition-colors duration-200">
             <svg class="w-5 h-5 mr-2 text-slate-500 group-hover:text-blue-500 transition-colors duration-200" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12.2429 6.18353L8.55917 8.27415C7.72801 8.74586 7.31243 8.98172 7.20411 9.38603C7.09579 9.79034 7.33779 10.2024 7.82179 11.0264L8.41749 12.0407C8.88853 12.8427 9.12405 13.2437 9.51996 13.3497C9.91586 13.4558 10.3203 13.2263 11.1292 12.7672L14.8646 10.6472M7.05634 9.72257L3.4236 11.7843C2.56736 12.2702 2.13923 12.5132 2.02681 12.9256C1.91438 13.3381 2.16156 13.7589 2.65591 14.6006C3.15026 15.4423 3.39744 15.8631 3.81702 15.9736C4.2366 16.0842 4.66472 15.8412 5.52096 15.3552L9.1537 13.2935M21.3441 5.18488L20.2954 3.39939C19.8011 2.55771 19.5539 2.13687 19.1343 2.02635C18.7147 1.91584 18.2866 2.15881 17.4304 2.64476L13.7467 4.73538C12.9155 5.20709 12.4999 5.44294 12.3916 5.84725C12.2833 6.25157 12.5253 6.6636 13.0093 7.48766L14.1293 9.39465C14.6004 10.1966 14.8359 10.5976 15.2318 10.7037C15.6277 10.8098 16.0322 10.5802 16.841 10.1212L20.5764 8.00122C21.4326 7.51527 21.8608 7.2723 21.9732 6.85985C22.0856 6.44741 21.8384 6.02657 21.3441 5.18488Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                     <path d="M12 12.5L16 22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -356,7 +374,7 @@ function getTeaser(text) {
     else{
         ResearchInfoHtml = `
         <div id="ResearchInfoDiv" class="research-teaser mt-3 p-4 hidden bg-slate-50/90  rounded-xl border border-slate-200/60 shadow-sm cursor-pointer group  transition-all duration-300 ease-out overflow-hidden">
-            <h6 class="text-sm font-bold text-slate-800 mb-2 flex items-center group-hover:text-blue-700 transition-colors duration-200">
+            <h6 class="text-sm font-semibold text-slate-800 mb-2 flex items-center group-hover:text-blue-700 transition-colors duration-200">
             <svg class="w-5 h-5 mr-2 text-slate-500 group-hover:text-blue-500 transition-colors duration-200" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12.2429 6.18353L8.55917 8.27415C7.72801 8.74586 7.31243 8.98172 7.20411 9.38603C7.09579 9.79034 7.33779 10.2024 7.82179 11.0264L8.41749 12.0407C8.88853 12.8427 9.12405 13.2437 9.51996 13.3497C9.91586 13.4558 10.3203 13.2263 11.1292 12.7672L14.8646 10.6472M7.05634 9.72257L3.4236 11.7843C2.56736 12.2702 2.13923 12.5132 2.02681 12.9256C1.91438 13.3381 2.16156 13.7589 2.65591 14.6006C3.15026 15.4423 3.39744 15.8631 3.81702 15.9736C4.2366 16.0842 4.66472 15.8412 5.52096 15.3552L9.1537 13.2935M21.3441 5.18488L20.2954 3.39939C19.8011 2.55771 19.5539 2.13687 19.1343 2.02635C18.7147 1.91584 18.2866 2.15881 17.4304 2.64476L13.7467 4.73538C12.9155 5.20709 12.4999 5.44294 12.3916 5.84725C12.2833 6.25157 12.5253 6.6636 13.0093 7.48766L14.1293 9.39465C14.6004 10.1966 14.8359 10.5976 15.2318 10.7037C15.6277 10.8098 16.0322 10.5802 16.841 10.1212L20.5764 8.00122C21.4326 7.51527 21.8608 7.2723 21.9732 6.85985C22.0856 6.44741 21.8384 6.02657 21.3441 5.18488Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                     <path d="M12 12.5L16 22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -375,7 +393,7 @@ function getTeaser(text) {
 
     let ConsultationHtml = `
     <div class="consultations-wrapper mt-3 p-4 bg-slate-50/90 rounded-xl border border-slate-200/60 shadow-sm">
-        <h6 class="text-sm font-bold text-slate-800 mb-3 flex items-center">
+        <h6 class="text-sm font-semibold text-slate-800 mb-3 flex items-center">
             <svg class="w-5 h-5 mr-2 text-slate-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M9 20H6C3.79086 20 2 18.2091 2 16V7C2 4.79086 3.79086 3 6 3H17C19.2091 3 21 4.79086 21 7V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M8 2V4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -406,7 +424,7 @@ function getTeaser(text) {
         <div class="p-4">
         <div class="flex items-center gap-4 mb-4 pb-3 border-b border-gray-200">
             <div class="relative">
-            <div class="rounded-full bg-gradient-to-br uppercase from-gray-100 to-gray-200 border-2 border-gray-300 w-14 h-14 flex items-center justify-center text-xl font-bold text-gray-700 flex-shrink-0 shadow-sm">
+            <div class="rounded-full bg-gradient-to-br uppercase from-gray-100 to-gray-200 border-2 border-gray-300 w-14 h-14 flex items-center justify-center text-xl font-semibold text-gray-700 flex-shrink-0 shadow-sm">
                 ${(name && name[0]) || '?'}
             </div>
             </div>
@@ -480,7 +498,7 @@ function getTeaser(text) {
     let cInfoHtml = '';
     if (c_info && c_info.trim()) {
         cInfoHtml = `<div class="company-teaser mt-3 p-4 mb-2 bg-white  rounded-xl border border-slate-200/60 shadow-sm cursor-pointer group  transition-all duration-300 ease-out overflow-hidden">
-            <h6 class="text-sm font-bold text-slate-800 mb-2 flex items-center group-hover:text-blue-700 transition-colors duration-200">
+            <h6 class="text-sm font-semibold text-slate-800 mb-2 flex items-center group-hover:text-blue-700 transition-colors duration-200">
             <svg fill="currentColor" class="w-5 h-5 mr-2 text-slate-500 group-hover:text-blue-500 transition-colors duration-200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
 	        viewBox="0 0 24 24" xml:space="preserve">
             <g id="overview_1_">
@@ -628,8 +646,8 @@ function getTeaser(text) {
         }
 
         const confidenceChipHtml = confidence 
-            ? `<span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${confidenceChipClass} mr-3 whitespace-nowrap">
-                Confidence: ${confidence}
+            ? `<span title="Confidence In Percentage" class="inline-flex items-center cursor-pointer px-3 py-1 text-xs font-semibold rounded-full ${confidenceChipClass} mr-3 whitespace-nowrap">
+               Confidence: ${confidence}
             </span>`
             : '';
 
@@ -641,7 +659,7 @@ function getTeaser(text) {
         verificationMetricsHtml = `
             <div class="verification-card mt-3 p-4 mb-2 bg-white  rounded-xl border border-slate-200/60 shadow-sm cursor-pointer group  transition-all duration-300 ease-out overflow-hidden">
                 <div class="flex items-start mb-2">
-                    <div class="text-sm font-bold text-gray-800 flex-grow">
+                    <div class="text-sm font-semibold text-gray-800 flex-grow">
                         Evidence Summary
                     </div>
                     ${confidenceChipHtml}
@@ -680,12 +698,18 @@ function getTeaser(text) {
         if (totalCount > 0) {
             allSourcesHtml = `
                 <div class="citation-container space-y-3 rounded-b-xl">
-                    <div class="text-sm font-semibold text-gray-700 flex items-center">
+                    <div class="text-sm font-semibold text-gray-700 flex items-start ">
+                        <div class="flex flex-grow">
                         <svg class="w-5 h-5 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
-                        Sources Found (${totalCount} Total)
+                         Sources Used 
+                        </div>
+                        <span title="Sources Used Count" class="inline-flex items-center px-3 py-1 cursor-pointer text-xs font-semibold rounded-full bg-gray-100 text-gray-700 mr-3 whitespace-nowrap">
+                          Total: ${totalCount}
+                        </span>
                     </div>
+
                     
                     <div class="flex flex-wrap gap-2">
                         ${combinedSources.map((url, index) => {
@@ -704,13 +728,13 @@ function getTeaser(text) {
                                 class="citation-pill group relative inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 whitespace-nowrap"
                                 aria-label="Source ${index + 1}: ${domain}">
                                     
-                                    <span class="text-gray-500 font-bold mr-2 text-sm">${index + 1}</span> 
+                                    <span class="text-gray-500 font-semibold mr-2 text-sm">${index + 1}</span> 
                                     
-                                    <div class="flex-shrink-0 w-4 h-4 mr-2">
-                                        <img src="${favicon}" alt="${domain}" class="w-4 h-4 rounded-full" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIHN0cm9rZT0iI2U1ZTVlNSIgLz4KPC9zdmc+';">
+                                    <div class="flex-shrink-0 w-5 h-5 mr-1">
+                                        <img src="${favicon}" alt="${domain}" class="w-5 h-5 rounded-full" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIHN0cm9rZT0iI2U1ZTVlNSIgLz4KPC9zdmc+';">
                                     </div>
                                     
-                                    <span class="min-w-0 flex-1 truncate">${domain}</span>
+                                    <span class="min-w-0 flex-1 truncate">${getDisplayName(url)}</span>
                                     
                                     <svg class="w-3 h-3 ml-1 text-gray-400 group-hover:text-gray-600 flex-shrink-0 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
@@ -821,7 +845,7 @@ function getTeaser(text) {
                             <path d="M12 12.5L16 22M12 12.5L8 22" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <h2 class="text-lg font-bold text-slate-900">Deep Research Results</h2>
+                    <h2 class="text-lg font-semibold text-slate-900">Deep Research Results</h2>
                 </div>
                 <button onclick="document.getElementById('researchModal').classList.add('hidden')" class="group flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 focus:outline-none ">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1673,7 +1697,7 @@ function renderCustomTasks() {
     list.innerHTML = currentCustomTasks.map((t, i) => `
         <li class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-xs flex items-center gap-2">
             ${t}
-            <button onclick="removeCustomTask(${i})" class="hover:text-red-600 font-bold">&times;</button>
+            <button onclick="removeCustomTask(${i})" class="hover:text-red-600 font-semibold">&times;</button>
         </li>
     `).join('');
 }
