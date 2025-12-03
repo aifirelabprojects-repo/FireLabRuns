@@ -34,16 +34,19 @@ async def health_check():
 @app.on_event("startup")
 async def startup():
     await init_db()
-    global httpx_client
-    limits = httpx.Limits(max_connections=HTTPX_MAX_CONNECTIONS, max_keepalive_connections=HTTPX_MAX_CONNECTIONS)
-    httpx_client = httpx.AsyncClient(timeout=httpx.Timeout(UPSTREAM_TIMEOUT), limits=limits)
+    limits = httpx.Limits(max_connections=HTTPX_MAX_CONNECTIONS,
+                          max_keepalive_connections=HTTPX_MAX_CONNECTIONS)
+    VerifyEmail.httpx_client = httpx.AsyncClient(
+        timeout=httpx.Timeout(UPSTREAM_TIMEOUT),
+        limits=limits
+    )
+
 
 @app.on_event("shutdown")
 async def shutdown():
     cfg.stop()
-    global httpx_client
-    if httpx_client:
-        await httpx_client.aclose()
+    if VerifyEmail.httpx_client:
+        await VerifyEmail.httpx_client.aclose()
 
 @app.get("/")
 async def home(request: Request):
