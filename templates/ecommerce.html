@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Business ChatBot</title>
+<script src="/static/tailwind.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#2b6cee",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101622",
+            },
+            fontFamily: {
+              "display": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .group:hover .group-hover-block {
+            display: block;
+        }
+    </style>
+    <script src="/static/dataset.js"></script>
+    <script>
+      tailwind.config = {
+          darkMode: "class",
+          theme: {
+              extend: {
+                  colors: {
+                      primary: "#4F46E5",
+                      "background-light": "#F8FAFC",
+                      "background-dark": "#111827",
+                  },
+                  fontFamily: {
+                      sans: ["Inter", "system-ui", "sans-serif"],
+                      display: ["Inter", "system-ui", "sans-serif"],
+                  },
+                  borderRadius: {
+                      DEFAULT: "0.75rem", 
+                      lg: "1rem",
+                  },
+                  keyframes: {
+                      shimmer: {
+                        '0%': { 'background-position': '-1000px 0' },
+                        '100%': { 'background-position': '1000px 0' },
+                      },
+                    },
+                    animation: {
+                      shimmer: 'shimmer 1.5s infinite linear',
+                  },
+              },
+          },
+      };
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+      /* Smooth transitions */
+      .fade-enter {
+          opacity: 0;
+          transform: translateY(10px);
+      }
+      .fade-enter-active {
+          opacity: 1;
+          transform: translateY(0);
+          transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      
+      /* Glassmorphism */
+      .glass-panel {
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255,255,255,0.5);
+          box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+      }
+  
+      /* Hide scrollbar for clean UI but allow scroll */
+      body::-webkit-scrollbar {
+          width: 8px;
+      }
+      body::-webkit-scrollbar-track {
+          background: #f1f5f9;
+      }
+      body::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 4px;
+      }
+      body::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+      }
+  </style>
+    <style>
+      body, html {
+        font-family: "Plus Jakarta Sans", "system-ui", "sans-serif";
+        font-feature-settings: "cv11", "ss01";
+        font-weight: 400;
+      }
+      #email-verify-anim {
+        display: none;
+        position: absolute;
+        bottom: calc(100% + 8px); 
+        left: 0;
+        margin: 0 auto;
+        width: max-content;
+        padding: 8px 12px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 21px;
+        font-family: sans-serif;
+        font-size: 12px;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 9999;
+      }
+    
+      #email-verify-anim .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ccc;
+        border-top-color: #333;
+        border-radius: 50%;
+        animation: simple-spin 0.8s linear infinite;
+      }
+    
+      @keyframes simple-spin {
+        from { transform: rotate(0); }
+        to   { transform: rotate(360deg); }
+      }
+    </style>
+  
+    
+    <style>
+      #messages::-webkit-scrollbar { width: 6px; }
+      #messages::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.2); border-radius: 6px; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .spinner { border: 2px solid rgba(100,100,100,0.2); border-top: 2px solid #6b7280; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; }
+      @keyframes fadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+      .fade-up { animation: fadeUp .2s ease-out; }
+      @keyframes hoverInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+      .hover-in-right { animation: hoverInRight .3s ease-out; }
+      .chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+      .chat-popup { 
+        position: fixed; 
+        top: 20px; 
+        right: 20px; 
+        width: 100%; 
+        max-width: 420px; 
+        height: calc(100vh - 40px); 
+        background: white; 
+        z-index: 999; 
+        transform: translateX(100%); 
+        opacity: 0; 
+        transition: transform .3s ease-out, opacity .3s ease-out; 
+        box-shadow: -4px 0 20px rgba(0,0,0,0.15); 
+        border-radius: 12px; 
+        overflow: hidden; 
+      }
+      .chat-popup.open { transform: translateX(0); opacity: 1; }
+      #chatToggle{
+        box-shadow: 0px 0px 5px 1px #d9d9d9;
+      }
+      @media (max-width: 768px) { 
+        .chat-popup { 
+          max-width: 100%; 
+          top: 0; 
+          right: 0; 
+          height: 100%; 
+          border-radius: 0;
+        } 
+      }
+  
+      #composer.disabled {
+        pointer-events: none;
+        opacity: 0.6;
+      }
+      #composer.disabled #input {
+        background-color: #f1f5f9 !important;
+        cursor: not-allowed;
+      }
+      #composer.disabled #sendBtn {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+  
+      .typing-wave {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .typing-wave span {
+        display: block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background-color: #94a3b8;
+        animation: wave 1.4s ease-in-out infinite;
+      }
+      .typing-wave span:nth-child(1) { animation-delay: 0s; }
+      .typing-wave span:nth-child(2) { animation-delay: 0.2s; }
+      .typing-wave span:nth-child(3) { animation-delay: 0.4s; }
+      
+      @keyframes wave {
+        0%, 80%, 100% { transform: translateY(0); opacity: 0.6; }
+        40% { transform: translateY(-7px); opacity: 1; }
+      }
+  
+      .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 998; opacity: 0; visibility: hidden; transition: all .3s ease-out; }
+      .overlay.open { opacity: 1; visibility: visible; }
+  
+      .email-popup {
+        position: absolute;
+        top: 68px;
+        right: 9px;
+        left: 9px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1001;
+        display: none;
+        animation: fadeUp 0.5s ease-out;
+      }
+      .email-popup.show {
+        display: block;
+      }
+      .email-popup:not(.show) {
+        animation: fadeOut 0.5s ease-out forwards;
+      }
+      .email-popup .close-popup {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+      }
+      @media (max-width: 768px) {
+        .email-popup {
+          max-width: calc(100% - 40px);
+          right: 10px;
+          top: 10px;
+        }
+      }
+  
+  
+      .autocomplete-wrapper {
+        position: relative;
+      }
+    
+      .ghost-text-overlay {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        font-size: 14px;
+        color: #ffffff;
+        opacity: 0.6;
+        z-index: 1;
+        pointer-events: none;
+        white-space: pre;
+        font-family: inherit;
+        overflow: hidden;
+        display: none;
+    }
+  
+      .suggestions-list {
+        position: absolute;
+        bottom: 100%; 
+        left: 0;
+        right: 0;
+        z-index: 10;
+        display: none; 
+        margin-bottom: 8px; 
+        overflow: hidden;
+        background-color: white;
+      }
+    
+      .suggestion-item {
+        padding: 11px 20px;
+        cursor: pointer;
+        border-bottom: 1px solid #c7c7c7;
+        color: #555;
+        transition: background 0.2s;
+        font-size: 13px;
+    }
+    
+    .suggestion-item:last-child { border-bottom: none; }
+  
+    .suggestion-item:only-child {
+      border-bottom: none;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+    }
+    
+    .highlight { 
+    font-weight: 600; 
+    color: #000000; 
+    }
+  
+    /* --- TOGGLE FIX STARTS HERE --- */
+    .toggle-checkbox:checked {
+      transform: translateX(100%); 
+      border-color: black;
+  }
+  
+  .toggle-checkbox:checked + .toggle-label {
+      background-color: black;
+  }
+  /* --- TOGGLE FIX ENDS HERE --- */
+  
+  /* Range Input Styling */
+  input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #1f2937;
+      margin-top: -6px;
+      cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 2px;
+  }
+  
+</style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-[#111318] dark:text-gray-200">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-gray-800 px-6 md:px-10 py-3 bg-white dark:bg-background-dark/50 backdrop-blur-sm sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-primary">
+<div class="size-6">
+<svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z" fill="currentColor"></path>
+</svg>
+</div>
+<h2 class="text-xl font-bold tracking-tight text-inherit">ShoeStore</h2>
+</div>
+<nav class="hidden lg:flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary dark:text-gray-300 dark:hover:text-primary" href="/">Home</a>
+<a class="text-sm font-medium text-primary" href="#">Shop</a>
+<a class="text-sm font-medium hover:text-primary dark:text-gray-300 dark:hover:text-primary" href="#">Men</a>
+<a class="text-sm font-medium hover:text-primary dark:text-gray-300 dark:hover:text-primary" href="#">Women</a>
+<a class="text-sm font-medium hover:text-primary dark:text-gray-300 dark:hover:text-primary" href="#">Kids</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end gap-4">
+<label class="hidden md:flex flex-col min-w-40 !h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-gray-500 dark:text-gray-400 flex bg-gray-100 dark:bg-gray-800/50 items-center justify-center pl-3 rounded-l-lg">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-inherit focus:outline-0 focus:ring-0 border-none bg-gray-100 dark:bg-gray-800/50 focus:border-none h-full placeholder:text-gray-400 dark:placeholder:text-gray-500 px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Search" value=""/>
+</div>
+</label>
+<div class="flex gap-2">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-gray-100 dark:bg-gray-800/50 hover:bg-gray-200 dark:hover:bg-gray-800 text-inherit gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-gray-100 dark:bg-gray-800/50 hover:bg-gray-200 dark:hover:bg-gray-800 text-inherit gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
+<span class="material-symbols-outlined text-xl">shopping_bag</span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User avatar image" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDky90r9Mzm3ymqc0FfeFT8zWlS0jJtG3QlBkyIJ7pZAyddH4tXHuLzG-geJKIg9Lx8Czt7_G-Zujm2PFPb_j9hmADCsU-ldqATOVwVZJaokUHHt3cucM-3mCXShLIoEOdSxjM4VLpnpsOif4EcT-l6VEYDN9BgZKEInzh8Ncrsl5WhNg9ZjdeJ-ZRNWTgPJ2Epk7FlE9SqRLqZ1giX0KRMzP414g5NocJVxYzkwxXsvndvcez_gEVr8fNoROwPVd-kkULAnNLAqNI");'></div>
+</div>
+</header>
+<main class="w-full max-w-screen-2xl mx-auto px-6 md:px-10 py-8">
+<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-4">
+<div class="flex flex-wrap items-center gap-2">
+<a class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary" href="#">Home</a>
+<span class="material-symbols-outlined text-sm text-gray-400">chevron_right</span>
+<a class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary" href="#">Men</a>
+<span class="material-symbols-outlined text-sm text-gray-400">chevron_right</span>
+<span class="text-sm font-medium text-gray-800 dark:text-gray-200">Sneakers</span>
+</div>
+<div class="flex flex-wrap justify-between gap-3 items-end">
+<div class="flex min-w-72 flex-col gap-1">
+<h1 class="text-4xl font-black leading-tight tracking-tight text-gray-900 dark:text-white">Men's Sneakers</h1>
+<p class="text-gray-500 dark:text-gray-400 text-base font-normal leading-normal">Showing 8 of 128 results</p>
+</div>
+</div>
+</div>
+<div class="flex flex-col lg:flex-row gap-8">
+<aside class="w-full lg:w-64 xl:w-72 shrink-0">
+<div class="sticky top-28 flex flex-col gap-6">
+<div class="flex lg:hidden flex-wrap gap-2">
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-gray-800/50 pl-4 pr-3 border border-gray-200 dark:border-gray-700">
+<p class="text-sm font-medium leading-normal">Sort by: Price</p>
+<span class="material-symbols-outlined text-lg">expand_more</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-gray-800/50 pl-4 pr-3 border border-gray-200 dark:border-gray-700">
+<p class="text-sm font-medium leading-normal">Filters</p>
+<span class="material-symbols-outlined text-lg">tune</span>
+</button>
+</div>
+<div class="hidden lg:flex flex-col gap-6">
+<div class="flex flex-col gap-4 border-b border-gray-200 dark:border-gray-800 pb-6">
+<h3 class="font-bold text-gray-900 dark:text-white">Sort by</h3>
+<select class="form-select w-full rounded-lg bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:ring-primary focus:border-primary">
+<option>Most Popular</option>
+<option>Newest</option>
+<option>Price: Low to High</option>
+<option>Price: High to Low</option>
+</select>
+</div>
+<div class="flex flex-col gap-4 border-b border-gray-200 dark:border-gray-800 pb-6">
+<h3 class="font-bold text-gray-900 dark:text-white">Category</h3>
+<div class="flex flex-col gap-2">
+<a class="text-gray-600 dark:text-gray-300 hover:text-primary" href="#">Running</a>
+<a class="text-gray-600 dark:text-gray-300 hover:text-primary" href="#">Lifestyle</a>
+<a class="font-medium text-primary" href="#">Sneakers</a>
+<a class="text-gray-600 dark:text-gray-300 hover:text-primary" href="#">Basketball</a>
+<a class="text-gray-600 dark:text-gray-300 hover:text-primary" href="#">Skateboarding</a>
+</div>
+</div>
+<div class="flex flex-col gap-4 border-b border-gray-200 dark:border-gray-800 pb-6">
+<h3 class="font-bold text-gray-900 dark:text-white">Brand</h3>
+<div class="flex flex-col gap-2">
+<label class="flex items-center gap-2"><input class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/> Nike</label>
+<label class="flex items-center gap-2"><input class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/> Adidas</label>
+<label class="flex items-center gap-2"><input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/> New Balance</label>
+<label class="flex items-center gap-2"><input class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/> Puma</label>
+</div>
+</div>
+<div>
+<button class="w-full flex items-center justify-center rounded-lg h-10 bg-primary text-white font-semibold hover:bg-primary/90">Apply Filters</button>
+</div>
+</div>
+</div>
+</aside>
+<div class="flex-1">
+<div class="columns-2 md:columns-3 xl:columns-4 gap-4 md:gap-6 space-y-6">
+<div class="flex flex-col group relative break-inside-avoid">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl bg-gray-100 dark:bg-gray-800/50" data-alt="Blue and white running shoe with orange accents" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDBlGcSduArk0pZU9tVU24NOVkFJzvKvZLlbaFwJZJ8Q5YPkMCogLB32mnF6pcaguAd9RRNpWhg4o1UaCj_8sA_5m9nUgVvxWHAn11yjTkKlmrDws5VrWg0tdLA6JEFBqPmSYh-h4zhfOwIGDoNdvbxh4Ik5-iLkqlsFr_JKjD-Vhugew4k1N8oYCfkz6THb3lCiRvxRokOSIVyjyawe0ZGSORjqt5GwmmwgYm-RHS5HTY84MywZupCHxtC7LqsyTGTMCENn3eXXac");'></div>
+<div class="pt-3">
+<p class="text-base font-semibold text-gray-800 dark:text-gray-100">Running Shoe Pro</p>
+<p class="text-sm font-medium text-gray-600 dark:text-gray-300">$120.00</p>
+</div>
+</div>
+<div class="flex flex-col group relative break-inside-avoid">
+<div class="w-full bg-center bg-no-repeat aspect-[4/5] bg-cover rounded-xl bg-gray-100 dark:bg-gray-800/50" data-alt="White classic sneaker with black details" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDOfhMKhTKbmILlFJSv_dkz8ihEpjsHw5xlQvuoDCqJfW0A8ExaEsepi-kGVOF5-PpxHLjVzFoBWXl-vuDEFcjfXO8ld5X1hHglNAYrxbwrjCxET3qXnNrdy4qX5-YWg3z4AflkyTmQZuJLTHMkwBa2y4ttodIPWoK2dfjlSG0XWxtUdlY3Y4QksA0E4saayPlWRPA6Skec2VjBKI-pNURL5q6I_ONEDhuhCrwY1hnzu2EUHWB-6K-7nd70_hWq8H9Xdt7ueEt33zE");'></div>
+<div class="pt-3">
+<p class="text-base font-semibold text-gray-800 dark:text-gray-100">Classic Walker</p>
+<p class="text-sm font-medium text-gray-600 dark:text-gray-300">$95.00</p>
+</div>
+</div>
+<div class="flex flex-col group relative break-inside-avoid">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl bg-gray-100 dark:bg-gray-800/50" data-alt="Black high-top trainer with white sole" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBz6SCsibFqk4K34lTKSl2QfacuhwyXt8B397kaz9wHI-HU_q8qPUrBX4LcmFIebaO3aLjMFlMYl6Y6keoXV60Ox1TdWeLin6hxgx7XOyYdl7bNg6Xv8SpU71SZ8OoEAVp2INCv4sAsmmZ5iGURi7e5PLkwH4DlCah4g1TeOl7ymFz13-FRy6u7Gs7mrf6tyhShaS4FlMAQSgAsoBkbk-18k8HhmBX81rT2l5bX-l-zWUzjg6kFJvHfjtcJ1TEroA0A1QCxI8_RcXM");'></div>
+<div class="pt-3">
+<p class="text-base font-semibold text-gray-800 dark:text-gray-100">High-Top Trainer</p>
+<p class="text-sm font-medium text-gray-600 dark:text-gray-300">$110.00</p>
+</div>
+</div>
+<div class="flex flex-col group relative break-inside-avoid">
+<div class="w-full bg-center bg-no-repeat aspect-[3/4] bg-cover rounded-xl bg-gray-100 dark:bg-gray-800/50" data-alt="Colorful urban sneaker" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAM2sHkGRuvrLNNkJ7EdPsfp-MT5EbUf16dJTi4H-0NcNMWJq5aVOn-_29Lg45Rldb8fMyBD6AduoeygscijkRV4ZjBw4z6Gl5bVn6c7sCI0qyIps780cZrSY_B5JgAzGBlCf7X2V1eAfC8rkP7rVxj4aTaN2o2IFXkmhmgg-0zBQOVdXZafVbhg-DRZrY4DTbZ4M9ZrV0CEEefiN7BB5fTnna503H6WGB6-RBDIyzHqYHBAVGZR8Nq2oxK4Fkx0KqVyQtsPqgXQY8");'></div>
+<div class="pt-3">
+<p class="text-base font-semibold text-gray-800 dark:text-gray-100">Urban Sneaker</p>
+<p class="text-sm font-medium text-gray-600 dark:text-gray-300">$88.00</p>
+</div>
+</div>
+<div class="flex flex-col group relative break-inside-avoid">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl bg-gray-100 dark:bg-gray-800/50" data-alt="Grey trail running shoe with thick sole" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBz69cQKp0v2HAa5M0g7Od7YCHu9IL70bMGy47w4ma31P7H9Vzes0C1vhZoNf4oydSzJhsPpxUwjCXJ5wKDcf5anTQA9KSNxkqZ4u09Xo9icRnX9LFrKkELGTvyck6_SvkuJYiNNwhJVeb8QldjDsNrKBoPK6lKPoS0dGDetqHv2TJVfzXF3_a08K2Y02IrKVnaWVQQt3SNIZ-JnehGdx-WXV0qYzCgKhV7otCAbbA97-PUFxwlFiS1KnE2a7dOTDq2xwIauELuZuU");'></div>
+<div class="pt-3">
+<p class="text-base font-semibold text-gray-800 dark:text-gray-100">Trail Runner X</p>
+<p class="text-sm font-medium text-gray-600 dark:text-gray-300">$145.00</p>
+</div>
+</div>
+<div class="flex flex-col group relative break-inside-avoid">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl bg-gray-100 dark:bg-gray-800/50" data-alt="Blue minimalist shoe on a wooden surface" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDhVil5nz7iIk6fAdWn4EbZh7GkchgtNSBFdzdKo6K-pcCzD_zHtZAZAK2XV1I0fn5pWO_zGv-jGkj0jZBC8HaBg5w19t5IosywTsRgZuCaOc65S8Rtj0TG01bMQzfgEgDLarI2zA1-vUcxnEmJ4ErpNDyWLlcC-7p8Wc3rEYRXebOHOrXrE30_NdE9A5xDUITOn-xDjiFE-BLFmOIWXVU6AvSqb9COh5-7xMXP2wrYustSZhvhQ2Sqg_CNmVeQD1cUNJWixh6m3zk");'></div>
+<div class="pt-3">
+<p class="text-base font-semibold text-gray-800 dark:text-gray-100">Minimalist Shoe</p>
+<p class="text-sm font-medium text-gray-600 dark:text-gray-300">$105.00</p>
+</div>
+</div>
+<div class="flex flex-col group relative break-inside-avoid">
+<div class="w-full bg-center bg-no-repeat aspect-[4/5] bg-cover rounded-xl bg-gray-100 dark:bg-gray-800/50" data-alt="White performance trainer with blue and red accents" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBuFqIcy-ZKbc4QYBTbQ86F6UKMb0NZ2AjWG8NlDeHn3brZqsDGt63RgMCxgfGYcaOnNy7KwJZkDQq85_cTPVYiGpxbRcmquB8yfWZfy-iA84zAhEQHYCEEB6M_vU3KXqpIFHwTrDc-F7t6W5qQv6iZ6l8ZUZ2OiADiUhGgq6csBZSwfHa8GbnU37dj6V8cAOAq9tMF5CcLsRUW5x6Kj9_GaN80uzZlWq8jN9B_LPgahLj1COVce_lh-Wa0YSl57ab6Nv22eBuozbc");'></div>
+<div class="pt-3">
+<p class="text-base font-semibold text-gray-800 dark:text-gray-100">Performance Trainer</p>
+<p class="text-sm font-medium text-gray-600 dark:text-gray-300">$130.00</p>
+</div>
+</div>
+<div class="flex flex-col group relative break-inside-avoid">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl bg-gray-100 dark:bg-gray-800/50" data-alt="Light brown casual canvas shoe" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCTPtGEddEqOKgRSFsl2uoGazmbdtC11LYdZluCNINzs9oqXRTBEYcFf1yS_JOQ164RrBULPEuZThjYwHOHF1jpVgM64Cp5Ow1--FDsS7xfBbSYBIvva1Jn3gTrkMF3bjhq-PLN7IrG-ziibxauIFS6NWuWM61UTmFFOl8gpb_CfF97Vreg1noe1OdUpTKHwN_nn34GFpSrkVYB9zgfZEFNauNA9IcYLLFRuyaozf98WjqspweEdVDt6GEF-JNZoMDFayAdnuxLey8");'></div>
+<div class="pt-3">
+<p class="text-base font-semibold text-gray-800 dark:text-gray-100">Casual Canvas Shoe</p>
+<p class="text-sm font-medium text-gray-600 dark:text-gray-300">$75.00</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-center pt-8">
+<nav class="flex items-center gap-2">
+<button class="size-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+<span class="material-symbols-outlined text-xl">chevron_left</span>
+</button>
+<button class="size-9 flex items-center justify-center rounded-lg bg-primary border border-primary text-white font-semibold">1</button>
+<button class="size-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium">2</button>
+<button class="size-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium">3</button>
+<span class="text-gray-500">...</span>
+<button class="size-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium">16</button>
+<button class="size-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+<span class="material-symbols-outlined text-xl">chevron_right</span>
+</button>
+</nav>
+</div>
+</div>
+</main>
+</div>
+
+<div id="overlay" class="overlay"></div>
+
+  <div id="chatDiv" class="chat-popup flex flex-col">
+    <div id="emailPopup" class="email-popup">
+      <button class="close-popup" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-slate-500">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <p class="text-sm text-slate-700">Unlock 20% off our expert advisory services with your Business</p>
+    </div>
+    <div class="flex flex-col border-b border-slate-100 bg-white z-20 relative transition-all duration-300">
+      <div class="flex items-center justify-between gap-3 px-4 py-3">
+          <div class="flex items-center gap-3">
+              <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                      <g id="Product-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                          <g id="ic_fluent_bot_24_regular" fill="#000" fill-rule="nonzero">
+                              <path d="M17.7530511,13.999921 C18.9956918,13.999921 20.0030511,15.0072804 20.0030511,16.249921 L20.0030511,17.1550008 C20.0030511,18.2486786 19.5255957,19.2878579 18.6957793,20.0002733 C17.1303315,21.344244 14.8899962,22.0010712 12,22.0010712 C9.11050247,22.0010712 6.87168436,21.3444691 5.30881727,20.0007885 C4.48019625,19.2883988 4.00354153,18.2500002 4.00354153,17.1572408 L4.00354153,16.249921 C4.00354153,15.0072804 5.01090084,13.999921 6.25354153,13.999921 L17.7530511,13.999921 Z M17.7530511,15.499921 L6.25354153,15.499921 C5.83932796,15.499921 5.50354153,15.8357075 5.50354153,16.249921 L5.50354153,17.1572408 C5.50354153,17.8128951 5.78953221,18.4359296 6.28670709,18.8633654 C7.5447918,19.9450082 9.44080155,20.5010712 12,20.5010712 C14.5599799,20.5010712 16.4578003,19.9446634 17.7186879,18.8621641 C18.2165778,18.4347149 18.5030511,17.8112072 18.5030511,17.1550005 L18.5030511,16.249921 C18.5030511,15.8357075 18.1672647,15.499921 17.7530511,15.499921 Z M11.8985607,2.00734093 L12.0003312,2.00049432 C12.380027,2.00049432 12.6938222,2.2826482 12.7434846,2.64872376 L12.7503312,2.75049432 L12.7495415,3.49949432 L16.25,3.5 C17.4926407,3.5 18.5,4.50735931 18.5,5.75 L18.5,10.254591 C18.5,11.4972317 17.4926407,12.504591 16.25,12.504591 L7.75,12.504591 C6.50735931,12.504591 5.5,11.4972317 5.5,10.254591 L5.5,5.75 C5.5,4.50735931 6.50735931,3.5 7.75,3.5 L11.2495415,3.49949432 L11.2503312,2.75049432 C11.2503312,2.37079855 11.5324851,2.05700336 11.8985607,2.00734093 L12.0003312,2.00049432 L11.8985607,2.00734093 Z M16.25,5 L7.75,5 C7.33578644,5 7,5.33578644 7,5.75 L7,10.254591 C7,10.6688046 7.33578644,11.004591 7.75,11.004591 L16.25,11.004591 C16.6642136,11.004591 17,10.6688046 17,10.254591 L17,5.75 C17,5.33578644 16.6642136,5 16.25,5 Z M9.74928905,6.5 C10.4392523,6.5 10.9985781,7.05932576 10.9985781,7.74928905 C10.9985781,8.43925235 10.4392523,8.99857811 9.74928905,8.99857811 C9.05932576,8.99857811 8.5,8.43925235 8.5,7.74928905 C8.5,7.05932576 9.05932576,6.5 9.74928905,6.5 Z M14.2420255,6.5 C14.9319888,6.5 15.4913145,7.05932576 15.4913145,7.74928905 C15.4913145,8.43925235 14.9319888,8.99857811 14.2420255,8.99857811 C13.5520622,8.99857811 12.9927364,8.43925235 12.9927364,7.74928905 C12.9927364,7.05932576 13.5520622,6.5 14.2420255,6.5 Z" id="🎨-Color"></path>
+                          </g>
+                      </g>
+                  </svg>
+              </div>
+              <div>
+                  <div class="text-slate-900 font-medium leading-tight">Business Chatbot</div>
+                  <div class="text-xs text-slate-400">Testing</div>
+              </div>
+          </div>
+          
+          <div class="flex items-center gap-2">
+              <button id="settingsBtn" class="p-2 rounded-md hover:bg-slate-50 transition-colors" title="Settings">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+              </button>
+              <button id="newBtn" title="New Chat" class="p-2 rounded-md hover:bg-slate-50">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-slate-500">
+                      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+              </button>
+              <button id="closeBtn" title="Close" class="p-2 rounded-md hover:bg-slate-50">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-slate-500">
+                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+                  </svg>
+              </button>
+          </div>
+      </div>
+      
+      <div id="settingsPanel" class="hidden px-4 py-3 bg-white border-t border-slate-100">
+          <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold text-gray-800 text-sm tracking-wide">Chat Preferences</h3>
+              </div>
+  
+          <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+              
+              <div class="flex items-center justify-between col-span-2 sm:col-span-1">
+                  <span class="text-xs font-medium text-gray-700">Show Suggestions</span>
+                  <div class="relative inline-block w-11 align-middle select-none transition duration-200 ease-in">
+                      <input type="checkbox" name="toggle" id="toggleSuggestions" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer pointer-events-none transition-all duration-300 ease-in-out top-0 left-0 border-slate-300"/>
+                      <label for="toggleSuggestions" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-200 cursor-pointer checked:bg-blue-500"></label>
+                  </div>
+              </div>
+              
+              <div class="col-span-2 sm:col-span-1">
+                  <div class="flex justify-between mb-1">
+                      <label for="limitRange" class="text-xs font-medium text-gray-700">Max Results</label>
+                      <span id="rangeValue" class="text-xs font-bold text-gray-800">4</span>
+                  </div>
+                  <input type="range" id="limitRange" min="1" max="5" value="4" class="w-full h-4 bg-gray-100 rounded-full appearance-none cursor-pointer range-xs">
+              </div>
+              
+          </div>
+      </div>
+    </div>
+
+    <main id="messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-white hover-in-right">
+
+    </main>
+
+    <div class="bg-white p-7">
+      <form id="composer" class="flex items-center gap-2" onsubmit="return false;">
+        
+        <div class="absolute right-2 left-2 bottom-3 autocomplete-wrapper">
+          <div id="suggestionBox" class="suggestions-list"></div>
+        <div id="email-verify-anim" style="display: none;" >
+          <div class="spinner"></div>
+          <div>Verifying email</div>
+        </div>
+          
+          <input id="input" type="text" autocomplete="off" placeholder="Type your message..." class="w-full bg-slate-50 border border-slate-200 rounded-full px-[15px] py-[15px]  text-sm focus:outline-none "/>
+        
+          <button id="sendBtn" class="absolute right-[0.3rem] top-1/2 transform -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 bg-gray-800 text-white rounded-full hover:bg-gray-800/90 transition shadow-sm hover:shadow focus:outline-none focus:ring-1" title="Send"><svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="icon"><path d="M8.99992 16V6.41407L5.70696 9.70704C5.31643 10.0976 4.68342 10.0976 4.29289 9.70704C3.90237 9.31652 3.90237 8.6835 4.29289 8.29298L9.29289 3.29298L9.36907 3.22462C9.76184 2.90427 10.3408 2.92686 10.707 3.29298L15.707 8.29298L15.7753 8.36915C16.0957 8.76192 16.0731 9.34092 15.707 9.70704C15.3408 10.0732 14.7618 10.0958 14.3691 9.7754L14.2929 9.70704L10.9999 6.41407V16C10.9999 16.5523 10.5522 17 9.99992 17C9.44764 17 8.99992 16.5523 8.99992 16Z"></path></svg></button>  
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <button id="chatToggle" 
+  class="group fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-2xl border border-gray-200 dark:border-gray-700">
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-3xl transition-transform group-hover:scale-110" style="font-variation-settings: 'FILL' 1, 'wght' 600;">support_agent</span>
+</div>
+
+<div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 whitespace-nowrap opacity-0 pointer-events-none transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1">
+<div class="rounded-lg bg-gray-900 text-white dark:bg-white dark:text-gray-900 px-4 py-2.5 text-sm font-medium shadow-xl">
+Need help with your order?
+</div>
+<div class="absolute left-full top-1/2 -translate-y-1/2 border-8 border-transparent border-l-gray-900 dark:border-l-white"></div>
+</div>
+</button>
+
+
+<script>
+
+    (() => {
+      const clear = () => localStorage.removeItem('chatSessionId');
+
+      if (performance.getEntriesByType('navigation')[0]?.type === 'reload') {
+        clear();
+      }
+      window.addEventListener('beforeunload', clear);
+      window.addEventListener('unload', clear); 
+    })();
+
+  let ws;
+  let welcomeMessageShown = false;  
+  let sessionId = localStorage.getItem('chatSessionId');
+  const messagesEl = document.getElementById('messages');
+  const inputEl = document.getElementById('input');
+  const sendBtn = document.getElementById('sendBtn');
+  const newBtn = document.getElementById('newBtn');
+  const chatToggle = document.getElementById('chatToggle');
+  const chatDiv = document.getElementById('chatDiv');
+  const overlay = document.getElementById('overlay');
+  const closeBtn = document.getElementById('closeBtn');
+
+  const suggestionBox = document.getElementById('suggestionBox');
+  
+  // Settings Elements
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const toggleSuggestions = document.getElementById('toggleSuggestions');
+  const limitRange = document.getElementById('limitRange');
+  const rangeValue = document.getElementById('rangeValue');
+
+
+  let config = {
+      enabled: true,
+      limit: 4
+  };
+
+  let welcomeOptionsUsed = false;  // This tracks if user already picked an option
+
+  function showWelcomeMessage() {
+    if (welcomeMessageShown) return;
+    welcomeMessageShown = true;
+
+    const welcomeText = `Hi there! 👋 Need help with sizing, shipping, or finding the best deal? I'm here 24/7 😊`;
+
+    const options = [
+        "Quick question",
+        "Shipping info",
+        "Size/fit help",
+        "Show me offers",
+        "Just browsing 🙂"
+    ];
+
+    addMessage('bot', welcomeText, new Date().toISOString(), options);
+}
+
+  function loadSettings() {
+      const saved = localStorage.getItem('autocompleteConfig');
+      if (saved) {
+          config = JSON.parse(saved);
+      }
+      // Update UI to match config
+      toggleSuggestions.checked = config.enabled;
+      limitRange.value = config.limit;
+      rangeValue.textContent = config.limit;
+  }
+
+  // Save to LocalStorage
+  function saveSettings() {
+      config.enabled = toggleSuggestions.checked;
+      config.limit = parseInt(limitRange.value);
+      localStorage.setItem('autocompleteConfig', JSON.stringify(config));
+      
+      // If disabled, immediately hide box
+      if (!config.enabled) {
+          suggestionBox.style.display = 'none';
+      } else if (inputEl.value.trim() !== '') {
+          // If enabled and typing, refresh results immediately
+          triggerSearch(inputEl.value);
+      }
+  }
+
+  // --- 3. Event Listeners for Settings ---
+
+  loadSettings(); // Run immediately
+
+  // Open/Close Panel
+  settingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent closing immediately
+      settingsPanel.classList.toggle('hidden');
+  });
+
+
+  // Close panel if clicking outside
+  document.addEventListener('click', (e) => {
+      if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
+          settingsPanel.classList.add('hidden');
+      }
+  });
+
+  // Update Settings
+  toggleSuggestions.addEventListener('change', saveSettings);
+  
+  limitRange.addEventListener('input', (e) => {
+      rangeValue.textContent = e.target.value;
+      saveSettings();
+  });
+
+  // --- 4. Search Logic (Updated) ---
+
+  function getFuzzyResults(query) {
+      if (!query) return [];
+      const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const terms = safeQuery.split(/\s+/).filter(t => t.length > 0);
+      if (terms.length === 0) return [];
+      const highlightRegex = new RegExp(`(${terms.join('|')})`, 'gi');
+      
+      return questions
+          .map(item => {
+              const itemLower = item.toLowerCase();
+              const isMatch = terms.every(term => itemLower.includes(term.toLowerCase()));
+              if (!isMatch) return { original: item, isMatch: false };
+              const html = item.replace(highlightRegex, match => `<span class="highlight">${match}</span>`);
+              return { original: item, html: html, isMatch: true };
+          })
+          .filter(res => res.isMatch)
+          .sort((a, b) => { // Simple sort: startsWith > contains
+              const qLower = query.toLowerCase();
+              const aStart = a.original.toLowerCase().startsWith(qLower);
+              const bStart = b.original.toLowerCase().startsWith(qLower);
+              return (aStart === bStart) ? 0 : aStart ? -1 : 1;
+          });
+  }
+
+  function triggerSearch(val) {
+      // CHECK SETTING: If disabled, stop here
+      if (!config.enabled) {
+          suggestionBox.style.display = 'none';
+          return;
+      }
+
+      suggestionBox.innerHTML = '';
+      suggestionBox.style.display = 'none';
+      
+      if (!val) return;
+      
+      const results = getFuzzyResults(val);
+      
+      if (results.length > 0) {
+          suggestionBox.style.display = 'block';
+          
+          // CHECK SETTING: Slice based on limit
+          results.slice(0, config.limit).forEach(res => {
+              const div = document.createElement('div');
+              div.className = 'suggestion-item';
+              div.innerHTML = res.html;
+              div.onclick = () => selectSuggestion(res.original);
+              suggestionBox.appendChild(div);
+          });
+      }
+  }
+
+  inputEl.addEventListener('input', function(e) {
+      triggerSearch(this.value);
+  });
+
+  function selectSuggestion(text) {
+      inputEl.value = text;
+      suggestionBox.innerHTML = '';
+      suggestionBox.style.display = 'none';
+      inputEl.focus();
+  }
+
+  function toggleChat(open) {
+    if (open) {
+      chatDiv.classList.add('open');
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden'; 
+    } else {
+      chatDiv.classList.remove('open');
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  }
+  chatToggle.addEventListener('click', () => toggleChat(true));
+  closeBtn.addEventListener('click', () => toggleChat(false));
+  overlay.addEventListener('click', () => toggleChat(false));
+
+  function appendHTML(html) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'fade-up';
+    wrapper.innerHTML = html;
+    messagesEl.appendChild(wrapper);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return wrapper;
+  }
+
+  function formatTime(ts = new Date().toISOString()) {
+    const d = new Date(ts);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function addMessage(role, content, timestamp = new Date().toISOString(), options = null) {
+    const safe = String(content).replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\n','<br>');
+    let html = '';
+    if (role === 'user') {
+      html = `
+      <div class="msg-animate in flex flex justify-end">
+      <div class="max-w-[80%]">
+          <div class="px-4 py-[0.6rem] min-w-20 flex justify-end bg-gray-900 text-white rounded-2xl shadow-sm text-sm max-w-md">
+          ${safe}
+          </div>
+      </div>
+      </div>
+        
+        `;
+    } else if (role === 'bot') {
+      // Keep your exact original button style
+      const optionsHtml = (options && options.length > 0) ? `
+        <div class="mt-2 flex flex-wrap gap-2">
+          ${options.map(o => `
+            <button class="option-btn px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs border border-slate-200 transition-colors" 
+                    data-value="${o.replace(/"/g, '&quot;')}" 
+                    data-text="${o.replace(/"/g, '&quot;')}">
+              ${o}
+            </button>
+          `).join('')}
+        </div>
+      ` : '';
+    
+      html = `
+        <div class="flex items-start gap-3">
+          <div class="max-w-[85%] p-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm">
+            <div class="text-[13px]">${safe}</div>
+            ${optionsHtml}
+            <div class="text-[10px] text-slate-400 mt-1">${formatTime(timestamp)}</div>
+          </div>
+        </div>`;
+    } else if (role === 'admin') {
+      html = `
+        <div class="flex justify-start gap-3">
+          <div class="w-7 h-7 flex items-center justify-center rounded-md bg-slate-100 flex-shrink-0">
+            <svg width="14" height="14" class="text-slate-600" viewBox="0 -0.5 17 17" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+              <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                <g transform="translate(1.000000, 0.000000)" fill="currentColor">
+                  <g transform="translate(0.000000, 2.000000)">
+                    <path d="M8.005,10.094 C6.563,10.094 5.098,9.238 4.243,8.105 C0.141,8.105 0.017,13.965 0.017,13.965 L15.992,13.965 C15.992,13.965 16.314,8.079 11.701,8.079 C10.847,9.226 9.447,10.094 8.005,10.094 Z"></path>
+                    <path d="M11.441,3.069 C11.441,4.755 9.902,7.979 8.002,7.979 C6.105,7.979 4.565,4.754 4.565,3.069 C4.565,1.384 6.104,0.016 8.002,0.016 C9.902,0.017 11.441,1.385 11.441,3.069 L11.441,3.069 Z"></path>
+                  </g>
+                  <path d="M12.975,3.614 C12.975,3.298 12.535,3.043 11.989,3.041 L11.989,2.39 C11.989,2.293 12.026,0.022 8.014,0.022 C4.004,0.022 4.041,2.293 4.041,2.39 L4.041,3.064 C4.031,3.064 4.023,3.061 4.014,3.061 C3.471,3.061 3.034,3.312 3.034,3.623 L3.034,6.377 C3.034,6.686 3.472,6.938 4.014,6.938 C4.556,6.938 4.996,6.686 4.996,6.377 L4.996,3.623 C4.996,3.58 4.969,3.541 4.953,3.501 L4.953,2.75 C4.953,2.681 4.665,0.967 8.014,0.967 C11.364,0.967 11.016,2.681 11.016,2.75 L11.016,3.541 C11.01,3.566 10.991,3.588 10.991,3.614 L10.991,6.431 C10.991,6.748 11.434,7.005 11.983,7.005 C11.995,7.005 12.004,7.001 12.016,7.001 L12.016,8.03 L11.032,8.03 L11.032,9 L12.985,9 L12.975,3.614 L12.975,3.614 Z"></path>
+                </g>
+              </g>
+            </svg>
+          </div>
+          <div class="max-w-[85%] bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl rounded-bl-none px-3 py-2 leading-tight shadow-sm">
+            <div class="text-[13px]">${safe}</div>
+            <div class="text-[11px] text-slate-400 mt-1">${formatTime(timestamp)}</div>
+          </div>
+        </div>`;
+    } else { 
+      html = `<div class="msg-animate in flex justify-center"><div class="text-xs px-4 py-2 bg-gray-100 rounded-full border border-gray-200 text-gray-500">${safe}</div></div>`;
+    }
+    const wrapper = appendHTML(html);
+    if (options && options.length > 0 && role === 'bot') {
+      const buttons = wrapper.querySelectorAll('.option-btn');
+
+      buttons.forEach(btn => {
+        btn.addEventListener('click', function () {
+          const value = this.dataset.value;
+          const text  = this.dataset.text;
+
+          // Instantly remove ALL option rows across the entire chat (bulletproof)
+          document.querySelectorAll('.mt-2.flex.flex-wrap.gap-2').forEach(container => {
+            container.style.transition = 'opacity 0.2s';
+            container.style.opacity = '0';
+            setTimeout(() => container.remove(), 160);
+          });
+
+          // Prevent any further clicks
+          buttons.forEach(b => b.disabled = true);
+
+          // Send the user's choice
+          sendOption(value, text);
+        });
+      });
+    }
+  }
+
+  function showGenerating() {
+    hideGenerating(); // prevent duplicates
+  
+    const el = document.createElement('div');
+    el.id = 'generating-row';
+    el.className = 'max-w-[85%] p-3 bg-gray-50 border border-gray-200 rounded-2xl';
+    el.innerHTML = `
+      <div class="flex items-start gap-3 max-w-[85%]">
+      <div class="flex-1 space-y-2 py-1">
+        <div class="h-4 w-full bg-gray-200 rounded-lg overflow-hidden relative">
+          <div class="absolute inset-0 bg-gray-300"></div>
+          <div class="absolute inset-0 animate-shimmer"
+               style="background-image: linear-gradient(to right, #e2e8f0 0%, #cbd5e1 20%, #e2e8f0 40%, #e2e8f0 100%);
+                      background-size: 1000px 100%;">
+          </div>
+        </div>
+
+        <div class="h-4 w-11/12 bg-gray-200 rounded-lg overflow-hidden relative">
+          <div class="absolute inset-0 bg-gray-300"></div>
+          <div class="absolute inset-0 animate-shimmer"
+               style="background-image: linear-gradient(to right, #e2e8f0 0%, #cbd5e1 20%, #e2e8f0 40%, #e2e8f0 100%);
+                      background-size: 1000px 100%;">
+          </div>
+        </div>
+
+        <div class="h-4 w-9/12 bg-gray-200 rounded-lg overflow-hidden relative">
+          <div class="absolute inset-0 bg-gray-300"></div>
+          <div class="absolute inset-0 animate-shimmer"
+               style="background-image: linear-gradient(to right, #e2e8f0 0%, #cbd5e1 20%, #e2e8f0 40%, #e2e8f0 100%);
+                      background-size: 1000px 100%;">
+          </div>
+        </div>
+
+        <div class="h-4 w-7/12 bg-gray-200 rounded-lg"></div>
+      </div>
+    </div>`;
+  
+    messagesEl.appendChild(el);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  
+    // Disable input during generation
+    document.getElementById('composer').classList.add('disabled');
+  }
+  
+  function hideGenerating() {
+    const el = document.getElementById('generating-row');
+    if (el) el.remove();
+    document.getElementById('composer').classList.remove('disabled');
+  }
+
+  async function createSessionIfNeeded() {
+    if (sessionId) return;
+    try {
+      const response = await fetch('/api/sessions/', { method: 'POST' });
+      if (!response.ok) throw new Error('Failed to create session');
+      const data = await response.json();
+      sessionId = data.session_id;
+      localStorage.setItem('chatSessionId', sessionId);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  function createWebSocket() {
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${window.location.host}/ws/eco/chat/${sessionId}`);
+    ws.addEventListener('message', (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'history') {
+        msg.messages.forEach(m => addMessage(m.role, m.content, m.timestamp));
+        
+      } else if (msg.type === 'message') {
+        if (msg.role !== 'user') {
+          hideGenerating();
+          addMessage(msg.role, msg.content, msg.timestamp, msg.options);
+        }
+      } else if (msg.type === 'status' || msg.type === 'error' || msg.type === 'handover') {
+        hideGenerating();
+        if (msg.type === 'handover') {
+          addMessage('system', 'Chat now controlled by AI');
+        } else if (msg.type === 'status') {
+          addMessage('system', 'Chat handed over to customer care');
+        }
+      } else if (msg.type === 'typing') {
+        if (msg.on) showGenerating(); else hideGenerating();
+      }
+    });
+  }
+
+  async function connectWS() {
+    return new Promise((resolve, reject) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        resolve();
+        return;
+      }
+      createWebSocket();
+      const timeout = setTimeout(() => reject(new Error('Connection timeout')), 5000);
+      const tempOnOpen = ws.onopen;
+      ws.onopen = () => {
+        clearTimeout(timeout);
+        if (tempOnOpen) tempOnOpen();
+        resolve();
+      };
+      const tempOnClose = ws.onclose;
+      ws.onclose = (event) => {
+        clearTimeout(timeout);
+        if (tempOnClose) tempOnClose(event);
+        if (event.code !== 1000) reject(new Error(`Connection closed with code ${event.code}`));
+      };
+      const tempOnError = ws.onerror;
+      ws.onerror = (error) => {
+        clearTimeout(timeout);
+        if (tempOnError) tempOnError(error);
+        reject(error);
+      };
+    });
+  }
+
+  async function ensureSessionAndConnect() {
+    await createSessionIfNeeded();
+    await connectWS();
+  }
+
+
+  async function initChat() {
+    try {
+        if (sessionId) {
+            await ensureSessionAndConnect();
+        } else {
+            welcomeMessageShown = false;
+            showWelcomeMessage();
+        }
+    } catch (err) {
+        addMessage('system', 'Unable to load chat history');
+    }
+}
+  
+
+  // Function to show email popup
+  function showEmailPopup() {
+    const popup = document.getElementById('emailPopup');
+    popup.classList.add('show');
+    const closePopupBtn = popup.querySelector('.close-popup');
+    // Remove existing listeners to prevent duplicates
+    closePopupBtn.removeEventListener('click', closePopupHandler);
+    closePopupBtn.addEventListener('click', closePopupHandler);
+    // Auto-close after 2 seconds, accounting for 0.2s animation
+    setTimeout(() => {
+      popup.classList.remove('show');
+    }, 4000);
+  }
+
+  function closePopupHandler() {
+    const popup = document.getElementById('emailPopup');
+    popup.classList.remove('show');
+  }
+
+  const EMAIL_URL = "/verify/email"; 
+  const personalProviderRegex = /@[a-zA-Z0-9.-]*(?:gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|icloud\.com|proton\.me|zoho\.com|aol\.com|gmx\.com|tutanota\.com|mail\.com|yandex\.com)\b/i;
+  const emailExtractRegex = /([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  const ROLE_WORDS = ['admin','support','sales','info','contact','help','no-reply','noreply','postmaster','founder'];
+
+
+  function showEmailVerifyAnimation() {
+    document.getElementById("email-verify-anim").style.display = "flex";
+  }
+  
+  function closeEmailVerifyAnimation() {
+    document.getElementById("email-verify-anim").style.display = "none";
+  }
+  
+  function extractEmails(text) {
+    const matches = [];
+    let m;
+    while ((m = emailExtractRegex.exec(text)) !== null) {
+      const email = `${m[1]}@${m[2]}`;
+      if (!matches.includes(email)) matches.push(email);
+    }
+    return matches;
+  }
+
+  async function verifyEmailWithApi(email, timeoutMs = 8000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+  
+    try {
+      const url = `${EMAIL_URL}?email=${encodeURIComponent(email)}`;
+  
+      const res = await fetch(url, {
+        method: 'GET',
+        signal: controller.signal
+      });
+  
+      clearTimeout(id);
+  
+      if (!res.ok) {
+        throw new Error(`verify API returned ${res.status}`);
+      }
+  
+      return await res.json();
+  
+    } catch (err) {
+      clearTimeout(id);
+      throw err;
+    }
+  }
+  
+
+  function isRoleLocalPart(localPart) {
+    if (!localPart) return false;
+    const lp = localPart.toLowerCase();
+    return ROLE_WORDS.some(role => lp === role || lp.startsWith(`${role}`) || lp.includes(role + '.'));
+  }
+
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    suggestionBox.innerHTML = '';
+    suggestionBox.style.display = 'none';
+    if (!text) return;
+
+    const originalText = text;
+    inputEl.value = '';
+
+    const emails = extractEmails(originalText);
+
+    if (personalProviderRegex.test(originalText)) {
+      try { showEmailPopup(); } catch (e) { }
+    }
+
+    if (emails.length > 0) {
+      showEmailVerifyAnimation();
+
+      try {
+        for (const em of emails) {
+          let apiResp;
+          try {
+            apiResp = await verifyEmailWithApi(em);
+          } catch (err) {
+            closeEmailVerifyAnimation();
+            addMessage('system', 'Could not verify the email address right now. Please try again in a moment.');
+            inputEl.value = originalText;
+            return;
+          }
+          const vals = apiResp.validations || {};
+
+          const formatOk = !!vals.syntax;
+          const domainOk = !!vals.domain_exists;
+          const mxOk = !!vals.mx_records;
+          const isDisposable = !!vals.is_disposable;
+          const isRoleBased = !!vals.is_role_based;
+
+          const localPart = em.split('@')[0] || '';
+          const localPartIsRole = isRoleLocalPart(localPart);
+
+          if (!formatOk || !domainOk || !mxOk || isDisposable) {
+            closeEmailVerifyAnimation();
+            addMessage('system', `We detected that the email "${em}" appears invalid or disposable. Please provide a valid business email.`);
+            inputEl.value = originalText;
+            return; 
+          }
+
+          if (isRoleBased || localPartIsRole) {
+            closeEmailVerifyAnimation();
+            addMessage('system', `The email "${em}" looks like a role/organization address (${localPart}). Please provide a personal or corporate contact email if you want a response.`);
+            inputEl.value = originalText;
+            return; 
+          }
+
+        } 
+
+        closeEmailVerifyAnimation();
+      } catch (err) {
+
+        closeEmailVerifyAnimation();
+        console.error('Email verification error', err);
+        addMessage('system', 'Unexpected error verifying email. Please try again.');
+        inputEl.value = originalText;
+        return;
+      }
+    }
+
+    try {
+      await ensureSessionAndConnect();
+      if (ws.readyState !== WebSocket.OPEN) throw new Error('WebSocket not open');
+      addMessage('user', originalText);
+      showGenerating();
+      ws.send(JSON.stringify({ type: 'message', content: originalText }));
+    } catch (err) {
+      inputEl.value = originalText;
+      addMessage('system', 'Unable to send message. Please try again.');
+    }
+  }
+
+
+  async function sendOption(value, text) {
+    try {
+      await ensureSessionAndConnect();
+      if (ws.readyState !== WebSocket.OPEN) throw new Error('WebSocket not open');
+      addMessage('user', text);
+      showGenerating();
+      ws.send(JSON.stringify({ type: 'message', content: value }));
+    } catch (err) {
+      hideGenerating();
+      addMessage('system', 'Unable to send option. Please try again.');
+    }
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  inputEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+  newBtn.addEventListener('click', () => {
+    localStorage.removeItem('chatSessionId');
+    sessionId = null;
+    if (ws) ws.close();
+    messagesEl.innerHTML = '';
+    welcomeMessageShown = false;  
+    addMessage('system', 'Started a new conversation.');
+    showWelcomeMessage();
+  });
+
+  chatDiv.addEventListener('transitionend', () => {
+    if (chatDiv.classList.contains('open')) inputEl.focus();
+  });
+  initChat();
+
+</script>
+
+</body></html>

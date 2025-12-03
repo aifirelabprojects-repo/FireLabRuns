@@ -334,10 +334,12 @@ input[type=range]::-webkit-slider-runnable-track {
                   <span class="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]"></span>
                   <span>Construction</span>
               </button>
-              <button onclick="setTheme('ecommerce')" class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
+              <a href="/eco">
+                <button class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
                   <span class="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]"></span>
-                  <span>E-Commerce</span>
+                  <span>E-Commerce </span>
               </button>
+              </a>
               <button onclick="setTheme('business')" class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
                   <span class="w-3 h-3 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]"></span>
                   <span>Corporate/SaaS</span>
@@ -352,11 +354,11 @@ input[type=range]::-webkit-slider-runnable-track {
               </button>
               <button onclick="setTheme('secureSign')" class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
                 <span class="w-3 h-3 rounded-full bg-green-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]"></span>
-                <span>secureSign</span>
+                <span>Secure Sign</span>
               </button>
               <button onclick="setTheme('digitalServices')" class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
                 <span class="w-3 h-3 rounded-full bg-teal-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]"></span>
-                <span>digitalServices</span>
+                <span>Digital Services</span>
               </button>
 
           </div>
@@ -716,16 +718,19 @@ input[type=range]::-webkit-slider-runnable-track {
         limit: 4
     };
 
+    let welcomeOptionsUsed = false;  // This tracks if user already picked an option
+
     function showWelcomeMessage() {
-      if (welcomeMessageShown) return;  // Prevent showing twice
-      welcomeMessageShown = true;
-  
-      const welcomeText = `Hi, I'm Sofia from Analytix – your official partner for fast-track business setup in Saudi Arabia.🚀 New business setup or existing client? 😊✨`;
-  
-      const options = ["I'm setting up a new business", "I'm an existing client"];
-  
-      addMessage('bot', welcomeText, new Date().toISOString(), options);
-  }
+        // 1. Never show welcome twice
+        if (welcomeMessageShown) return;
+        welcomeMessageShown = true;
+
+        const welcomeText = `Hi, I'm Sofia from Analytix - your official partner for fast-track business setup in Saudi Arabia.🚀 New business setup or existing client? 😊✨`;
+
+        const options = ["I'm setting up a new business", "I'm an existing client"];
+
+        addMessage('bot', welcomeText, new Date().toISOString(), options);
+    }
 
     function loadSettings() {
         const saved = localStorage.getItem('autocompleteConfig');
@@ -889,10 +894,11 @@ input[type=range]::-webkit-slider-runnable-track {
           
           `;
       } else if (role === 'bot') {
+        // Keep your exact original button style
         const optionsHtml = (options && options.length > 0) ? `
           <div class="mt-2 flex flex-wrap gap-2">
             ${options.map(o => `
-              <button class="option-btn px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs border border-slate-200 transition-colors" 
+              <button class="option-btn px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs border border-slate-200 transition-colors" 
                       data-value="${o.replace(/"/g, '&quot;')}" 
                       data-text="${o.replace(/"/g, '&quot;')}">
                 ${o}
@@ -900,6 +906,7 @@ input[type=range]::-webkit-slider-runnable-track {
             `).join('')}
           </div>
         ` : '';
+      
         html = `
           <div class="flex items-start gap-3">
             <div class="max-w-[85%] p-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm">
@@ -934,11 +941,24 @@ input[type=range]::-webkit-slider-runnable-track {
       }
       const wrapper = appendHTML(html);
       if (options && options.length > 0 && role === 'bot') {
-        const btns = wrapper.querySelectorAll('.option-btn');
-        btns.forEach(btn => {
-          btn.addEventListener('click', () => {
-            const value = btn.dataset.value;
-            const text = btn.dataset.text;
+        const buttons = wrapper.querySelectorAll('.option-btn');
+
+        buttons.forEach(btn => {
+          btn.addEventListener('click', function () {
+            const value = this.dataset.value;
+            const text  = this.dataset.text;
+
+            // Instantly remove ALL option rows across the entire chat (bulletproof)
+            document.querySelectorAll('.mt-2.flex.flex-wrap.gap-2').forEach(container => {
+              container.style.transition = 'opacity 0.2s';
+              container.style.opacity = '0';
+              setTimeout(() => container.remove(), 160);
+            });
+
+            // Prevent any further clicks
+            buttons.forEach(b => b.disabled = true);
+
+            // Send the user's choice
             sendOption(value, text);
           });
         });

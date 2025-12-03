@@ -2,7 +2,7 @@ import json
 import asyncio
 import re
 from datetime import datetime, timezone
-from typing import Any, Dict,Tuple
+from typing import Any, Dict, List,Tuple
 from fastapi import WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import selectinload
 from BotGraph import invoke_chat_async
@@ -12,7 +12,7 @@ from SessionUtils import get_field, set_field
 from database import AsyncSessionLocal, CompanyDetails, Session as SessionModel, Message as MessageModel, SessionPhase, VerificationDetails
 from CompanyFinder import FindTheComp
 from FindUser import find_existing_customer
-
+from ClientModel import client
 
 
 
@@ -482,3 +482,81 @@ def init(app):
             await set_active_status(session_id)
             await manager.broadcast(json.dumps({"type": "status", "status": "active"}), session_id)
             manager.disconnect(websocket, session_id)
+            
+    active_sessions: Dict[str, List[dict]] = {}       
+    @app.websocket("/ws/eco/chat/{session_id}")
+    async def eco_chat_websocket(websocket: WebSocket, session_id: str):
+        await websocket.accept()
+        if session_id not in active_sessions:
+            active_sessions[session_id] = [
+                {
+                "role": "system",
+                "content": "You are a friendly, professional, and super-helpful live chat assistant for an online store. Your name is Sofia.\n\nYour goals:\n- Always be warm, patient, and polite 😊\n- Help customers quickly with sizing, shipping, tracking, discounts, product questions, or checkout issues\n- Reply fast and keep answers short and clear\n- If they have items in cart, gently help them complete the purchase\n- Never sound robotic or pushy\n- Use emojis sparingly to stay friendly (👋 😊 🚚)\n- If you don't know something, say 'Let me check that for you real quick!'"
+                }
+            ]
+
+        try:
+            while True:
+                data = await websocket.receive_text()
+
+                try:
+                    payload = json.loads(data)
+                    user_text = payload["content"]
+
+                    print(user_text)
+                except json.JSONDecodeError:
+                    await websocket.send_text(json.dumps({"error": "Invalid JSON"}))
+                    continue
+
+                if not user_text:
+                    continue
+
+                # Append user message to history
+                active_sessions[session_id].append({"role": "user", "content": user_text})
+
+                # Echo user message back (optional, but nice for UI)
+                await websocket.send_text(json.dumps({
+                    "role": "user",
+                    "content": user_text
+                }))
+
+
+                try:
+                    # Call OpenAI — non-streaming
+                    response = await client.chat.completions.create(
+                        model="gpt-4o-mini",          
+                        messages=active_sessions[session_id],
+                        temperature=0.7,
+                        max_tokens=800
+                    )
+
+                    bot_reply = response.choices[0].message.content.strip()
+
+                    # Save bot reply to session history
+                    active_sessions[session_id].append({
+                        "role": "assistant",
+                        "content": bot_reply
+                    })
+
+                    # Send bot response
+                    await websocket.send_text(json.dumps({
+                        "type": "message",
+                        "role": "bot",
+                        "content": bot_reply
+                    }))
+
+                except Exception as e:
+                    error_msg = "Sorry, the AI is temporarily unavailable. Please try again."
+                    print(f"OpenAI Error: {e}")
+                    await websocket.send_text(json.dumps({
+                        "role": "error",
+                        "content": error_msg
+                    }))
+
+        except WebSocketDisconnect:
+            print(f"Session {session_id} disconnected")
+        except Exception as e:
+            print(f"WebSocket error: {e}")
+        finally:
+            del active_sessions[session_id]
+            pass

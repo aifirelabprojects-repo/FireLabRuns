@@ -51,6 +51,9 @@ async def shutdown():
 @app.get("/")
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+@app.get("/eco")
+async def home(request: Request):
+    return templates.TemplateResponse("ecommerce.html", {"request": request})
 
 @app.get("/admin/")
 async def admin_home(request: Request, db = Depends(get_db)):
