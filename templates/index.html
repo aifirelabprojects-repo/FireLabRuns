@@ -41,6 +41,42 @@
         },
     };
 </script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    /* Smooth transitions */
+    .fade-enter {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    .fade-enter-active {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    
+    /* Glassmorphism */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.5);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    }
+
+    /* Hide scrollbar for clean UI but allow scroll */
+    body::-webkit-scrollbar {
+        width: 8px;
+    }
+    body::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+    body::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    body::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
   <style>
     body, html {
       font-family: "Plus Jakarta Sans", "system-ui", "sans-serif";
@@ -282,16 +318,277 @@ input[type=range]::-webkit-slider-runnable-track {
 
   </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans text-sm text-slate-700 relative">
-  <button id="chatToggle" class="chat-widget p-3 bg-white hover:bg-gray-100 text-gray-700 rounded-full  transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-slate-200 z-10">
-    <svg class="w-6 h-6" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-      <g id="Product-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="ic_fluent_bot_24_regular" fill="#000" fill-rule="nonzero">
-          <path d="M17.7530511,13.999921 C18.9956918,13.999921 20.0030511,15.0072804 20.0030511,16.249921 L20.0030511,17.1550008 C20.0030511,18.2486786 19.5255957,19.2878579 18.6957793,20.0002733 C17.1303315,21.344244 14.8899962,22.0010712 12,22.0010712 C9.11050247,22.0010712 6.87168436,21.3444691 5.30881727,20.0007885 C4.48019625,19.2883988 4.00354153,18.2500002 4.00354153,17.1572408 L4.00354153,16.249921 C4.00354153,15.0072804 5.01090084,13.999921 6.25354153,13.999921 L17.7530511,13.999921 Z M17.7530511,15.499921 L6.25354153,15.499921 C5.83932796,15.499921 5.50354153,15.8357075 5.50354153,16.249921 L5.50354153,17.1572408 C5.50354153,17.8128951 5.78953221,18.4359296 6.28670709,18.8633654 C7.5447918,19.9450082 9.44080155,20.5010712 12,20.5010712 C14.5599799,20.5010712 16.4578003,19.9446634 17.7186879,18.8621641 C18.2165778,18.4347149 18.5030511,17.8112072 18.5030511,17.1550005 L18.5030511,16.249921 C18.5030511,15.8357075 18.1672647,15.499921 17.7530511,15.499921 Z M11.8985607,2.00734093 L12.0003312,2.00049432 C12.380027,2.00049432 12.6938222,2.2826482 12.7434846,2.64872376 L12.7503312,2.75049432 L12.7495415,3.49949432 L16.25,3.5 C17.4926407,3.5 18.5,4.50735931 18.5,5.75 L18.5,10.254591 C18.5,11.4972317 17.4926407,12.504591 16.25,12.504591 L7.75,12.504591 C6.50735931,12.504591 5.5,11.4972317 5.5,10.254591 L5.5,5.75 C5.5,4.50735931 6.50735931,3.5 7.75,3.5 L11.2495415,3.49949432 L11.2503312,2.75049432 C11.2503312,2.37079855 11.5324851,2.05700336 11.8985607,2.00734093 L12.0003312,2.00049432 L11.8985607,2.00734093 Z M16.25,5 L7.75,5 C7.33578644,5 7,5.33578644 7,5.75 L7,10.254591 C7,10.6688046 7.33578644,11.004591 7.75,11.004591 L16.25,11.004591 C16.6642136,11.004591 17,10.6688046 17,10.254591 L17,5.75 C17,5.33578644 16.6642136,5 16.25,5 Z M9.74928905,6.5 C10.4392523,6.5 10.9985781,7.05932576 10.9985781,7.74928905 C10.9985781,8.43925235 10.4392523,8.99857811 9.74928905,8.99857811 C9.05932576,8.99857811 8.5,8.43925235 8.5,7.74928905 C8.5,7.05932576 9.05932576,6.5 9.74928905,6.5 Z M14.2420255,6.5 C14.9319888,6.5 15.4913145,7.05932576 15.4913145,7.74928905 C15.4913145,8.43925235 14.9319888,8.99857811 14.2420255,8.99857811 C13.5520622,8.99857811 12.9927364,8.43925235 12.9927364,7.74928905 C12.9927364,7.05932576 13.5520622,6.5 14.2420255,6.5 Z" id="🎨-Color"></path>
-        </g>
-      </g>
-    </svg>
-  </button>
+
+
+<body class="font-sans antialiased text-slate-700 bg-slate-50 selection:bg-indigo-500 selection:text-white">
+
+  <div id="industry-panel" class="fixed top-24 left-0 z-50 transition-transform duration-300 transform -translate-x-[calc(100%-2rem)] hover:translate-x-0 group">
+      <div class="flex items-start">
+          <div class="bg-slate-900/95 text-white p-5 rounded-r-xl shadow-2xl backdrop-blur-md border-y border-r border-slate-700 w-64 flex flex-col gap-3 min-h-[300px]">
+              <div class="flex justify-between items-center mb-2">
+                  <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Select Industry</p>
+                  <button onclick="toggleIndustryPanel()" class="md:hidden text-slate-400"><i class="fas fa-times"></i></button>
+              </div>
+              
+              <button onclick="setTheme('construction')" class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
+                  <span class="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]"></span>
+                  <span>Construction</span>
+              </button>
+              <button onclick="setTheme('ecommerce')" class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
+                  <span class="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]"></span>
+                  <span>E-Commerce</span>
+              </button>
+              <button onclick="setTheme('business')" class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
+                  <span class="w-3 h-3 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]"></span>
+                  <span>Corporate/SaaS</span>
+              </button>
+              <button onclick="setTheme('corporate')" class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
+                <span class="w-3 h-3 rounded-full bg-indigo-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]"></span>
+                <span>Corporate</span>
+              </button>
+              <button onclick="setTheme('finance')" class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
+                <span class="w-3 h-3 rounded-full bg-emerald-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]"></span>
+                <span>Finance</span>
+              </button>
+              <button onclick="setTheme('secureSign')" class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
+                <span class="w-3 h-3 rounded-full bg-green-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]"></span>
+                <span>secureSign</span>
+              </button>
+              <button onclick="setTheme('digitalServices')" class="industry-btn flex items-center space-x-3 px-3 py-3 hover:bg-slate-800 rounded-lg transition text-sm border border-transparent hover:border-slate-600">
+                <span class="w-3 h-3 rounded-full bg-teal-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]"></span>
+                <span>digitalServices</span>
+              </button>
+
+          </div>
+
+          <button  class="bg-slate-900 text-white p-3 rounded-r-lg mt-4 shadow-lg border-y border-r border-slate-700 hover:bg-slate-800 transition-colors">
+              <i id="panel-icon" class="fas fa-chevron-right text-sm"></i>
+          </button>
+      </div>
+  </div>
+
+  <main id="mock-website" class="relative w-full min-h-screen flex flex-col transition-colors duration-700">
+      
+      <header class="fixed w-full px-6 md:px-12 py-4 flex justify-between items-center z-40 transition-all duration-300" id="main-header">
+          <div id="site-logo" class="text-xl md:text-2xl font-bold tracking-tighter flex items-center gap-2 text-slate-800"></div>
+          <nav class="hidden md:flex space-x-8 text-sm font-medium text-slate-600">
+              <a href="#" class="hover:text-slate-900 transition">Services</a>
+              <a href="#" class="hover:text-slate-900 transition">About</a>
+              <a href="#Contact" class="hover:text-slate-900 transition">Support</a>
+              <a href="#" class="hover:text-slate-900 transition">Projects</a>
+              <button id="header-cta" class="px-5 py-2 rounded-full text-white text-xs font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
+                  GET QUOTE
+              </button>
+          </nav>
+      </header>
+
+      <section class="relative h-screen flex items-center px-6 md:px-12 pt-20 overflow-hidden">
+          <div id="bg-image" class="absolute inset-0 z-0 bg-cover bg-center transition-all duration-1000 opacity-70 scale-105"></div>
+          <div class="absolute inset-0 z-0 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
+          
+          <div class="max-w-3xl z-10 relative mt-10">
+              <span id="site-tagline" class="inline-block py-1 px-4 rounded-full text-xs font-bold mb-6 uppercase tracking-widest bg-white shadow-sm border border-slate-100"></span>
+              <h1 id="site-headline" class="text-5xl md:text-7xl font-extrabold leading-tight mb-6 text-slate-900 tracking-tight"></h1>
+              <p id="site-subhead" class="text-lg md:text-xl text-slate-600 mb-10 max-w-xl leading-relaxed"></p>
+              <div class="flex flex-col sm:flex-row gap-4">
+                  <button id="main-cta" class="px-8 py-4 text-white rounded-lg font-bold shadow-xl shadow-slate-200/50 transition-all hover:scale-105 hover:shadow-2xl">
+                      Get Started
+                  </button>
+                  <button class="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-lg font-bold shadow-sm hover:bg-slate-50 transition-colors">
+                      View Portfolio
+                  </button>
+              </div>
+          </div>
+      </section>
+
+      <section class="bg-white py-16 px-6 md:px-12 border-y border-slate-100">
+          <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+              <div>
+                  <h3 class="text-3xl font-bold text-slate-900 mb-1">500+</h3>
+                  <p class="text-sm text-slate-500 uppercase tracking-wide">Projects Completed</p>
+              </div>
+              <div>
+                  <h3 class="text-3xl font-bold text-slate-900 mb-1">98%</h3>
+                  <p class="text-sm text-slate-500 uppercase tracking-wide">Client Satisfaction</p>
+              </div>
+              <div>
+                  <h3 class="text-3xl font-bold text-slate-900 mb-1">24/7</h3>
+                  <p class="text-sm text-slate-500 uppercase tracking-wide">Support Available</p>
+              </div>
+              <div>
+                  <h3 class="text-3xl font-bold text-slate-900 mb-1">15+</h3>
+                  <p class="text-sm text-slate-500 uppercase tracking-wide">Years Experience</p>
+              </div>
+          </div>
+      </section>
+
+      <section class="py-24 px-6 md:px-12 bg-slate-50">
+          <div class="max-w-7xl mx-auto">
+              <div class="text-center mb-16">
+                  <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Why Choose Us?</h2>
+                  <p class="text-slate-600 max-w-2xl mx-auto">We combine industry expertise with cutting-edge technology to deliver results that exceed expectations.</p>
+              </div>
+
+              <div class="grid md:grid-cols-3 gap-8">
+                  <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl transition-shadow duration-300">
+                      <div class="w-12 h-12 rounded-lg flex items-center justify-center mb-6 text-white feature-icon-bg transition-colors duration-500">
+                          <i class="fas fa-rocket text-xl"></i>
+                      </div>
+                      <h3 class="text-xl font-bold mb-3 text-slate-800">Fast Execution</h3>
+                      <p class="text-slate-500 leading-relaxed">We understand the value of time in your industry. Our streamlined processes ensure rapid delivery without compromising quality.</p>
+                  </div>
+
+                  <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl transition-shadow duration-300">
+                      <div class="w-12 h-12 rounded-lg flex items-center justify-center mb-6 text-white feature-icon-bg transition-colors duration-500">
+                          <i class="fas fa-shield-alt text-xl"></i>
+                      </div>
+                      <h3 class="text-xl font-bold mb-3 text-slate-800">Reliable Security</h3>
+                      <p class="text-slate-500 leading-relaxed">Your data and assets are protected by enterprise-grade security protocols designed specifically for your sector.</p>
+                  </div>
+
+                  <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl transition-shadow duration-300">
+                      <div class="w-12 h-12 rounded-lg flex items-center justify-center mb-6 text-white feature-icon-bg transition-colors duration-500">
+                          <i class="fas fa-chart-line text-xl"></i>
+                      </div>
+                      <h3 class="text-xl font-bold mb-3 text-slate-800">Scalable Growth</h3>
+                      <p class="text-slate-500 leading-relaxed">Our solutions are built to grow with you. From startup to enterprise, we have the infrastructure to support you.</p>
+                  </div>
+              </div>
+          </div>
+      </section>
+
+      <section class="py-24 px-6 md:px-12 bg-white">
+          <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+              <div class="flex-1">
+                  <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop" alt="Team meeting" class="rounded-2xl shadow-2xl grayscale hover:grayscale-0 transition-all duration-700">
+              </div>
+              <div class="flex-1">
+                  <span class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-2 block">Our Philosophy</span>
+                  <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-6">Dedicated to your success since day one.</h2>
+                  <p class="text-slate-600 mb-6 leading-relaxed">
+                      We believe in building long-term partnerships. Whether you are constructing a skyline, selling products globally, or saving lives, our team seamlessly integrates into your workflow.
+                  </p>
+                  <ul class="space-y-4 mb-8">
+                      <li class="flex items-center gap-3 text-slate-700">
+                          <i class="fas fa-check-circle text-green-500"></i> Certified Experts
+                      </li>
+                      <li class="flex items-center gap-3 text-slate-700">
+                          <i class="fas fa-check-circle text-green-500"></i> Global Reach
+                      </li>
+                      <li class="flex items-center gap-3 text-slate-700">
+                          <i class="fas fa-check-circle text-green-500"></i> Innovative Solutions
+                      </li>
+                  </ul>
+                  <a href="#" class="text-indigo-600 font-bold hover:text-indigo-800 transition flex items-center gap-2 group">
+                      Learn more about us <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+                  </a>
+              </div>
+          </div>
+      </section>
+
+      <section id="Contact" class="py-24 px-6 md:px-12 bg-white">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+              <div class="text-center mb-12">
+                  <h2 class="text-3xl font-extrabold text-gray-900">Still need help?</h2>
+                  <p class="mt-4 text-lg text-gray-500">Our team is available to assist you.</p>
+              </div>
+      
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                  
+                  <!-- Option A: The AI Chatbot Card (Highlighted) -->
+                  <div class="relative bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center hover:shadow-md transition-shadow">
+                      <span class="absolute top-4 right-4 bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">Available 24/7</span>
+                      
+                      <button id="supportBtnIco" class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+                          <!-- Chat Icon -->
+                          <svg  class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 4v-4z" />
+                          </svg>
+                        </button>
+                      
+                      <h3 class="text-xl font-bold text-gray-900">Chat with Support</h3>
+                      <p class="mt-2 text-gray-500 mb-8">Get instant answers from our advanced AI assistant or connect with an agent.</p>
+                      
+                      <!-- The Button User Requested -->
+                      <button id="supportBtn" type="button" class="w-full  text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                          <span>Start Live Chat</span>
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                      </button>
+                  </div>
+      
+                  <!-- Option B: Email Support -->
+                  <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center hover:shadow-md transition-shadow">
+                      <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                          <!-- Email Icon -->
+                          <svg class="w-8 h-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                      </div>
+                      
+                      <h3 class="text-xl font-bold text-gray-900">Email Support</h3>
+                      <p class="mt-2 text-gray-500 mb-8">For complex inquiries, send us an email. We typically respond within 24 hours.</p>
+                      
+                      <button type="button" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+                          Submit a Ticket
+                      </button>
+                  </div>
+      
+              </div>
+          </div>
+      </section>
+
+      <footer class="bg-slate-900 text-white py-16 px-6 md:px-12">
+          <div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-12 mb-12">
+              <div class="col-span-1 md:col-span-2">
+                  <div id="footer-logo" class="text-2xl font-bold mb-6">LOGO</div>
+                  <p class="text-slate-400 max-w-sm mb-6">Empowering industries with next-generation solutions. Built for speed, reliability, and scale.</p>
+                  <div class="flex gap-4">
+                      <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-white hover:text-slate-900 transition"><i class="fab fa-twitter"></i></a>
+                      <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-white hover:text-slate-900 transition"><i class="fab fa-linkedin-in"></i></a>
+                      <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-white hover:text-slate-900 transition"><i class="fab fa-instagram"></i></a>
+                  </div>
+              </div>
+              <div>
+                  <h4 class="font-bold mb-6">Company</h4>
+                  <ul class="space-y-4 text-slate-400 text-sm">
+                      <li><a href="#" class="hover:text-white transition">About Us</a></li>
+                      <li><a href="#" class="hover:text-white transition">Careers</a></li>
+                      <li><a href="#" class="hover:text-white transition">Blog</a></li>
+                      <li><a href="#" class="hover:text-white transition">Contact</a></li>
+                  </ul>
+              </div>
+              <div>
+                  <h4 class="font-bold mb-6">Legal</h4>
+                  <ul class="space-y-4 text-slate-400 text-sm">
+                      <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+                      <li><a href="#" class="hover:text-white transition">Terms of Service</a></li>
+                      <li><a href="#" class="hover:text-white transition">Cookie Policy</a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="border-t border-slate-800 pt-8 text-center text-slate-500 text-sm">
+              &copy; 2025 Industry Solutions Demo. All rights reserved.
+          </div>
+      </footer>
+
+  </main>
+
+  <div class="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-4">
+      
+      <button id="chatToggle" class="chat-widget group relative p-3 bg-slate-800 text-white rounded-full shadow-2xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 focus:outline-none z-50">
+          <span class="absolute right-full mr-4 top-1/2 -translate-y-1/2 px-3 py-1 bg-slate-900 text-white text-xs font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg">
+              Chat with support
+          </span>
+          <svg class="w-7 h-7" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+              <g id="Product-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                <g id="ic_fluent_bot_24_regular" fill="#000" fill-rule="nonzero">
+                  <path d="M17.7530511,13.999921 C18.9956918,13.999921 20.0030511,15.0072804 20.0030511,16.249921 L20.0030511,17.1550008 C20.0030511,18.2486786 19.5255957,19.2878579 18.6957793,20.0002733 C17.1303315,21.344244 14.8899962,22.0010712 12,22.0010712 C9.11050247,22.0010712 6.87168436,21.3444691 5.30881727,20.0007885 C4.48019625,19.2883988 4.00354153,18.2500002 4.00354153,17.1572408 L4.00354153,16.249921 C4.00354153,15.0072804 5.01090084,13.999921 6.25354153,13.999921 L17.7530511,13.999921 Z M17.7530511,15.499921 L6.25354153,15.499921 C5.83932796,15.499921 5.50354153,15.8357075 5.50354153,16.249921 L5.50354153,17.1572408 C5.50354153,17.8128951 5.78953221,18.4359296 6.28670709,18.8633654 C7.5447918,19.9450082 9.44080155,20.5010712 12,20.5010712 C14.5599799,20.5010712 16.4578003,19.9446634 17.7186879,18.8621641 C18.2165778,18.4347149 18.5030511,17.8112072 18.5030511,17.1550005 L18.5030511,16.249921 C18.5030511,15.8357075 18.1672647,15.499921 17.7530511,15.499921 Z M11.8985607,2.00734093 L12.0003312,2.00049432 C12.380027,2.00049432 12.6938222,2.2826482 12.7434846,2.64872376 L12.7503312,2.75049432 L12.7495415,3.49949432 L16.25,3.5 C17.4926407,3.5 18.5,4.50735931 18.5,5.75 L18.5,10.254591 C18.5,11.4972317 17.4926407,12.504591 16.25,12.504591 L7.75,12.504591 C6.50735931,12.504591 5.5,11.4972317 5.5,10.254591 L5.5,5.75 C5.5,4.50735931 6.50735931,3.5 7.75,3.5 L11.2495415,3.49949432 L11.2503312,2.75049432 C11.2503312,2.37079855 11.5324851,2.05700336 11.8985607,2.00734093 L12.0003312,2.00049432 L11.8985607,2.00734093 Z M16.25,5 L7.75,5 C7.33578644,5 7,5.33578644 7,5.75 L7,10.254591 C7,10.6688046 7.33578644,11.004591 7.75,11.004591 L16.25,11.004591 C16.6642136,11.004591 17,10.6688046 17,10.254591 L17,5.75 C17,5.33578644 16.6642136,5 16.25,5 Z M9.74928905,6.5 C10.4392523,6.5 10.9985781,7.05932576 10.9985781,7.74928905 C10.9985781,8.43925235 10.4392523,8.99857811 9.74928905,8.99857811 C9.05932576,8.99857811 8.5,8.43925235 8.5,7.74928905 C8.5,7.05932576 9.05932576,6.5 9.74928905,6.5 Z M14.2420255,6.5 C14.9319888,6.5 15.4913145,7.05932576 15.4913145,7.74928905 C15.4913145,8.43925235 14.9319888,8.99857811 14.2420255,8.99857811 C13.5520622,8.99857811 12.9927364,8.43925235 12.9927364,7.74928905 C12.9927364,7.05932576 13.5520622,6.5 14.2420255,6.5 Z" id="🎨-Color"></path>
+                </g>
+              </g>
+            </svg>
+      </button>
+  </div>
+
   <div id="overlay" class="overlay"></div>
 
   <div id="chatDiv" class="chat-popup flex flex-col">
@@ -303,7 +600,7 @@ input[type=range]::-webkit-slider-runnable-track {
       </button>
       <p class="text-sm text-slate-700">Unlock 20% off our expert advisory services with your Business</p>
     </div>
-    <header class="flex flex-col border-b border-slate-100 bg-white z-20 relative transition-all duration-300">
+    <div class="flex flex-col border-b border-slate-100 bg-white z-20 relative transition-all duration-300">
       <div class="flex items-center justify-between gap-3 px-4 py-3">
           <div class="flex items-center gap-3">
               <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100">
@@ -366,7 +663,7 @@ input[type=range]::-webkit-slider-runnable-track {
               
           </div>
       </div>
-    </header>
+    </div>
 
     <main id="messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-white hover-in-right">
 
@@ -389,6 +686,7 @@ input[type=range]::-webkit-slider-runnable-track {
       </form>
     </div>
   </div>
+
 
   <script>
     let ws;
@@ -557,7 +855,7 @@ input[type=range]::-webkit-slider-runnable-track {
         document.body.style.overflow = '';
       }
     }
-
+    document.getElementById('supportBtn').addEventListener('click', () => toggleChat(true));
     chatToggle.addEventListener('click', () => toggleChat(true));
     closeBtn.addEventListener('click', () => toggleChat(false));
     overlay.addEventListener('click', () => toggleChat(false));
@@ -971,7 +1269,178 @@ input[type=range]::-webkit-slider-runnable-track {
       if (chatDiv.classList.contains('open')) inputEl.focus();
     });
 
-    initChat();
   </script>
+
+  <script>
+            // Data for the different themes
+            const themes = {
+              construction: {
+                  color: 'bg-yellow-500 hover:bg-yellow-400 text-slate-900', 
+                  textColor: 'text-yellow-600',
+                  logo: '<i class="fas fa-hard-hat text-yellow-500"></i> BUILD<span class="text-yellow-500">CORP</span>',
+                  tagline: 'Engineering Excellence',
+                  headline: 'Building Tomorrow\'s Skylines Today.',
+                  subhead: 'From residential complexes to industrial skyscrapers, we provide the foundation for your future.',
+                  bgImage: 'url("https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=2070&auto=format&fit=crop")',
+                  welcome: 'Hello! Looking for a quote on a new construction project?',
+                  accent: 'bg-yellow-500' // For features icons
+              },
+              ecommerce: {
+                  color: 'bg-rose-500 hover:bg-rose-400 text-white',
+                  textColor: 'text-rose-600',
+                  logo: '<i class="fas fa-shopping-bag text-rose-500"></i> STYLE<span class="text-rose-500">HUB</span>',
+                  tagline: 'Summer Collection 2025',
+                  headline: 'Discover Your Unique Style.',
+                  subhead: 'Shop the latest trends in fashion with free shipping on orders over $50.',
+                  bgImage: 'url("https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop")',
+                  welcome: 'Hi there! Need help sizing or tracking an order?',
+                  accent: 'bg-rose-500'
+              },
+              business: {
+                  color: 'bg-blue-600 hover:bg-blue-500 text-white',
+                  textColor: 'text-blue-600',
+                  logo: '<i class="fas fa-briefcase text-blue-600"></i> ENTER<span class="text-blue-500">PRISE</span>',
+                  tagline: 'Global Solutions',
+                  headline: 'Scalable Software for Modern Business.',
+                  subhead: 'Optimize your workflow with AI-driven analytics and cloud infrastructure.',
+                  bgImage: 'url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop")',
+                  welcome: 'Welcome! Would you like to schedule a demo of our software?',
+                  accent: 'bg-blue-600'
+              },
+              corporate: {
+                color: 'bg-indigo-600 hover:bg-indigo-500 text-white',
+                textColor: 'text-indigo-600',
+                logo: '<i class="fas fa-building text-indigo-600"></i> CORP<span class="text-indigo-500">VISION</span>',
+                tagline: 'Next-Gen Corporate Strategy',
+                headline: 'Empowering Enterprises Through Innovation.',
+                subhead: 'We help global organizations transform with scalable digital solutions and strategic consulting.',
+                bgImage: 'url("https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=2070&auto=format&fit=crop")',
+                welcome: 'Hello! Interested in optimizing your corporate strategy?',
+                accent: 'bg-indigo-600'
+            },
+            
+            finance: {
+                color: 'bg-emerald-600 hover:bg-emerald-500 text-white',
+                textColor: 'text-emerald-600',
+                logo: '<i class="fas fa-chart-line text-emerald-600"></i> FIN<span class="text-emerald-500">EDGE</span>',
+                tagline: 'Smart Financial Solutions',
+                headline: 'Driving Growth Through Intelligent Finance.',
+                subhead: 'From investment insights to automated accounting, we provide tools to grow your financial future.',
+                bgImage: 'url("https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070&auto=format&fit=crop")',
+                welcome: 'Hi! Looking for financial management or investment tools?',
+                accent: 'bg-emerald-600'
+            },
+
+            secureSign: {
+              color: 'bg-green-700 hover:bg-green-600 text-white',
+              textColor: 'text-green-600',
+              logo: '<i class="fas fa-shield-alt text-green-700"></i> ANALYTIX<span class="text-green-700">DIGI</span>',
+              tagline: 'Secure Digital Signatures Since 2008',
+              headline: 'Authenticate & Protect Your Business Documents Instantly.',
+              subhead: 'Digital Signature Certificates, e-Signing, SSL & e-Tender services — trusted by 500+ corporates.',
+              bgImage: 'url("https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=2070&q=80")',
+              welcome: 'Welcome! Need a secure digital signature or e-signing solution today?',
+              accent: 'bg-green-700'
+           },
+           
+           digitalServices: {
+              color: 'bg-teal-600 hover:bg-teal-500 text-white',
+              textColor: 'text-teal-600',
+              logo: '<i class="fas fa-file-signature text-teal-600"></i> ANALYTIX<span class="text-teal-500">E-SERV</span>',
+              tagline: 'E-Documents, E-Security, E-Trust',
+              headline: 'From DSC to SSL — End-to-End Digital Security Services.',
+              subhead: 'We provide comprehensive digital certification and e-products for businesses and organizations across India.',
+              bgImage: 'url("https://images.unsplash.com/photo-1521790361543-f645cf042ec4?auto=format&fit=crop&w=2070&q=80")',
+              welcome: 'Hi there! Looking for DSC, eSign, SSL or e-Tender support?',
+              accent: 'bg-teal-600'
+           }
+           
+            
+          };
+  
+  
+          
+          // Mock Site Elements
+          const siteLogo = document.getElementById('site-logo');
+          const footerLogo = document.getElementById('footer-logo');
+          const siteTagline = document.getElementById('site-tagline');
+          const siteHeadline = document.getElementById('site-headline');
+          const siteSubhead = document.getElementById('site-subhead');
+          const bgImage = document.getElementById('bg-image');
+          const headerCta = document.getElementById('header-cta');
+          const mainCta = document.getElementById('main-cta');
+          const supportBtn = document.getElementById('supportBtn');
+          const supportBtnIco = document.getElementById('supportBtnIco');
+          const featureIcons = document.querySelectorAll('.feature-icon-bg');
+          
+          // Industry Panel Logic
+          const industryPanel = document.getElementById('industry-panel');
+          const panelIcon = document.getElementById('panel-icon');
+          let isPanelOpen = false;
+  
+          function toggleIndustryPanel() {
+              isPanelOpen = !isPanelOpen;
+              if (isPanelOpen) {
+                  industryPanel.classList.remove('-translate-x-[calc(100%-3rem)]');
+                  industryPanel.classList.add('translate-x-0');
+                  panelIcon.classList.remove('fa-chevron-right');
+                  panelIcon.classList.add('fa-chevron-left');
+              } else {
+                  industryPanel.classList.add('-translate-x-[calc(100%-3rem)]');
+                  industryPanel.classList.remove('translate-x-0');
+                  panelIcon.classList.add('fa-chevron-right');
+                  panelIcon.classList.remove('fa-chevron-left');
+              }
+          }
+  
+  
+          // Theme Logic
+          function setTheme(themeKey) {
+              const t = themes[themeKey];
+              
+              // Text Animations
+              const animateText = (element, newText) => {
+                  element.classList.remove('fade-enter-active');
+                  element.classList.add('fade-enter');
+                  setTimeout(() => {
+                      element.innerHTML = newText;
+                      element.classList.remove('fade-enter');
+                      element.classList.add('fade-enter-active');
+                  }, 100);
+              };
+  
+              // 1. Update Logo & Taglines
+              siteLogo.innerHTML = t.logo;
+              footerLogo.innerHTML = t.logo;
+              siteTagline.innerHTML = t.tagline;
+              siteTagline.className = `inline-block py-1 px-4 rounded-full text-xs font-bold mb-6 uppercase tracking-widest bg-white shadow-sm border border-slate-100 ${t.textColor}`;
+              
+              animateText(siteHeadline, t.headline);
+              animateText(siteSubhead, t.subhead);
+              bgImage.style.backgroundImage = t.bgImage;
+              chatToggle.className = `chat-widget group relative p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 focus:outline-none z-50 ${t.color}`;
+              headerCta.className = `px-5 py-2 rounded-full text-white text-xs font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 ${t.color.split(' ')[0]}`; 
+              mainCta.className = `px-8 py-4 text-white rounded-lg font-bold shadow-xl shadow-slate-200/50 transition-all hover:scale-105 hover:shadow-2xl ${t.color.split(' ')[0]}`;
+              supportBtn.className=`w-full  text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${t.color}`;
+              supportBtnIco.className=`w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-6 ${t.textColor}`;
+              featureIcons.forEach(icon => {
+                  icon.className = `w-12 h-12 rounded-lg flex items-center justify-center mb-6 text-white feature-icon-bg transition-colors duration-500 ${t.accent}`;
+              });
+  
+              // Navbar scroll effect
+              const header = document.getElementById('main-header');
+              window.addEventListener('scroll', () => {
+                  if (window.scrollY > 50) {
+                      header.classList.add('bg-white/90', 'backdrop-blur-md', 'shadow-sm');
+                  } else {
+                      header.classList.remove('bg-white/90', 'backdrop-blur-md', 'shadow-sm');
+                  }
+              });
+          }
+  
+          setTheme('business');
+          initChat();
+  </script>
+
 </body>
 </html>
