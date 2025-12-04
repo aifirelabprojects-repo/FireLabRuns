@@ -32,7 +32,7 @@
             display: block;
         }
     </style>
-    <script src="/static/dataset.js"></script>
+    <script src="/static/eco.js"></script>
     <script>
       tailwind.config = {
           darkMode: "class",
@@ -750,7 +750,6 @@ Need help with your order?
       saveSettings();
   });
 
-  // --- 4. Search Logic (Updated) ---
 
   function getFuzzyResults(query) {
       if (!query) return [];
@@ -759,7 +758,7 @@ Need help with your order?
       if (terms.length === 0) return [];
       const highlightRegex = new RegExp(`(${terms.join('|')})`, 'gi');
       
-      return questions
+      return ecommerceQuestions
           .map(item => {
               const itemLower = item.toLowerCase();
               const isMatch = terms.every(term => itemLower.includes(term.toLowerCase()));
